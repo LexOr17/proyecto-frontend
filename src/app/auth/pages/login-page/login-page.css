@@ -1,0 +1,286 @@
+main {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f0f2f5;
+    background-image: linear-gradient(135deg, #f0f2f5 0%, #e0e7ff 100%);
+    color: #333333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Usar dvh (dynamic viewport height) evita problemas de scroll en móviles con barras de navegación */
+    min-height: 100dvh;
+    width: 100%;
+    padding: 20px;
+    overflow-x: hidden;
+    /* Previene scroll horizontal accidental */
+}
+
+/* --- Animaciones --- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* --- Contenedor Principal --- */
+.login-container {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    animation: fadeIn 0.8s ease-out;
+    /* Asegura que el contenedor no crezca más de lo necesario */
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- Logo o Icono --- */
+.login-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    display: inline-block;
+    animation: pulse 3s infinite ease-in-out;
+    cursor: default;
+    align-self: center;
+}
+
+.login-container h1 {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.login-container p {
+    color: #666666;
+    margin-bottom: 30px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* --- Grupos de Formulario (Label Flotante + Validación) --- */
+.form-group {
+    position: relative;
+    /* Aumentado para reservar espacio para el mensaje de error absoluto */
+    margin-bottom: 35px;
+    text-align: left;
+}
+
+.form-label {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    color: #9ca3af;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    background-color: transparent;
+    z-index: 1;
+}
+
+.form-input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    outline: none;
+    color: #1f2937;
+    background-color: transparent;
+}
+
+/* Lógica del Label Flotante */
+.form-input:focus+.form-label,
+.form-input:not(:placeholder-shown)+.form-label {
+    top: -10px;
+    left: 10px;
+    font-size: 0.8rem;
+    color: #4CAF50;
+    background-color: #ffffff;
+    padding: 0 6px;
+    font-weight: 500;
+    z-index: 2;
+}
+
+.form-input:focus {
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+}
+
+/* --- Estilos de Validación de Errores --- */
+
+/* El mensaje se posiciona de forma absoluta para no empujar el contenido */
+.error-msg {
+    position: absolute;
+    bottom: -22px;
+    /* Se sitúa en el margen inferior reservado */
+    left: 5px;
+    font-size: 0.75rem;
+    color: #ef4444;
+    /* Rojo error */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* Estado de Error Activo (Simulado con clase .error en el padre) */
+.form-group.error .form-input {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+}
+
+.form-group.error .form-label {
+    color: #ef4444;
+}
+
+.form-group.error .error-msg {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* --- Botón de Envío --- */
+.submit-btn {
+    width: 100%;
+    padding: 15px;
+    background-color: #4CAF50;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2);
+    margin-top: 10px;
+    /* Un poco de aire extra antes del botón */
+}
+
+.submit-btn:hover {
+    background-color: #43a047;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(76, 175, 80, 0.3);
+}
+
+.submit-btn:active {
+    transform: translateY(0);
+}
+
+/* --- Enlace Recuperar Contraseña --- */
+.forgot-password {
+    margin-top: 25px;
+    font-size: 0.9rem;
+}
+
+.forgot-password a {
+    color: #4CAF50;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.forgot-password a:hover {
+    color: #2e7d32;
+    text-decoration: underline;
+}
+
+
+
+
+
+
+/* --- Alerta de Error General (Login Fallido) --- */
+.alert-error {
+    background-color: #fef2f2; /* Fondo rojo muy suave */
+    border: 1px solid #fee2e2; /* Borde sutil */
+    color: #ef4444; /* Mismo rojo que usas en los inputs */
+    padding: 12px 15px;
+    border-radius: 12px; /* Coincide con tus inputs y botón */
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 25px; /* Espacio antes de empezar el formulario */
+    margin-top: -10px;   /* Ajuste para no separar tanto del texto de bienvenida */
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideDownFade 0.4s ease-out forwards;
+    box-shadow: 0 2px 5px rgba(239, 68, 68, 0.05);
+}
+
+/* Pequeño icono de advertencia puro CSS antes del texto del error (Opcional pero recomendado) */
+.alert-error::before {
+    content: '!';
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 20px;
+    height: 20px;
+    background-color: #ef4444;
+    color: white;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+/* --- Animación suave para cuando aparece el error --- */
+@keyframes slideDownFade {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- Estilos del Spinner (Cargando...) que faltaban --- */
+.spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #ffffff;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Ajuste pequeño al botón cuando está deshabilitado/cargando */
+.submit-btn:disabled {
+    background-color: #94d397; /* Verde más claro */
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
