@@ -1,0 +1,23 @@
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <h2><span class='bx bxl-apple'></span> <span>Bienestar</span></h2>
+        <div class="close-mobile" (click)="layoutService.close()">
+            <span class='bx bx-x'></span>
+        </div>
+    </div>
+
+    <nav class="sidebar-menu">
+        <ul>
+            <li>
+                <a routerLink="/main/dashboard" routerLinkActive="active">
+                    <span class='bx bx-grid-alt'></span>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li><a routerLink="/main/usuarios" ><span class='bx bx-user'></span> <span>Usuarios</span></a></li>
+            <li><a routerLink="/main/usuarios/usuarios" ><span class='bx bx-message-square-detail'></span> <span>Lista de usuarios</span></a></li>
+            <li><a (click)="logout()" style="cursor:pointer"><span class='bx bx-log-out'></span> <span>Salir</span></a>
+            </li>
+        </ul>
+    </nav>
+</aside>

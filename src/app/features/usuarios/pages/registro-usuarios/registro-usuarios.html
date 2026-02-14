@@ -1,0 +1,286 @@
+<!-- <main class="main-content">
+    <header>
+        <div class="header-title">
+            <h1><i class="bx bx-user-plus"></i> Nuevo Usuario</h1>
+        </div>
+        <a class="btn-back" routerLink="/main/dashboard">
+            <i class="bx bx-arrow-back"></i> Volver
+        </a>
+    </header>
+
+    <div class="form-container">
+        <form [formGroup]="registroForm" (ngSubmit)="onSubmit()">
+
+            @if (errorMessage()) {
+            <div class="alert-error">
+                {{ errorMessage() }}
+            </div>
+            }
+
+            <h3 class="section-title">Información de Cuenta</h3>
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label>Rol</label>
+                    <select formControlName="rol">
+                        <option value="PACIENTE">Paciente</option>
+                        <option value="NUTRIOLOGO">Nutriólogo</option>
+                        <option value="ADMINISTRADOR">Administrador</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Correo</label>
+                    <input type="email" formControlName="correo" [class.error]="isInvalid('correo')">
+                    @if (isInvalid('correo')) {
+                    <small class="error-msg">Correo inválido</small>
+                    }
+                </div>
+            </div>
+
+            <h3 class="section-title">Datos Personales</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text" formControlName="nombre" [class.error]="isInvalid('nombre')">
+                </div>
+
+                <div class="form-group">
+                    <label>Apellido Paterno</label>
+                    <input type="text" formControlName="apellidoPaterno" [class.error]="isInvalid('apellidoPaterno')">
+                </div>
+
+                <div class="form-group">
+                    <label>Apellido Materno</label>
+                    <input type="text" formControlName="apellidoMaterno" [class.error]="isInvalid('apellidoMaterno')">
+                </div>
+
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" formControlName="telefono" placeholder="10 dígitos"
+                        [class.error]="isInvalid('telefono')">
+                </div>
+
+                <div class="form-group">
+                    <label>Fecha Nacimiento</label>
+                    <input type="date" formControlName="fechaNacimiento" [class.error]="isInvalid('fechaNacimiento')">
+                </div>
+
+                <div class="form-group">
+                    <label>Género</label>
+                    <select formControlName="genero">
+                        <option value="MASCULINO">Masculino</option>
+                        <option value="FEMENINO">Femenino</option>
+                    </select>
+                </div>
+            </div>
+
+            @if (rolSeleccionado === 'NUTRIOLOGO') {
+            <div class="conditional-section fade-in">
+                <h3 class="section-title text-green">Datos Profesionales</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Cédula Profesional</label>
+                        <input type="text" formControlName="cedulaProfesional"
+                            [class.error]="isInvalid('cedulaProfesional')">
+                        @if (isInvalid('cedulaProfesional')) {
+                        <small class="error-msg">Requerido</small>
+                        }
+                    </div>
+                </div>
+            </div>
+            }
+
+            @if (rolSeleccionado === 'PACIENTE') {
+            <div class="conditional-section fade-in">
+                <h3 class="section-title text-blue">Asignación</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nutriólogo Asignado <span class="required">*</span></label>
+                        <select formControlName="nutriologoId" [class.error]="isInvalid('nutriologoId')">
+                            <option value="">-- Seleccione --</option>
+                            @for (nut of nutriologosList(); track nut.id) {
+                            <option [value]="nut.id">
+                                {{ nut.nombre }} {{ nut.apellido }}
+                            </option>
+                            }
+                        </select>
+                        @if (isInvalid('nutriologoId')) {
+                        <small class="error-msg">Seleccione un nutriólogo</small>
+                        }
+                    </div>
+                </div>
+            </div>
+            }
+
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" routerLink="/main/dashboard">Cancelar</button>
+                <button type="submit" class="btn-save" [disabled]="isLoading()">
+                    @if (isLoading()) {
+                    <span>Guardando...</span>
+                    } @else {
+                    <span>Guardar Usuario</span>
+                    }
+                </button>
+            </div>
+
+        </form>
+    </div>
+</main> -->
+
+
+
+
+<main class="main-content">
+    <header>
+        <div class="header-title">
+            <h1><i class="bx bx-user-plus" aria-hidden="true"></i> Nuevo Usuario</h1>
+        </div>
+        <a class="btn-back" routerLink="/main/dashboard">
+            <i class="bx bx-arrow-back" aria-hidden="true"></i> Volver
+        </a>
+    </header>
+
+    <div class="form-container">
+        <form [formGroup]="registroForm" (ngSubmit)="onSubmit()">
+
+            @if (errorMessage()) {
+            <div class="alert-error" role="alert">
+                {{ errorMessage() }}
+            </div>
+            }
+
+            <h3 class="section-title">Información de Cuenta</h3>
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="rol">Rol</label>
+                    <select id="rol" formControlName="rol">
+                        <option value="PACIENTE">Paciente</option>
+                        <option value="NUTRIOLOGO">Nutriólogo</option>
+                        <option value="ADMINISTRADOR">Administrador</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="correo">Correo</label>
+                    <input type="email" id="correo" formControlName="correo" autocomplete="email"
+                        [class.error]="isInvalid('correo')" aria-describedby="correo-error">
+                    @if (isInvalid('correo')) {
+                    <small id="correo-error" class="error-msg" role="alert">
+                        Correo inválido o requerido
+                    </small>
+                    }
+                </div>
+            </div>
+
+            <h3 class="section-title">Datos Personales</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="nombre">Nombre</label>
+                    <input type="text" id="nombre" formControlName="nombre" autocomplete="given-name"
+                        [class.error]="isInvalid('nombre')">
+                    @if (isInvalid('nombre')) {
+                    <small class="error-msg">El nombre es requerido (mín. 2 letras)</small>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="apellidoPaterno">Apellido Paterno</label>
+                    <input type="text" id="apellidoPaterno" formControlName="apellidoPaterno" autocomplete="family-name"
+                        [class.error]="isInvalid('apellidoPaterno')">
+                    @if (isInvalid('apellidoPaterno')) {
+                    <small class="error-msg">Requerido</small>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="apellidoMaterno">Apellido Materno</label>
+                    <input type="text" id="apellidoMaterno" formControlName="apellidoMaterno"
+                        autocomplete="additional-name" [class.error]="isInvalid('apellidoMaterno')">
+                </div>
+
+                <div class="form-group">
+                    <label for="telefono">Teléfono</label>
+                    <input type="tel" id="telefono" formControlName="telefono" placeholder="10 dígitos"
+                        autocomplete="tel" [class.error]="isInvalid('telefono')">
+                    @if (isInvalid('telefono')) {
+                    <small class="error-msg">Debe tener 10 dígitos numéricos</small>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="fechaNacimiento">Fecha Nacimiento</label>
+                    <input type="date" id="fechaNacimiento" formControlName="fechaNacimiento"
+                        [class.error]="isInvalid('fechaNacimiento')">
+                    @if (isInvalid('fechaNacimiento')) {
+                    <small class="error-msg">Fecha requerida</small>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="genero">Género</label>
+                    <select id="genero" formControlName="genero">
+                        <option value="MASCULINO">Masculino</option>
+                        <option value="FEMENINO">Femenino</option>
+                    </select>
+                </div>
+            </div>
+
+            @if (registroForm.get('rol')?.value === 'NUTRIOLOGO') {
+            <div class="conditional-section fade-in">
+                <h3 class="section-title text-green">Datos Profesionales</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="cedulaProfesional">Cédula Profesional <span class="required"
+                                aria-hidden="true">*</span></label>
+                        <input type="text" id="cedulaProfesional" formControlName="cedulaProfesional"
+                            [class.error]="isInvalid('cedulaProfesional')">
+                        @if (isInvalid('cedulaProfesional')) {
+                        <small class="error-msg">La cédula es obligatoria para nutriólogos</small>
+                        }
+                    </div>
+                </div>
+            </div>
+            }
+
+            @if (registroForm.get('rol')?.value === 'PACIENTE') {
+            <div class="conditional-section fade-in">
+                <h3 class="section-title text-blue">Asignación</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="nutriologoId">Nutriólogo Asignado <span class="required"
+                                aria-hidden="true">*</span></label>
+                        <select id="nutriologoId" formControlName="nutriologoId"
+                            [class.error]="isInvalid('nutriologoId')">
+                            <option value="">-- Seleccione --</option>
+                            @for (nut of nutriologosList(); track nut.id) {
+                            <option [value]="nut.id">
+                                {{ nut.nombre }} {{ nut.apellido }}
+                            </option>
+                            }
+                        </select>
+                        @if (isInvalid('nutriologoId')) {
+                        <small class="error-msg">Debe asignar un nutriólogo</small>
+                        }
+                    </div>
+                </div>
+            </div>
+            }
+
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" routerLink="/main/dashboard">Cancelar</button>
+
+                <button type="submit" class="btn-save" [disabled]="registroForm.invalid || isLoading()"
+                    [class.opacity-50]="isLoading()">
+                    @if (isLoading()) {
+                    <span><i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i> Guardando...</span>
+                    } @else {
+                    <span>Guardar Usuario</span>
+                    }
+                </button>
+            </div>
+
+        </form>
+    </div>
+</main>

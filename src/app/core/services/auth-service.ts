@@ -2,8 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs';
-import { AuthResponse, UserRole } from '../interfaces/auth-response';
 import { environment } from '../../../environments/environment';
+import { AuthResponse, UserRole } from '../interfaces/auth-response';
 
 @Injectable({
   providedIn: 'root'

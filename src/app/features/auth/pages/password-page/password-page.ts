@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
   selector: 'app-password-page',
   imports: [RouterLink],
   templateUrl: './password-page.html',
-  styleUrl: './password-page.css',
+  styleUrls: ['./password-page.css'],
 })
 export class PasswordPage {
 

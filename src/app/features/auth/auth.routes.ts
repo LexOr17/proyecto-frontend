@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { AuthLayout } from './layout/auth-layout/auth-layout';
+import { AuthLayout } from '../../layouts/auth-layout/auth-layout';
 import { LoginPage } from './pages/login-page/login-page';
 import { PasswordPage } from './pages/password-page/password-page';
 

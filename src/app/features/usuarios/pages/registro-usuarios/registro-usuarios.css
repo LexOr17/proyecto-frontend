@@ -1,0 +1,171 @@
+/* Container */
+.main-content {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header-title h1 {
+  font-size: 1.5rem;
+  color: #1B5E20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-back {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #666;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #e0e0e0;
+  transition: 0.3s;
+}
+
+.btn-back:hover {
+  background: #d0d0d0;
+}
+
+/* Form Card */
+.form-container {
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border-top: 4px solid #4CAF50;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  color: #4CAF50;
+  margin: 20px 0 15px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #E8F5E9;
+}
+
+.section-title.text-blue {
+  color: #1976D2;
+  border-color: #E3F2FD;
+}
+
+/* Grid */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+label {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.required {
+  color: #D32F2F;
+}
+
+input,
+select {
+  padding: 10px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  background: #FAFAFA;
+  font-family: inherit;
+  transition: 0.3s;
+}
+
+input:focus,
+select:focus {
+  border-color: #4CAF50;
+  background: #fff;
+  outline: none;
+}
+
+/* Validaciones */
+input.error,
+select.error {
+  border-color: #EF5350;
+  background: #FFEBEE;
+}
+
+.error-msg {
+  color: #D32F2F;
+  font-size: 0.75rem;
+}
+
+/* Acciones */
+.form-actions {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+}
+
+.btn-save {
+  background: #4CAF50;
+  color: #fff;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-save:disabled {
+  background: #A5D6A7;
+  cursor: not-allowed;
+}
+
+.btn-cancel {
+  background: transparent;
+  border: 1px solid #ccc;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #666;
+}
+
+/* Animaciones */
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.alert-error {
+  background: #FFEBEE;
+  color: #C62828;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  text-align: center;
+}
