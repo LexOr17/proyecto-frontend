@@ -1,22 +1,17 @@
 <header>
-    <div class="header-left" style="display: flex; align-items: center;">
-        <div class="menu-btn" (click)="layoutService.toggle()">
-            <span></span><span></span><span></span>
-        </div>
-        <h2>Inicio</h2>
+    <div class="header-left">
+        <button type="button" class="menu-btn" (click)="toggleSidebar()" aria-label="Abrir o cerrar menú lateral">
+            <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+        </button>
+        <h2>{{ pageTitle() }}</h2>
     </div>
 
     <div class="header-right">
-        <div class="header-icons">
-            <span class='bx bx-message-square-detail' title="Mensajes"></span>
-            <span class='bx bx-bell notify-dot' title="Notificaciones"></span>
-        </div>
-
         <div class="user-wrapper">
-            <img src="https://ui-avatars.com/api/?name=Usuario+Bienestar&background=4CAF50&color=fff" alt="Avatar">
+            <div class="user-avatar" aria-hidden="true">U</div>
             <div>
-                <h4>Juan Pérez</h4>
-                <small>Admin</small>
+                <h4>Usuario</h4>
+                <small>{{ currentUserRole() }}</small>
             </div>
         </div>
     </div>

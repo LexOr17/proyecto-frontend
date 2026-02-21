@@ -14,9 +14,7 @@ export const authGuard: CanMatchFn = (route, segments) => {
   const expectedRoles = route.data?.['roles'] as UserRole[] | undefined;
 
   if (expectedRoles && !authService.hasRole(expectedRoles)) {
-    return router.createUrlTree(['/unauthorized']); 
-    // Opcional: Podrías retornar `false` si quieres que el router 
-    // siga buscando otra ruta que coincida (ej: mostrar un 404 en vez de 403).
+    return router.createUrlTree(['/main/dashboard']);
   }
 
   return true;

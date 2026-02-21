@@ -1,8 +1,8 @@
 export interface AuthResponse {
     mensaje:   string;
     estatus:   number;
-    datos:     Datos;
-    timestamp: Date;
+    datos:     Datos | null;
+    timestamp: string;
 }
 
 export interface Datos {

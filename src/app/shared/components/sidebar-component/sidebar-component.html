@@ -1,12 +1,12 @@
 <aside class="sidebar">
     <div class="sidebar-brand">
         <h2><span class='bx bxl-apple'></span> <span>Bienestar</span></h2>
-        <div class="close-mobile" (click)="layoutService.close()">
-            <span class='bx bx-x'></span>
-        </div>
+        <button type="button" class="close-mobile" (click)="closeSidebar()" aria-label="Cerrar menú lateral">
+            <span class='bx bx-x' aria-hidden="true"></span>
+        </button>
     </div>
 
-    <nav class="sidebar-menu">
+    <nav class="sidebar-menu" aria-label="Menú principal">
         <ul>
             <li>
                 <a routerLink="/main/dashboard" routerLinkActive="active">
@@ -14,9 +14,25 @@
                     <span>Dashboard</span>
                 </a>
             </li>
-            <li><a routerLink="/main/usuarios" ><span class='bx bx-user'></span> <span>Usuarios</span></a></li>
-            <li><a routerLink="/main/usuarios/usuarios" ><span class='bx bx-message-square-detail'></span> <span>Lista de usuarios</span></a></li>
-            <li><a (click)="logout()" style="cursor:pointer"><span class='bx bx-log-out'></span> <span>Salir</span></a>
+            @if (currentUserRole() === 'ADMINISTRADOR') {
+              <li>
+                <a routerLink="/main/usuarios/nuevo" routerLinkActive="active">
+                  <span class='bx bx-user'></span> 
+                  <span>Nuevo Usuario</span>
+                </a>
+              </li>
+              <li>
+                <a routerLink="/main/usuarios" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+                  <span class='bx bx-group'></span> 
+                  <span>Lista de Usuarios</span>
+                </a>
+              </li>
+            }
+            <li>
+                <button type="button" class="sidebar-logout" (click)="logout()">
+                    <span class='bx bx-log-out' aria-hidden="true"></span>
+                    <span>Salir</span>
+                </button>
             </li>
         </ul>
     </nav>

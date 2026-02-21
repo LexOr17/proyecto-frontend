@@ -13,126 +13,32 @@
 
 /* Contenedor Principal */
 .main-content {
-  margin-left: 250px;
+  margin-left: var(--sidebar-width);
   padding: 2rem;
-  margin-top: 60px;
+  margin-top: var(--header-height);
   transition: margin-left 300ms ease;
 }
 
 /* =========================================
-   LÓGICA RESPONSIVA (La traducción del CSS original)
-   ========================================= */
-
-/* =========================================
-   LÓGICA ESCRITORIO (> 960px)
+   DESKTOP (> 960px)
    ========================================= */
 @media only screen and (min-width: 961px) {
 
-  /* 1. Encoger Sidebar y estirar contenido */
-  .layout-wrapper.toggled ::ng-deep .sidebar {
-    width: 70px;
-  }
-
-  .layout-wrapper.toggled ::ng-deep header {
-    left: 70px;
-    width: calc(100% - 70px);
-  }
-
   .layout-wrapper.toggled .main-content {
-    margin-left: 70px;
-  }
-
-  /* 2. Ocultar textos */
-  .layout-wrapper.toggled ::ng-deep .sidebar h2 span:last-child,
-  .layout-wrapper.toggled ::ng-deep .sidebar a span:last-child {
-    display: none !important;
-  }
-
-  /* 3. CENTRADO DE ICONOS (CORRECCIÓN) */
-
-  /* Quitamos el padding del enlace y centramos el contenido */
-  .layout-wrapper.toggled ::ng-deep .sidebar-menu a {
-    padding-left: 0 !important;
-    /* Vital para quitar el hueco izquierdo */
-    justify-content: center !important;
-    width: 70px;
-    /* Asegura que ocupe todo el ancho del sidebar mini */
-  }
-
-  /* Quitamos cualquier margen derecho que tenga el icono */
-  .layout-wrapper.toggled ::ng-deep .sidebar-menu a span:first-child {
-    padding-right: 0 !important;
-    margin-right: 0 !important;
-    margin-left: 0 !important;
-  }
-
-  /* Centrar también el logo de la manzana */
-  .layout-wrapper.toggled ::ng-deep .sidebar-brand {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    justify-content: center !important;
-  }
-
-  .layout-wrapper.toggled ::ng-deep .sidebar-brand h2 span:first-child {
-    padding-right: 0 !important;
-    margin-right: 0 !important;
-  }
-
-  /* Animación del botón del header (opcional) */
-  .layout-wrapper.toggled ::ng-deep .menu-btn span:nth-child(1) {
-    width: 60%;
-  }
-
-  .layout-wrapper.toggled ::ng-deep .menu-btn span:nth-child(2) {
-    width: 100%;
-  }
-
-  .layout-wrapper.toggled ::ng-deep .menu-btn span:nth-child(3) {
-    width: 60%;
+    margin-left: var(--sidebar-collapsed-width);
   }
 }
 
-/* --- MÓVIL (<= 960px) --- */
+/* =========================================
+   MÓVIL (<= 960px)
+   ========================================= */
 @media only screen and (max-width: 960px) {
 
-  /* Estado por defecto en móvil: Todo oculto/ajustado */
-  ::ng-deep .sidebar {
-    left: -100% !important;
-    width: 250px !important;
-  }
-
-  ::ng-deep header {
-    left: 0 !important;
-    width: 100% !important;
-  }
-
   .main-content {
-    margin-left: 0 !important;
-  }
-
-  ::ng-deep .close-mobile {
-    display: block !important;
-  }
-
-  /* Estado Toggled (Abierto) -> Se muestra */
-  .layout-wrapper.toggled ::ng-deep .sidebar {
-    left: 0 !important;
+    margin-left: 0;
   }
 
   .layout-wrapper.toggled .sidebar-overlay {
     display: block;
-  }
-
-  /* Animación del botón hamburguesa */
-  .layout-wrapper.toggled ::ng-deep .menu-btn span:nth-child(1) {
-    transform: rotate(45deg) translate(5px, 5px);
-  }
-
-  .layout-wrapper.toggled ::ng-deep .menu-btn span:nth-child(2) {
-    opacity: 0;
-  }
-
-  .layout-wrapper.toggled ::ng-deep .menu-btn span:nth-child(3) {
-    transform: rotate(-45deg) translate(5px, -6px);
   }
 }

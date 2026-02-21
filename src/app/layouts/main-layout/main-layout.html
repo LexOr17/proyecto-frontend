@@ -1,6 +1,6 @@
-<div class="layout-wrapper" [class.toggled]="layoutService.isSidebarOpen()">
+<div class="layout-wrapper" [class.toggled]="isSidebarOpen()">
 
-    <div class="sidebar-overlay" (click)="layoutService.close()"></div>
+    <div class="sidebar-overlay" aria-hidden="true" (click)="closeSidebar()"></div>
 
     <app-sidebar-component></app-sidebar-component>
     <app-header-component></app-header-component>

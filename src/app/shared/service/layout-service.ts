@@ -5,14 +5,15 @@ import { Injectable, signal } from '@angular/core';
 })
 export class LayoutService {
 
-  isSidebarOpen = signal(false);
+  private readonly _isSidebarOpen = signal(false);
+  readonly isSidebarOpen = this._isSidebarOpen.asReadonly();
 
   toggle() {
-    this.isSidebarOpen.update(v => !v);
+    this._isSidebarOpen.update(v => !v);
   }
 
   close() {
-    this.isSidebarOpen.set(false);
+    this._isSidebarOpen.set(false);
   }
 
 }

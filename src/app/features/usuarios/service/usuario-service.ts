@@ -1,8 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 import { map, Observable } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
-import { Usuario, Dato, SelectorNutiologos } from '../interfaces/usuario-request';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { ApiResponse, Usuario, UsuarioRequest, Dato } from '../interfaces/usuario-request';
+import { Page } from '../../../shared/interfaces/page.interface';
 
 
 @Injectable({
@@ -11,28 +12,43 @@ import { Usuario, Dato, SelectorNutiologos } from '../interfaces/usuario-request
 export class UsuarioService {
 
   private http = inject(HttpClient);
-  private baseUrl = environment.baseUrl;
+  private readonly baseUrl = environment.baseUrl;
 
-  registrarUsuario(usuario: Usuario): Observable<any> {
-    return this.http.post(`${this.baseUrl}/usuarios/registro`, usuario);
+  registrarUsuario(usuario: UsuarioRequest): Observable<ApiResponse<Usuario>> {
+    return this.http.post<ApiResponse<Usuario>>(`${this.baseUrl}/usuarios/registro`, usuario);
   }
 
-  obtenerUsuarios(): Observable<Usuario[]> {
-    return this.http.get<{ datos: Usuario[] }>(`${this.baseUrl}/usuarios`)
-    .pipe(
-      map(response => response.datos)
-    );
+  obtenerUsuarios(page = 0, size = 10): Observable<Page<Usuario>> {
+    const params = new HttpParams()
+      .set('page', page)
+      .set('size', size);
+
+    return this.http.get<ApiResponse<Page<Usuario>>>(`${this.baseUrl}/usuarios`, { params })
+      .pipe(
+        map(response => response.datos)
+      );
   }
 
-  eliminarUsuario(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/usuarios/${id}`);
+  eliminarUsuario(id: number): Observable<ApiResponse<null>> {
+    return this.http.delete<ApiResponse<null>>(`${this.baseUrl}/usuarios/${id}`);
+  }
+
+  obtenerUsuarioPorId(id: number): Observable<Usuario> {
+    return this.http.get<ApiResponse<Usuario>>(`${this.baseUrl}/usuarios/${id}`)
+      .pipe(
+        map(response => response.datos)
+      );
+  }
+
+  actualizarUsuario(id: number, usuario: UsuarioRequest): Observable<ApiResponse<Usuario>> {
+    return this.http.put<ApiResponse<Usuario>>(`${this.baseUrl}/usuarios/${id}`, usuario);
   }
 
   obtenerNutriologos(): Observable<Dato[]> {
-    return this.http.get<SelectorNutiologos>(`${this.baseUrl}/nutriologos/selector`)
-    .pipe(
-      map(response => response.datos)
-    );
+    return this.http.get<ApiResponse<Dato[]>>(`${this.baseUrl}/nutriologos/selector`)
+      .pipe(
+        map(response => response.datos)
+      );
   }
 
 }

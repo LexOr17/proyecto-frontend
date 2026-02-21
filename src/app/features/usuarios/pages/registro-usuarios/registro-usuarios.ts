@@ -1,31 +1,46 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UsuarioService } from '../../service/usuario-service';
-import { Router } from '@angular/router';
-import { Dato } from '../../interfaces/usuario-request';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { mapRegistroFormToRequest } from '../../mappers/usuario.mapper';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NotificationService } from '../../../../shared/service/notification-service';
 
 @Component({
   selector: 'app-registro-usuarios',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './registro-usuarios.html',
-  styleUrls: ['./registro-usuarios.css'],
+  styleUrl: './registro-usuarios.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RegistroUsuarios implements OnInit {
+export class RegistroUsuarios {
 
-  private fb = inject(FormBuilder);
-  private usuarioService = inject(UsuarioService);
-  private router = inject(Router);
-  private destroyRef = inject(DestroyRef);
+  private readonly fb = inject(FormBuilder);
+  private readonly usuarioService = inject(UsuarioService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly notificationService = inject(NotificationService);
 
   // State Signals
-  protected isLoading = signal(false);
-  protected nutriologosList = signal<Dato[]>([]);
-  protected errorMessage = signal<string | null>(null);
+  protected isSubmitting = signal(false);
+  protected rolSeleccionado = signal<string>('PACIENTE');
+
+  // Detectar ID de la ruta
+  protected usuarioId = signal<number | null>(
+    this.route.snapshot.paramMap.has('id')
+      ? Number(this.route.snapshot.paramMap.get('id'))
+      : null
+  );
+
+  protected modoEdicion = computed(() => this.usuarioId() !== null);
+  protected titulo = computed(() => this.modoEdicion() ? 'Editar Usuario' : 'Nuevo Usuario');
+
+  // View references
+  private telefonoInput = viewChild<ElementRef<HTMLInputElement>>('telefonoInput');
 
   // Formulario
-  registroForm = this.fb.group({
+  protected registroForm = this.fb.nonNullable.group({
     nombre: ['', [Validators.required, Validators.minLength(2)]],
     apellidoPaterno: ['', [Validators.required]],
     apellidoMaterno: [''],
@@ -35,23 +50,71 @@ export class RegistroUsuarios implements OnInit {
     genero: ['MASCULINO', [Validators.required]],
     rol: ['PACIENTE', [Validators.required]],
     cedulaProfesional: [''],
-    nutriologoId: [null as number | null],
+    nutriologoId: ['' as string | number],
+  });
+
+  // rxResource: carga del usuario en modo edición
+  protected usuarioResource = rxResource({
+    params: () => {
+      const id = this.usuarioId();
+      return id ? { id } : undefined;
+    },
+    stream: ({ params }) => this.usuarioService.obtenerUsuarioPorId(params.id),
+  });
+
+  // rxResource: carga de nutriólogos cuando el rol es PACIENTE
+  protected nutriologosResource = rxResource({
+    params: () => {
+      const rol = this.rolSeleccionado();
+      return rol === 'PACIENTE' ? {} : undefined;
+    },
+    stream: () => this.usuarioService.obtenerNutriologos(),
   });
 
   constructor() {
+    // Sincronizar cambios del FormControl 'rol' con la signal
     this.registroForm.get('rol')?.valueChanges
       .pipe(takeUntilDestroyed())
-      .subscribe(rol => this.actualizarValidacionesPorRol(rol));
-  }
+      .subscribe(rol => {
+        this.rolSeleccionado.set(rol ?? 'PACIENTE');
+        this.actualizarValidacionesPorRol(rol);
+      });
 
-  ngOnInit(): void {
-    // Inicialización correcta basada en el valor actual
-    const rolActual = this.registroForm.get('rol')?.value;
-    this.actualizarValidacionesPorRol(rolActual);
+    // Poblar formulario cuando el usuario se carga en modo edición
+    effect(() => {
+      const usuario = this.usuarioResource.value();
+      if (!usuario) return;
+
+      this.registroForm.patchValue({
+        nombre: usuario.nombre,
+        apellidoPaterno: usuario.apellidoPaterno,
+        apellidoMaterno: usuario.apellidoMaterno,
+        correo: usuario.correo,
+        telefono: usuario.telefono,
+        fechaNacimiento: usuario.fechaNacimiento
+          ? new Date(usuario.fechaNacimiento).toISOString().substring(0, 10)
+          : '',
+        genero: usuario.genero,
+        rol: usuario.rol,
+        cedulaProfesional: usuario.cedulaProfesional || '',
+        nutriologoId: usuario.nutriologoId || '',
+      });
+
+      this.rolSeleccionado.set(usuario.rol);
+
+      // Formatear visualmente el teléfono
+      const inputEl = this.telefonoInput()?.nativeElement;
+      if (inputEl && usuario.telefono) {
+        inputEl.value = this.formatearTelefono(usuario.telefono);
+      }
+    });
+
+    // Inicialización de validaciones basada en el valor actual
+    this.actualizarValidacionesPorRol(this.registroForm.get('rol')?.value);
   }
 
   // Esta lógica UI se queda aquí porque manipula el formulario directamente
-  actualizarValidacionesPorRol(rol: string | null | undefined) {
+  private actualizarValidacionesPorRol(rol: string | null | undefined) {
     const cedulaCtrl = this.registroForm.get('cedulaProfesional');
     const nutriologoCtrl = this.registroForm.get('nutriologoId');
 
@@ -59,39 +122,26 @@ export class RegistroUsuarios implements OnInit {
     cedulaCtrl?.clearValidators();
     nutriologoCtrl?.clearValidators();
     cedulaCtrl?.setValue('');
-    nutriologoCtrl?.setValue(null);
+    nutriologoCtrl?.setValue('');
 
     // Aplicar lógica condicional
     if (rol === 'NUTRIOLOGO') {
       cedulaCtrl?.setValidators([Validators.required]);
     } else if (rol === 'PACIENTE') {
       nutriologoCtrl?.setValidators([Validators.required]);
-      this.cargarNutriologos();
     }
 
     cedulaCtrl?.updateValueAndValidity();
     nutriologoCtrl?.updateValueAndValidity();
   }
 
-  cargarNutriologos() {
-    if (this.nutriologosList().length > 0) return;
-
-    this.usuarioService.obtenerNutriologos()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (data) => this.nutriologosList.set(data),
-        error: () => this.errorMessage.set('Error al cargar nutriólogos')
-      });
-  }
-
-  onSubmit() {
+  protected onSubmit() {
     if (this.registroForm.invalid) {
       this.registroForm.markAllAsTouched();
       return;
     }
 
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
+    this.isSubmitting.set(true);
 
     // 1. Obtener datos crudos
     const rawValue = this.registroForm.getRawValue();
@@ -99,136 +149,87 @@ export class RegistroUsuarios implements OnInit {
     // 2. Usar el MAPPER puro (importado)
     const request = mapRegistroFormToRequest(rawValue);
 
-    // 3. Llamar al servicio
-    this.usuarioService.registrarUsuario(request).subscribe({
-      next: () => {
-        this.isLoading.set(false);
-        this.router.navigate(['/main/dashboard']);
-      },
-      error: () => {
-        this.isLoading.set(false);
-        this.errorMessage.set('No se pudo registrar el usuario.');
-      }
-    });
+    // 3. Decidir entre crear o actualizar
+    const operacion$ = this.modoEdicion()
+      ? this.usuarioService.actualizarUsuario(this.usuarioId()!, request)
+      : this.usuarioService.registrarUsuario(request);
+
+    operacion$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          const mensajeExito = this.modoEdicion()
+            ? 'Usuario actualizado correctamente'
+            : 'Usuario registrado correctamente';
+          this.notificationService.success(mensajeExito);
+          this.router.navigate(['/main/usuarios'])
+            .then(() => this.isSubmitting.set(false))
+            .catch(() => this.isSubmitting.set(false));
+        },
+        error: () => {
+          this.isSubmitting.set(false);
+        }
+      });
   }
 
-  // Helper visual para el template
-  isInvalid(field: string): boolean {
+  protected isInvalid(field: string): boolean {
     const ctrl = this.registroForm.get(field);
     return !!(ctrl && ctrl.invalid && (ctrl.touched || ctrl.dirty));
   }
 
-  //   private fb = inject(FormBuilder);
-  //   private usuarioService = inject(UsuarioService);
-  //   private router = inject(Router);
+  private formatearTelefono(telefono: string): string {
+    const value = telefono.replace(/\D/g, '');
+    if (value.length >= 3) {
+      let formatted = `(${value.substring(0, 3)}`;
+      if (value.length > 3) {
+        formatted += `) ${value.substring(3, 6)}`;
+        if (value.length > 6) {
+          formatted += `-${value.substring(6, 10)}`;
+        }
+      }
+      return formatted;
+    }
+    return value;
+  }
 
-  //   // State Signals
-  //   protected isLoading = signal(false);
-  //   protected nutriologosList = signal<Dato[]>([]);
-  //   protected errorMessage = signal<string | null>(null);
+  protected onTelefonoInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value.replace(/\D/g, ''); // Solo números
 
-  //   // Formulario Reactivo
-  //   registroForm = this.fb.group({
-  //     nombre: ['', [Validators.required, Validators.minLength(2)]],
-  //     apellidoPaterno: ['', [Validators.required]],
-  //     apellidoMaterno: '',
-  //     correo: ['', [Validators.required, Validators.email]],
-  //     telefono: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
-  //     fechaNacimiento: ['', [Validators.required]],
-  //     genero: ['MASCULINO', [Validators.required]],
-  //     rol: ['PACIENTE', [Validators.required]],
-  //     cedulaProfesional: [''],
-  //     nutriologoId: ['']
-  //   });
+    // Limitar a 10 dígitos
+    const limitedValue = value.substring(0, 10);
 
-  //   // Signal computada o helper para el template (para evitar llamar funciones complejas)
-  //   // En este caso, usamos un getter simple o accedemos directo al control en el template
-  //   get rolSeleccionado() {
-  //     return this.registroForm.get('rol')?.value;
-  //   }
+    // Formatear visualmente: (xxx) xxx-xxxx
+    let formatted = limitedValue;
+    if (limitedValue.length >= 3) {
+      formatted = `(${limitedValue.substring(0, 3)}`;
+      if (limitedValue.length > 3) {
+        formatted += `) ${limitedValue.substring(3, 6)}`;
+        if (limitedValue.length > 6) {
+          formatted += `-${limitedValue.substring(6, 10)}`;
+        }
+      }
+    }
 
-  //   ngOnInit(): void {
-  //     // Suscripción a cambios del rol
-  //     this.registroForm.get('rol')?.valueChanges.subscribe(rol => {
-  //       this.actualizarValidacionesPorRol(rol);
-  //     });
+    // Actualizar el input con el formato visual
+    input.value = formatted;
 
-  //     // Cargar validaciones iniciales
-  //     this.actualizarValidacionesPorRol(this.rolSeleccionado);
-  //   }
+    // Guardar solo los números en el formulario
+    this.registroForm.get('telefono')?.setValue(limitedValue, { emitEvent: false });
+  }
 
-  //   actualizarValidacionesPorRol(rol: string | null | undefined) {
-  //     const cedulaCtrl = this.registroForm.get('cedulaProfesional');
-  //     const nutriologoCtrl = this.registroForm.get('nutriologoId');
+  protected limpiarFormulario(): void {
+    this.registroForm.reset({
+      genero: 'MASCULINO',
+      rol: 'PACIENTE',
+      cedulaProfesional: '',
+      nutriologoId: '',
+    });
 
-  //     // Limpiar
-  //     cedulaCtrl?.clearValidators();
-  //     nutriologoCtrl?.clearValidators();
-  //     cedulaCtrl?.setValue('');
-  //     nutriologoCtrl?.setValue('');
-
-  //     if (rol === 'NUTRIOLOGO') {
-  //       cedulaCtrl?.setValidators([Validators.required]);
-  //     } else if (rol === 'PACIENTE') {
-  //       nutriologoCtrl?.setValidators([Validators.required]);
-  //       this.cargarNutriologos();
-  //     }
-
-  //     cedulaCtrl?.updateValueAndValidity();
-  //     nutriologoCtrl?.updateValueAndValidity();
-  //   }
-
-  //   cargarNutriologos() {
-  //     if (this.nutriologosList().length === 0) {
-  //       this.usuarioService.obtenerNutriologos().subscribe({
-  //         next: (data) => this.nutriologosList.set(data),
-  //         error: (err) => console.error(err)
-  //       });
-  //     }
-  //   }
-
-  //   onSubmit() {
-
-  //     console.log('Intento de envío...');
-
-  //     if (this.registroForm.invalid) {
-  //       this.registroForm.markAllAsTouched();
-  //       return;
-  //     }
-
-  //     this.isLoading.set(true);
-  //     this.errorMessage.set(null);
-
-  //     // Casting seguro porque validamos el form
-  //     const request = this.registroForm.getRawValue() as any; 
-
-  //     this.usuarioService.registrarUsuario(request).subscribe({
-  //       next: () => {
-  //         this.isLoading.set(false);
-  //         this.router.navigate(['/main/dashboard']); // Ajustado a tu ruta layout
-  //       },
-  //       error: () => {
-  //         this.isLoading.set(false);
-  //         this.errorMessage.set('No se pudo registrar el usuario.');
-  //       }
-  //     });
-  //   }
-
-  //   // Helpers visuales
-  //   isInvalid(field: string): boolean {
-  //     const ctrl = this.registroForm.get(field);
-  //     return !!(ctrl && ctrl.invalid && (ctrl.touched || ctrl.dirty));
-  //   }
-
-  //   getAllErrors() {
-  //   const errors: any = {};
-  //   Object.keys(this.registroForm.controls).forEach(key => {
-  //     const controlErrors = this.registroForm.get(key)?.errors;
-  //     if (controlErrors) {
-  //       errors[key] = controlErrors;
-  //     }
-  //   });
-  //   return errors;
-  // }
+    const inputEl = this.telefonoInput()?.nativeElement;
+    if (inputEl) {
+      inputEl.value = '';
+    }
+  }
 
 }

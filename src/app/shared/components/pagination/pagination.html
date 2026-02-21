@@ -1,0 +1,45 @@
+<div class="pagination-wrapper">
+  <div class="pagination-info">
+    <span>Mostrando {{ showingFrom() }}-{{ showingTo() }} de {{ totalElements() }}</span>
+
+    <div class="page-size-selector">
+      <label for="pageSize">Mostrar</label>
+      <select id="pageSize" [value]="pageSize()" (change)="onPageSizeChange($event)">
+        @for (option of pageSizeOptions; track option) {
+          <option [value]="option">{{ option }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  @if (totalPages() > 1) {
+    <nav class="page-controls" aria-label="Paginación">
+      <button class="page-btn"
+              [disabled]="currentPage() === 0"
+              (click)="goToPage(currentPage() - 1)"
+              aria-label="Página anterior">
+        <i class="bx bx-chevron-left" aria-hidden="true"></i>
+      </button>
+
+      @for (page of pages(); track $index) {
+        @if (page === '...') {
+          <span class="page-ellipsis">...</span>
+        } @else {
+          <button class="page-btn"
+                  [class.active]="page === currentPage()"
+                  [attr.aria-current]="page === currentPage() ? 'page' : null"
+                  (click)="goToPage(+page)">
+            {{ +page + 1 }}
+          </button>
+        }
+      }
+
+      <button class="page-btn"
+              [disabled]="currentPage() === totalPages() - 1"
+              (click)="goToPage(currentPage() + 1)"
+              aria-label="Página siguiente">
+        <i class="bx bx-chevron-right" aria-hidden="true"></i>
+      </button>
+    </nav>
+  }
+</div>

@@ -1,12 +1,15 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { NotificationContainer } from './shared/components/notification-container/notification-container';
+import { ConfirmDialog } from './shared/components/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, NotificationContainer, ConfirmDialog],
   templateUrl: './app.html',
-  styleUrls: ['./app.css']
+  styleUrl: './app.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
-  protected readonly title = signal('nutriologo-app-frontend');
+
 }

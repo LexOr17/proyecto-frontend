@@ -1,6 +1,6 @@
 /* Estilos Base del Sidebar */
 .sidebar {
-    width: 250px;
+    width: var(--sidebar-width);
     position: fixed;
     left: 0;
     top: 0;
@@ -16,7 +16,7 @@
 }
 
 .sidebar-brand {
-    height: 60px;
+    height: var(--header-height);
     padding: 0 1rem 0 2rem;
     display: flex;
     align-items: center;
@@ -41,6 +41,10 @@
     font-size: 1.8rem;
     color: #1D2231;
     cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    align-items: center;
 }
 
 /* MENU - AQUÍ ARREGLAMOS LA ALINEACIÓN */
@@ -80,4 +84,94 @@
 .sidebar-menu a:hover {
     background: #f1f5f9;
     color: #4CAF50;
+}
+
+/* BOTÓN LOGOUT */
+.sidebar-logout {
+    padding-left: 1rem;
+    display: flex;
+    align-items: center;
+    color: #8390A2;
+    font-size: 1.1rem;
+    height: 40px;
+    transition: 0.3s;
+    border-radius: 30px 0 0 30px;
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+}
+
+.sidebar-logout:hover {
+    background: #f1f5f9;
+    color: #4CAF50;
+}
+
+.sidebar-logout span:first-child {
+    font-size: 1.6rem;
+    padding-right: 1rem;
+    min-width: 50px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+}
+
+/* =========================================
+   DESKTOP: Sidebar colapsado (> 960px)
+   ========================================= */
+@media only screen and (min-width: 961px) {
+
+  :host.toggled .sidebar {
+    width: var(--sidebar-collapsed-width);
+  }
+
+  :host.toggled .sidebar h2 span:last-child,
+  :host.toggled .sidebar a span:last-child,
+  :host.toggled .sidebar .sidebar-logout span:last-child {
+    display: none;
+  }
+
+  :host.toggled .sidebar-menu a,
+  :host.toggled .sidebar-menu .sidebar-logout {
+    padding-left: 0;
+    justify-content: center;
+    width: var(--sidebar-collapsed-width);
+  }
+
+  :host.toggled .sidebar-menu a span:first-child,
+  :host.toggled .sidebar-menu .sidebar-logout span:first-child {
+    padding-right: 0;
+    margin-right: 0;
+    margin-left: 0;
+  }
+
+  :host.toggled .sidebar-brand {
+    padding-left: 0;
+    padding-right: 0;
+    justify-content: center;
+  }
+
+  :host.toggled .sidebar-brand h2 span:first-child {
+    padding-right: 0;
+    margin-right: 0;
+  }
+}
+
+/* =========================================
+   MÓVIL: Sidebar oculto por defecto (<= 960px)
+   ========================================= */
+@media only screen and (max-width: 960px) {
+
+  .sidebar {
+    left: -100%;
+    width: var(--sidebar-width);
+  }
+
+  .close-mobile {
+    display: block;
+  }
+
+  :host.toggled .sidebar {
+    left: 0;
+  }
 }

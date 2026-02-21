@@ -6,12 +6,6 @@
         <h1>Bienvenido de Nuevo</h1>
         <p>Inicia sesión para continuar a tu plan de bienestar.</p>
 
-        @if (loginError()) {
-        <div class="alert-error" role="alert">
-            {{ loginError() }}
-        </div>
-        }
-
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
 
             <div class="form-group" [class.error]="isInvalid('email')">
@@ -20,7 +14,7 @@
                 <label for="email" class="form-label">Correo Electrónico</label>
 
                 @if (isInvalid('email')) {
-                <span id="email-error" class="error-msg">
+                <span id="email-error" class="error-msg" role="alert">
                     {{ getErrorMessage('email', 'Correo') }}
                 </span>
                 }
@@ -28,11 +22,11 @@
 
             <div class="form-group" [class.error]="isInvalid('password')">
                 <input type="password" id="password" formControlName="password" class="form-input" placeholder=" "
-                    [attr.aria-invalid]="isInvalid('password')" aria-describedby="password-error">
+                    autocomplete="current-password" [attr.aria-invalid]="isInvalid('password')" aria-describedby="password-error">
                 <label for="password" class="form-label">Contraseña</label>
 
                 @if (isInvalid('password')) {
-                <span id="password-error" class="error-msg">
+                <span id="password-error" class="error-msg" role="alert">
                     {{ getErrorMessage('password', 'Contraseña') }}
                 </span>
                 }
@@ -48,7 +42,7 @@
         </form>
 
         <div class="forgot-password">
-            <a routerLink="/auth/recuperar-password">¿Olvidaste tu contraseña?</a>
+            <a routerLink="../recuperar-password">¿Olvidaste tu contraseña?</a>
         </div>
     </div>
 

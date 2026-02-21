@@ -1,0 +1,14 @@
+@if (isOpen()) {
+  <div class="dialog-overlay" (click)="onCancel()" (keydown)="onKeydown($event)">
+    <div #dialogBox class="dialog-box" role="alertdialog" aria-modal="true"
+         aria-labelledby="dialog-title" aria-describedby="dialog-message"
+         (click)="$event.stopPropagation()">
+      <h3 id="dialog-title" class="dialog-title">{{ title() }}</h3>
+      <p id="dialog-message" class="dialog-message">{{ message() }}</p>
+      <div class="dialog-actions">
+        <button type="button" class="btn-dialog-cancel" (click)="onCancel()">Cancelar</button>
+        <button type="button" class="btn-dialog-confirm" (click)="onConfirm()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+}

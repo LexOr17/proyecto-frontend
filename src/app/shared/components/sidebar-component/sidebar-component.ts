@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { LayoutService } from '../../service/layout-service';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth-service';
@@ -7,15 +7,26 @@ import { AuthService } from '../../../core/services/auth-service';
   selector: 'app-sidebar-component',
   imports: [RouterLink, RouterLinkActive],
   templateUrl: './sidebar-component.html',
-  styleUrls: ['./sidebar-component.css'],
+  styleUrl: './sidebar-component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '[class.toggled]': 'isSidebarOpen()',
+  },
 })
 export class SidebarComponent { 
 
-  public layoutService = inject(LayoutService);
-  private authService = inject(AuthService);
+  private readonly layoutService = inject(LayoutService);
 
+  protected readonly isSidebarOpen = this.layoutService.isSidebarOpen;
+  private readonly authService = inject(AuthService);
 
-  logout() {
+  protected readonly currentUserRole = this.authService.currentUserRole;
+
+  protected closeSidebar(): void {
+    this.layoutService.close();
+  }
+
+  protected logout(): void {
     this.authService.logout();
   }
 
