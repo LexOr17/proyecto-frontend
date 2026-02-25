@@ -1,0 +1,100 @@
+<div class="main-content">
+    <header>
+        <div class="header-title">
+            <h1>
+                <i class="bx" [class.bx-user-plus]="!modoEdicion()" [class.bx-edit]="modoEdicion()"
+                    aria-hidden="true"></i>
+                {{ titulo() }}
+            </h1>
+        </div>
+        <a class="btn-back" routerLink="/main/pacientes">
+            <i class="bx bx-arrow-back" aria-hidden="true"></i> Volver
+        </a>
+    </header>
+
+    <div class="form-container">
+        <form [formGroup]="registroForm" (ngSubmit)="onSubmit()">
+
+            <h3 class="section-title">Información de Cuenta</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="correo">Correo</label>
+                    <input type="email" id="correo" formControlName="correo" autocomplete="email"
+                        [class.error]="isInvalid('correo')" aria-describedby="correo-error">
+                    @if (isInvalid('correo')) {
+                    <small id="correo-error" class="error-msg" role="alert">
+                        Correo inválido o requerido
+                    </small>
+                    }
+                </div>
+            </div>
+
+            <h3 class="section-title">Datos Personales</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="nombre">Nombre</label>
+                    <input type="text" id="nombre" formControlName="nombre" autocomplete="given-name"
+                        [class.error]="isInvalid('nombre')">
+                    @if (isInvalid('nombre')) {
+                    <small class="error-msg" role="alert">El nombre es requerido (mín. 2 letras)</small>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="apellidoPaterno">Apellido Paterno</label>
+                    <input type="text" id="apellidoPaterno" formControlName="apellidoPaterno" autocomplete="family-name"
+                        [class.error]="isInvalid('apellidoPaterno')">
+                    @if (isInvalid('apellidoPaterno')) {
+                    <small class="error-msg" role="alert">El apellido paterno es requerido</small>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="apellidoMaterno">Apellido Materno</label>
+                    <input type="text" id="apellidoMaterno" formControlName="apellidoMaterno"
+                        autocomplete="additional-name" [class.error]="isInvalid('apellidoMaterno')">
+                </div>
+
+                <div class="form-group">
+                    <label for="telefono">Teléfono</label>
+                    <input type="tel" id="telefono" #telefonoInput formControlName="telefono" placeholder="(xxx) xxx-xxxx"
+                        autocomplete="tel" [class.error]="isInvalid('telefono')" (input)="onTelefonoInput($event)">
+                    @if (isInvalid('telefono')) {
+                    <small class="error-msg" role="alert">Debe tener 10 dígitos numéricos</small>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="fechaNacimiento">Fecha de Nacimiento</label>
+                    <input type="date" id="fechaNacimiento" formControlName="fechaNacimiento"
+                        [class.error]="isInvalid('fechaNacimiento')">
+                    @if (isInvalid('fechaNacimiento')) {
+                    <small class="error-msg" role="alert">Fecha requerida</small>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="genero">Género</label>
+                    <select id="genero" formControlName="genero">
+                        <option value="MASCULINO">Masculino</option>
+                        <option value="FEMENINO">Femenino</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" (click)="limpiarFormulario()">Limpiar</button>
+
+                <button type="submit" class="btn-save" [disabled]="registroForm.invalid || isSubmitting()"
+                    [class.opacity-50]="isSubmitting()">
+                    @if (isSubmitting()) {
+                    <span><i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i> Guardando...</span>
+                    } @else {
+                    <span>{{ modoEdicion() ? 'Actualizar Paciente' : 'Guardar Paciente' }}</span>
+                    }
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>

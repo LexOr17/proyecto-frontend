@@ -28,6 +28,20 @@
                 </a>
             </li>
             }
+            @if (currentUserRole() === 'NUTRIOLOGO') {
+            <li>
+                <a routerLink="/main/pacientes/nuevo" routerLinkActive="active">
+                    <span class='bx bx-user-plus' aria-hidden="true"></span>
+                    <span>Nuevo Paciente</span>
+                </a>
+            </li>
+            <li>
+                <a routerLink="/main/pacientes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+                    <span class='bx bx-group' aria-hidden="true"></span>
+                    <span>Mis Pacientes</span>
+                </a>
+            </li>
+            }
             @if (currentUserRole() === 'ADMINISTRADOR' || currentUserRole() === 'NUTRIOLOGO') {
             <li>
                 <a routerLink="/main/alimentos/nuevo" routerLinkActive="active">

@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { tap } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AuthResponse, UserRole } from '../interfaces/auth-response';
+import { ApiResponse, AuthResponse, UserRole } from '../interfaces/auth-response';
 
 @Injectable({
   providedIn: 'root'
@@ -56,6 +56,10 @@ export class AuthService {
 
     // 3. Redirigir
     this.router.navigate(['/auth/login']);
+  }
+
+  recoverPassword(email: string): Observable<ApiResponse<string>> {
+    return this.http.post<ApiResponse<string>>(`${this.baseUrl}/recuperar-contrasena`, { email });
   }
 
   hasRole(allowedRoles: UserRole[]): boolean {

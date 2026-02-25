@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../../../../core/services/auth-service';
 import { FormValidatorHelper } from '../../../../shared/helpers/form-validator-helper';
 import { NotificationService } from '../../../../shared/service/notification-service';
 
@@ -14,14 +16,23 @@ import { NotificationService } from '../../../../shared/service/notification-ser
 export class PasswordPage {
 
   private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
   private readonly notificationService = inject(NotificationService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected isLoading = signal(false);
   protected submitted = signal(false);
 
   protected recoveryForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
-  });
+    confirmEmail: ['', [Validators.required, Validators.email]],
+  }, { validators: [PasswordPage.emailsMatchValidator] });
+  // Validador estático para comparar ambos correos
+  private static emailsMatchValidator(group: any) {
+    const email = group.get('email')?.value;
+    const confirmEmail = group.get('confirmEmail')?.value;
+    return email === confirmEmail ? null : { emailsMismatch: true };
+  }
 
   protected onSubmit(): void {
     if (this.recoveryForm.invalid) {
@@ -31,22 +42,35 @@ export class PasswordPage {
 
     this.isLoading.set(true);
 
-    // TODO: Conectar con el endpoint de recuperación cuando esté disponible
-    // Por ahora simulamos la respuesta exitosa
-    setTimeout(() => {
-      this.isLoading.set(false);
-      this.submitted.set(true);
-      this.notificationService.success('Si el correo existe, recibirás instrucciones para restablecer tu contraseña.');
-    }, 1000);
+    this.authService.recoverPassword(this.recoveryForm.getRawValue().email)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          this.isLoading.set(false);
+          this.submitted.set(true);
+          this.notificationService.success(response.mensaje);
+        },
+        error: () => {
+          this.isLoading.set(false);
+        }
+      });
   }
+
 
   protected isInvalid(fieldName: string): boolean {
     const control = this.recoveryForm.get(fieldName);
+    if (!control) return false;
+    if (fieldName === 'confirmEmail' && this.recoveryForm.hasError('emailsMismatch')) {
+      return true;
+    }
     return FormValidatorHelper.isFieldInvalid(control);
   }
 
   protected getErrorMessage(fieldName: string, label: string): string {
     const control = this.recoveryForm.get(fieldName);
+    if (fieldName === 'confirmEmail' && this.recoveryForm.hasError('emailsMismatch')) {
+      return 'Los correos no coinciden';
+    }
     return FormValidatorHelper.getErrorMessage(control, label);
   }
 

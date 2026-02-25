@@ -28,6 +28,12 @@ const mainRoutes: Routes = [
         data: { roles: [UserRole.ADMINISTRADOR] }
       },
       {
+        path: 'pacientes',
+        loadChildren: () => import('../pacientes/pacientes.routes').then(m => m.default),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.NUTRIOLOGO] }
+      },
+      {
         path: 'alimentos',
         loadChildren: () => import('../alimentos/alimentos.routes').then(m => m.default),
         canMatch: [authGuard],

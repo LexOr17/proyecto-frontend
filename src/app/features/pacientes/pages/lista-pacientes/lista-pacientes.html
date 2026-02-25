@@ -1,0 +1,102 @@
+<div class="main-content">
+    <header>
+        <div class="header-title">
+            <h1><i class="bx bx-group" aria-hidden="true"></i> Mis Pacientes</h1>
+        </div>
+        <a routerLink="nuevo" class="btn-primary">
+            <i class="bx bx-plus" aria-hidden="true"></i> Nuevo Paciente
+        </a>
+    </header>
+
+    <div class="table-container">
+
+        <div class="table-actions-bar">
+            <div class="search-box">
+                <i class='bx bx-search' aria-hidden="true"></i>
+                <label for="search-pacientes" class="sr-only">Buscar pacientes</label>
+                <input type="text" id="search-pacientes" placeholder="Buscar por nombre o correo..."
+                    [value]="searchTerm()" (input)="onSearchChange($event)">
+            </div>
+        </div>
+
+        @if (pacientesResource.isLoading()) {
+        <div class="loading-message">
+            <p>Cargando pacientes...</p>
+        </div>
+        } @else {
+        <table aria-label="Lista de pacientes asignados">
+            <thead>
+                <tr>
+                    <th>Paciente</th>
+                    <th>Género</th>
+                    <th>Contacto</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (paciente of pacientesFiltrados(); track paciente.id; let i = $index) {
+                <tr>
+                    <td data-label="Paciente">
+                        @let avatarColor = obtenerColorAvatar(i);
+                        <div class="user-info">
+                            <div class="avatar" [style.background-color]="avatarColor.backgroundColor"
+                                [style.color]="avatarColor.color">
+                                {{ obtenerIniciales(paciente) }}
+                            </div>
+                            <div class="user-details">
+                                <h4>
+                                    <a [routerLink]="[]" class="paciente-link">
+                                        {{ paciente.nombre }} {{ paciente.apellidoPaterno }} {{ paciente.apellidoMaterno }}
+                                    </a>
+                                </h4>
+                                <span>{{ paciente.correo }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td data-label="Género">
+                        <span class="badge" [class]="paciente.genero === 'MASCULINO' ? 'badge-masculino' : 'badge-femenino'">
+                            {{ paciente.genero }}
+                        </span>
+                    </td>
+                    <td data-label="Contacto">{{ formatearTelefono(paciente.telefono) }}</td>
+                    <td data-label="Acciones">
+                        <div class="actions-cell">
+                            <button class="btn-icon btn-edit" [attr.aria-label]="'Editar paciente ' + paciente.nombre"
+                                (click)="editarPaciente(paciente)">
+                                <i class='bx bx-edit' aria-hidden="true"></i>
+                            </button>
+                            <button class="btn-icon btn-delete"
+                                [attr.aria-label]="'Eliminar paciente ' + paciente.nombre"
+                                [disabled]="isDeleting() === paciente.id" (click)="eliminarPaciente(paciente)">
+                                @if (isDeleting() === paciente.id) {
+                                <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i>
+                                } @else {
+                                <i class='bx bx-trash' aria-hidden="true"></i>
+                                }
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                } @empty {
+                <tr>
+                    <td colspan="4" class="empty-message">
+                        @if (searchTerm()) {
+                        No se encontraron pacientes que coincidan con "{{ searchTerm() }}"
+                        } @else {
+                        No hay pacientes registrados
+                        }
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+
+        @if ((pacientesResource.value()?.totalPages ?? 0) > 0) {
+        <app-pagination [currentPage]="currentPage()" [totalPages]="pacientesResource.value()?.totalPages ?? 0"
+            [totalElements]="pacientesResource.value()?.totalElements ?? 0" [pageSize]="pageSize()"
+            (pageChange)="onPageChange($event)" />
+        }
+        }
+
+    </div>
+</div>
