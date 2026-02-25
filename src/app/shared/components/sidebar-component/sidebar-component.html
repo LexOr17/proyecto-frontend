@@ -15,18 +15,40 @@
                 </a>
             </li>
             @if (currentUserRole() === 'ADMINISTRADOR') {
-              <li>
+            <li>
                 <a routerLink="/main/usuarios/nuevo" routerLinkActive="active">
-                  <span class='bx bx-user'></span> 
-                  <span>Nuevo Usuario</span>
+                    <span class='bx bx-user'></span>
+                    <span>Nuevo Usuario</span>
                 </a>
-              </li>
-              <li>
+            </li>
+            <li>
                 <a routerLink="/main/usuarios" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-                  <span class='bx bx-group'></span> 
-                  <span>Lista de Usuarios</span>
+                    <span class='bx bx-group'></span>
+                    <span>Lista de Usuarios</span>
                 </a>
-              </li>
+            </li>
+            }
+            @if (currentUserRole() === 'ADMINISTRADOR' || currentUserRole() === 'NUTRIOLOGO') {
+            <li>
+                <a routerLink="/main/alimentos/nuevo" routerLinkActive="active">
+                    <span class='bx bx-bowl-hot'></span>
+                    <span>Nuevo Alimento</span>
+                </a>
+            </li>
+            <li>
+                <a routerLink="/main/alimentos" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+                    <span class='bx bx-food-menu'></span>
+                    <span>Catálogo de Alimentos</span>
+                </a>
+            </li>
+            }
+            @if (currentUserRole() === 'ADMINISTRADOR') {
+            <li>
+                <a routerLink="/main/restauracion" routerLinkActive="active">
+                    <span class='bx bx-history'></span>
+                    <span>Restauración del Sistema</span>
+                </a>
+            </li>
             }
             <li>
                 <button type="button" class="sidebar-logout" (click)="logout()">

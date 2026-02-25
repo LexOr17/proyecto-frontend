@@ -1,0 +1,168 @@
+<div class="main-content">
+    <header>
+        <div class="header-title">
+            <h1>
+                <i class="bx" [class.bx-plus-circle]="!modoEdicion()" [class.bx-edit]="modoEdicion()"
+                    aria-hidden="true"></i>
+                {{ titulo() }}
+            </h1>
+        </div>
+        <a class="btn-back" routerLink="/main/alimentos">
+            <i class="bx bx-arrow-back" aria-hidden="true"></i> Volver
+        </a>
+    </header>
+
+    <div class="form-container">
+        <form [formGroup]="registroForm" (ngSubmit)="onSubmit()">
+
+            <h3 class="section-title">Información General</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="nombre">Nombre del Alimento</label>
+                    <input type="text" id="nombre" formControlName="nombre" autocomplete="off"
+                        maxlength="100"
+                        [class.error]="isInvalid('nombre')" aria-describedby="nombre-error">
+                    @if (isInvalid('nombre')) {
+                    <small id="nombre-error" class="error-msg" role="alert">
+                        El nombre es requerido (máx. 100 caracteres)
+                    </small>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="categoria">Categoría</label>
+                    <select id="categoria" formControlName="categoria"
+                        [class.error]="isInvalid('categoria')" aria-describedby="categoria-error">
+                        <option value="">-- Seleccione --</option>
+                        @for (cat of categorias; track cat.value) {
+                        <option [value]="cat.value">{{ cat.label }}</option>
+                        }
+                    </select>
+                    @if (isInvalid('categoria')) {
+                    <small id="categoria-error" class="error-msg" role="alert">
+                        La categoría es requerida
+                    </small>
+                    }
+                </div>
+            </div>
+
+            <h3 class="section-title text-orange">Información Nutricional</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="calorias">Calorías (kcal)</label>
+                    <input type="number" id="calorias" formControlName="calorias" min="0" step="0.01"
+                        [class.error]="isInvalid('calorias')" aria-describedby="calorias-error">
+                    @if (isInvalid('calorias')) {
+                    <small id="calorias-error" class="error-msg" role="alert">
+                        Las calorías son requeridas (valor positivo)
+                    </small>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="proteina">Proteína (g)</label>
+                    <input type="number" id="proteina" formControlName="proteina" min="0" step="0.01"
+                        [class.error]="isInvalid('proteina')" aria-describedby="proteina-error">
+                    @if (isInvalid('proteina')) {
+                    <small id="proteina-error" class="error-msg" role="alert">
+                        La proteína es requerida (valor positivo)
+                    </small>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="carbohidratos">Carbohidratos (g)</label>
+                    <input type="number" id="carbohidratos" formControlName="carbohidratos" min="0" step="0.01"
+                        [class.error]="isInvalid('carbohidratos')" aria-describedby="carbohidratos-error">
+                    @if (isInvalid('carbohidratos')) {
+                    <small id="carbohidratos-error" class="error-msg" role="alert">
+                        Los carbohidratos son requeridos (valor positivo)
+                    </small>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="grasas">Grasas (g)</label>
+                    <input type="number" id="grasas" formControlName="grasas" min="0" step="0.01"
+                        [class.error]="isInvalid('grasas')" aria-describedby="grasas-error">
+                    @if (isInvalid('grasas')) {
+                    <small id="grasas-error" class="error-msg" role="alert">
+                        Las grasas son requeridas (valor positivo)
+                    </small>
+                    }
+                </div>
+            </div>
+
+            <h3 class="section-title text-blue">Porción</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="porcionBase">Porción Base</label>
+                    <input type="number" id="porcionBase" formControlName="porcionBase" min="0.01" step="0.01"
+                        [class.error]="isInvalid('porcionBase')" aria-describedby="porcion-error">
+                    @if (isInvalid('porcionBase')) {
+                    <small id="porcion-error" class="error-msg" role="alert">
+                        La porción base es requerida (mayor a 0)
+                    </small>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="unidadPorcion">Unidad de Porción</label>
+                    <select id="unidadPorcion" formControlName="unidadPorcion"
+                        [class.error]="isInvalid('unidadPorcion')" aria-describedby="unidad-error">
+                        <option value="">-- Seleccione --</option>
+                        @for (unidad of unidades; track unidad.value) {
+                        <option [value]="unidad.value">{{ unidad.label }}</option>
+                        }
+                    </select>
+                    @if (isInvalid('unidadPorcion')) {
+                    <small id="unidad-error" class="error-msg" role="alert">
+                        La unidad de porción es requerida
+                    </small>
+                    }
+                </div>
+            </div>
+
+            <h3 class="section-title text-gray">Imagen (Opcional)</h3>
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label for="imagen">Imagen del Alimento</label>
+
+                    @if (imagePreview()) {
+                    <div class="image-preview-wrapper">
+                        <img [src]="imagePreview()" alt="Vista previa del alimento" class="image-preview">
+                        <button type="button" class="btn-remove-image" (click)="removeImage()"
+                            aria-label="Eliminar imagen seleccionada">
+                            <i class="bx bx-x" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    }
+
+                    <div class="file-upload-area">
+                        <input type="file" id="imagen" accept="image/jpeg,image/png,image/webp"
+                            (change)="onFileSelected($event)" class="file-input">
+                        <label for="imagen" class="file-upload-label">
+                            <i class="bx bx-cloud-upload" aria-hidden="true"></i>
+                            <span>Seleccionar imagen</span>
+                            <small>JPG, PNG o WebP (máx. 5MB)</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" (click)="limpiarFormulario()">Limpiar</button>
+
+                <button type="submit" class="btn-save" [disabled]="registroForm.invalid || isSubmitting()"
+                    [class.opacity-50]="isSubmitting()">
+                    @if (isSubmitting()) {
+                    <span><i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i> Guardando...</span>
+                    } @else {
+                    <span>{{ modoEdicion() ? 'Actualizar Alimento' : 'Guardar Alimento' }}</span>
+                    }
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>

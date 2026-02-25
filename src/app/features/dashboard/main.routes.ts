@@ -28,6 +28,12 @@ const mainRoutes: Routes = [
         data: { roles: [UserRole.ADMINISTRADOR] }
       },
       {
+        path: 'alimentos',
+        loadChildren: () => import('../alimentos/alimentos.routes').then(m => m.default),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.ADMINISTRADOR, UserRole.NUTRIOLOGO] }
+      },
+      {
         path: '**',
         redirectTo: 'dashboard',
       }

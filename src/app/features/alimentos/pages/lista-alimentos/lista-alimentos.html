@@ -1,0 +1,108 @@
+<div class="main-content">
+    <header>
+        <div class="header-title">
+            <h1><i class="bx bx-food-menu" aria-hidden="true"></i> Catálogo de Alimentos</h1>
+        </div>
+        <a routerLink="nuevo" class="btn-primary">
+            <i class="bx bx-plus" aria-hidden="true"></i> Nuevo Alimento
+        </a>
+    </header>
+
+    <div class="catalog-container">
+
+        <div class="catalog-actions-bar">
+            <div class="search-box">
+                <i class='bx bx-search' aria-hidden="true"></i>
+                <label for="search-alimentos" class="sr-only">Buscar alimentos</label>
+                <input type="text" id="search-alimentos" placeholder="Buscar por nombre o categoría..."
+                    [value]="searchTerm()" (input)="onSearchChange($event)">
+            </div>
+        </div>
+
+        @if (alimentosResource.isLoading()) {
+        <div class="loading-message">
+            <p>Cargando alimentos...</p>
+        </div>
+        } @else {
+
+        <div class="cards-grid" role="list" aria-label="Alimentos registrados">
+            @for (alimento of alimentosFiltrados(); track alimento.id) {
+            <article class="alimento-card" role="listitem">
+                <div class="card-image">
+                    @if (alimento.imagenUrl) {
+                    <img [src]="alimento.imagenUrl" [alt]="alimento.nombre" loading="lazy">
+                    } @else {
+                    <div class="card-image-placeholder" aria-hidden="true">
+                        <i class="bx bx-bowl-hot"></i>
+                    </div>
+                    }
+                    <span class="badge" [class]="obtenerClaseBadge(alimento.categoria)">
+                        {{ obtenerLabelCategoria(alimento.categoria) }}
+                    </span>
+                </div>
+
+                <div class="card-body">
+                    <h3 class="card-title">{{ alimento.nombre }}</h3>
+
+                    <div class="card-kcal">
+                        <i class="bx bx-bolt-circle" aria-hidden="true"></i>
+                        <span>{{ alimento.calorias }} kcal</span>
+                    </div>
+
+                    <div class="card-macros">
+                        <div class="macro-item macro-p">
+                            <span class="macro-label">Prot</span>
+                            <span class="macro-value">{{ alimento.proteina }}g</span>
+                        </div>
+                        <div class="macro-item macro-c">
+                            <span class="macro-label">Carbs</span>
+                            <span class="macro-value">{{ alimento.carbohidratos }}g</span>
+                        </div>
+                        <div class="macro-item macro-g">
+                            <span class="macro-label">Grasas</span>
+                            <span class="macro-value">{{ alimento.grasas }}g</span>
+                        </div>
+                    </div>
+
+                    <div class="card-porcion">
+                        <small>Porción: {{ alimento.porcionBase }} {{ alimento.unidadPorcion }}</small>
+                    </div>
+                </div>
+
+                <div class="card-actions">
+                    <button class="btn-icon btn-edit"
+                        [attr.aria-label]="'Editar alimento ' + alimento.nombre"
+                        (click)="editarAlimento(alimento)">
+                        <i class='bx bx-edit' aria-hidden="true"></i>
+                    </button>
+                    <button class="btn-icon btn-delete"
+                        [attr.aria-label]="'Eliminar alimento ' + alimento.nombre"
+                        [disabled]="isDeleting() === alimento.id" (click)="eliminarAlimento(alimento)">
+                        @if (isDeleting() === alimento.id) {
+                        <span aria-hidden="true">⏳</span>
+                        } @else {
+                        <i class='bx bx-trash' aria-hidden="true"></i>
+                        }
+                    </button>
+                </div>
+            </article>
+            } @empty {
+            <div class="empty-message">
+                @if (searchTerm()) {
+                <p>No se encontraron alimentos que coincidan con "{{ searchTerm() }}"</p>
+                } @else {
+                <p>No hay alimentos registrados</p>
+                }
+            </div>
+            }
+        </div>
+
+        @if ((alimentosResource.value()?.totalPages ?? 0) > 0) {
+        <app-pagination [currentPage]="currentPage()" [totalPages]="alimentosResource.value()?.totalPages ?? 0"
+            [totalElements]="alimentosResource.value()?.totalElements ?? 0" [pageSize]="pageSize()"
+            (pageChange)="onPageChange($event)" />
+        }
+        }
+
+    </div>
+</div>
