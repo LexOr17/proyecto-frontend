@@ -1,0 +1,249 @@
+/* Container */
+.main-content {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+header {
+  margin-bottom: 24px;
+}
+
+.header-title h1 {
+  font-size: 1.5rem;
+  color: #1B5E20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* =========================================
+   CARDS WRAPPER
+   ========================================= */
+.cards-wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+}
+
+.action-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border-top: 4px solid #4CAF50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+}
+
+/* Icons */
+.card-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+}
+
+.download-icon {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.restore-icon {
+  background: #FFF3E0;
+  color: #E65100;
+}
+
+.action-card h2 {
+  font-size: 1.15rem;
+  color: #333;
+  margin: 0;
+}
+
+.action-card p {
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* =========================================
+   BUTTONS
+   ========================================= */
+.btn-action {
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: 0.3s;
+  font-family: inherit;
+}
+
+.btn-download {
+  background: #4CAF50;
+  color: #fff;
+}
+
+.btn-download:hover:not(:disabled) {
+  background: #43A047;
+  transform: translateY(-1px);
+}
+
+.btn-restore {
+  background: #E65100;
+  color: #fff;
+}
+
+.btn-restore:hover:not(:disabled) {
+  background: #D84315;
+  transform: translateY(-1px);
+}
+
+.btn-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* =========================================
+   FILE UPLOAD
+   ========================================= */
+.file-upload-area {
+  width: 100%;
+  position: relative;
+}
+
+.file-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.file-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  border: 2px dashed #FFCC80;
+  border-radius: 12px;
+  background: #FFFBF5;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.file-upload-label:hover {
+  border-color: #E65100;
+  background: #FFF3E0;
+}
+
+.file-upload-label i {
+  font-size: 2rem;
+  color: #E65100;
+}
+
+.file-upload-label span {
+  font-weight: 500;
+  color: #444;
+}
+
+.file-upload-label small {
+  color: #999;
+  font-size: 0.75rem;
+}
+
+/* Selected file */
+.file-selected {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #FFF3E0;
+  border: 1px solid #FFCC80;
+  border-radius: 8px;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #E65100;
+  font-weight: 500;
+  overflow: hidden;
+}
+
+.file-info span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-remove-file {
+  background: none;
+  border: none;
+  color: #D32F2F;
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 4px;
+  transition: 0.2s;
+}
+
+.btn-remove-file:hover {
+  background: #FFEBEE;
+}
+
+/* Warning */
+.warning-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  background: #FFF8E1;
+  border: 1px solid #FFE082;
+  border-radius: 8px;
+  width: 100%;
+  text-align: left;
+}
+
+.warning-note i {
+  color: #F57F17;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.warning-note small {
+  color: #795548;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+@media screen and (max-width: 768px) {
+  .cards-wrapper {
+    grid-template-columns: 1fr;
+  }
+}

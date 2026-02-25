@@ -34,6 +34,12 @@ const mainRoutes: Routes = [
         data: { roles: [UserRole.ADMINISTRADOR, UserRole.NUTRIOLOGO] }
       },
       {
+        path: 'restauracion',
+        loadChildren: () => import('../backup/backup.routes').then(m => m.backupRoutes),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.ADMINISTRADOR] }
+      },
+      {
         path: '**',
         redirectTo: 'dashboard',
       }

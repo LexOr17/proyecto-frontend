@@ -1,0 +1,77 @@
+<div class="main-content">
+    <header>
+        <div class="header-title">
+            <h1><i class="bx bx-data" aria-hidden="true"></i> Restauración del Sistema</h1>
+        </div>
+    </header>
+
+    <div class="cards-wrapper">
+
+        <!-- Card: Descargar Respaldo -->
+        <section class="action-card">
+            <div class="card-icon download-icon" aria-hidden="true">
+                <i class="bx bx-download"></i>
+            </div>
+            <h2>Descargar Respaldo</h2>
+            <p>Genera y descarga una copia de seguridad completa de la base de datos en formato SQL.</p>
+
+            <button type="button" class="btn-action btn-download"
+                [disabled]="isDownloading()"
+                (click)="descargarBackup()">
+                @if (isDownloading()) {
+                <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i> Generando...
+                } @else {
+                <i class="bx bx-download" aria-hidden="true"></i> Descargar Respaldo
+                }
+            </button>
+        </section>
+
+        <!-- Card: Restaurar -->
+        <section class="action-card">
+            <div class="card-icon restore-icon" aria-hidden="true">
+                <i class="bx bx-upload"></i>
+            </div>
+            <h2>Restaurar Base de Datos</h2>
+            <p>Sube un archivo de respaldo para restaurar la base de datos a un estado anterior.</p>
+
+            @if (selectedFile()) {
+            <div class="file-selected">
+                <div class="file-info">
+                    <i class="bx bx-file" aria-hidden="true"></i>
+                    <span>{{ selectedFile()!.name }}</span>
+                </div>
+                <button type="button" class="btn-remove-file" (click)="removeFile()"
+                    aria-label="Quitar archivo seleccionado">
+                    <i class="bx bx-x" aria-hidden="true"></i>
+                </button>
+            </div>
+            } @else {
+            <div class="file-upload-area">
+                <input type="file" id="backup-file" accept=".sql,.sql.gz"
+                    (change)="onFileSelected($event)" class="file-input">
+                <label for="backup-file" class="file-upload-label">
+                    <i class="bx bx-cloud-upload" aria-hidden="true"></i>
+                    <span>Seleccionar archivo</span>
+                    <small>Archivos .sql o .sql.gz</small>
+                </label>
+            </div>
+            }
+
+            <button type="button" class="btn-action btn-restore"
+                [disabled]="!selectedFile() || isRestoring()"
+                (click)="restaurarBackup()">
+                @if (isRestoring()) {
+                <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i> Restaurando...
+                } @else {
+                <i class="bx bx-upload" aria-hidden="true"></i> Restaurar Base de Datos
+                }
+            </button>
+
+            <div class="warning-note" role="alert">
+                <i class="bx bx-error-circle" aria-hidden="true"></i>
+                <small>Esta acción reemplazará todos los datos actuales. Asegúrate de tener un respaldo antes de continuar.</small>
+            </div>
+        </section>
+
+    </div>
+</div>
