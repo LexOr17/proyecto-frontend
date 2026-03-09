@@ -8,9 +8,9 @@
 
     <div class="header-right">
         <div class="user-wrapper">
-            <div class="user-avatar" aria-hidden="true">U</div>
+            <div class="user-avatar" aria-hidden="true">{{ userInitials() }}</div>
             <div>
-                <h4>Usuario</h4>
+                <h4>{{ userFullName() }}</h4>
                 <small>{{ currentUserRole() }}</small>
             </div>
         </div>

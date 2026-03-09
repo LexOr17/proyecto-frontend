@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -26,6 +27,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegistroAlimentos {
+
   private readonly fb = inject(FormBuilder);
   private readonly alimentoService = inject(AlimentoService);
   private readonly router = inject(Router);
@@ -76,8 +78,8 @@ export class RegistroAlimentos {
   });
 
   constructor() {
-    // Poblar el formulario cuando se carga el alimento en modo edición
-    const checkResource = setInterval(() => {
+    // Poblar el formulario cuando se carga el alimento en modo edición usando effect
+    effect(() => {
       const alimento = this.alimentoResource.value();
       if (alimento) {
         this.registroForm.patchValue({
@@ -90,17 +92,12 @@ export class RegistroAlimentos {
           porcionBase: String(alimento.porcionBase),
           unidadPorcion: alimento.unidadPorcion,
         });
-
         // Si tiene imagen, mostrar preview de la URL existente
         if (alimento.imagenUrl) {
           this.imagePreview.set(alimento.imagenUrl);
         }
-
-        clearInterval(checkResource);
       }
-    }, 100);
-
-    this.destroyRef.onDestroy(() => clearInterval(checkResource));
+    });
   }
 
   protected onFileSelected(event: Event): void {

@@ -1,9 +1,4 @@
-export interface ApiResponse<T> {
-  mensaje: string;
-  estatus: number;
-  datos: T;
-  timestamp: string;
-}
+// Usa ApiResponse<T> desde core/interfaces/auth-response.ts
 
 export interface Alimento {
   id?: number;

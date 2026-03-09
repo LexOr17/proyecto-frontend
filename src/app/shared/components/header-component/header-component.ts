@@ -25,6 +25,8 @@ export class HeaderComponent {
 
   protected readonly isSidebarOpen = this.layoutService.isSidebarOpen;
   protected readonly currentUserRole = this.authService.currentUserRole;
+  protected readonly userFullName = this.authService.userFullName;
+  protected readonly userInitials = this.authService.userInitials;
   protected readonly pageTitle = signal('Inicio');
 
   constructor() {

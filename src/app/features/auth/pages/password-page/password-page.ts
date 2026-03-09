@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth-service';
 import { FormValidatorHelper } from '../../../../shared/helpers/form-validator-helper';
@@ -28,7 +28,7 @@ export class PasswordPage {
     confirmEmail: ['', [Validators.required, Validators.email]],
   }, { validators: [PasswordPage.emailsMatchValidator] });
   // Validador estático para comparar ambos correos
-  private static emailsMatchValidator(group: any) {
+  private static emailsMatchValidator(group: AbstractControl) {
     const email = group.get('email')?.value;
     const confirmEmail = group.get('confirmEmail')?.value;
     return email === confirmEmail ? null : { emailsMismatch: true };

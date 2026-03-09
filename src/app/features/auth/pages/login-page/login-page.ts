@@ -43,7 +43,7 @@ export class LoginPage {
 
     const { email, password } = this.loginForm.getRawValue();
 
-    this.authService.login({ correo: email, contrasena: password })
+    this.authService.login({ correo: email, password: password })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {

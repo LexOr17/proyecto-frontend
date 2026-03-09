@@ -1,10 +1,15 @@
 <main>
 
-    <div class="login-container">
-        <div class="login-icon" aria-hidden="true">🍎</div>
+    <div class="shape shape-1" aria-hidden="true"></div>
+    <div class="shape shape-2" aria-hidden="true"></div>
+    <div class="shape shape-3" aria-hidden="true"></div>
 
-        <h1>Bienvenido de Nuevo</h1>
-        <p>Inicia sesión para continuar a tu plan de bienestar.</p>
+    <div class="login-card">
+        <div class="logo-area">
+            <img src="/icons/nutri.png" alt="NutriSystem" class="logo-icon">
+            <h1>Nutri<span>System</span></h1>
+            <p>Plataforma de Salud Integral</p>
+        </div>
 
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
 
