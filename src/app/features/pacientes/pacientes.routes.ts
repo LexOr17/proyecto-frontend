@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { ListaPacientes } from './pages/lista-pacientes/lista-pacientes';
 import { RegistroPacientes } from './pages/registro-pacientes/registro-pacientes';
 import { SeguimientoPaciente } from './pages/seguimiento-paciente/seguimiento-paciente';
+import { MedidasAntropometricas } from './pages/medidas-antropometricas/medidas-antropometricas';
 
 const pacientesRoutes: Routes = [
   {
@@ -23,7 +24,12 @@ const pacientesRoutes: Routes = [
     path: ':id',
     component: SeguimientoPaciente,
     title: 'Seguimiento del Paciente',
-  }
+  },
+  {
+    path: ':id/medidas',
+    component: MedidasAntropometricas,
+    title: 'Medidas Antropométricas',
+  },
 ];
 
 export default pacientesRoutes;
