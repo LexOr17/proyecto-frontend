@@ -16,6 +16,9 @@ export interface Datos {
     token:          string;
     rol:            string;
     expirationTime: string;
+    nombre:         string;
+    apellidos:      string;
+    id:             string;
 }
 
 export enum UserRole {

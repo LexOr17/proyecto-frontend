@@ -1,0 +1,43 @@
+<div class="main-content">
+  <header>
+    <div class="header-title">
+      <h1>
+        <i class="bx bx-calendar-edit" aria-hidden="true"></i>
+        Solicitar Reprogramación
+      </h1>
+    </div>
+    <a class="btn-back" routerLink="/main/mis-citas">
+      <i class="bx bx-arrow-back" aria-hidden="true"></i> Volver
+    </a>
+  </header>
+
+  <div class="form-container">
+    <p class="form-hint">
+      Propón una nueva fecha y hora para tu cita. Tu nutriólogo recibirá la solicitud y confirmará el cambio.
+    </p>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+      <div class="form-group">
+        <label for="nuevaFechaHoraInicio">Nueva fecha y hora propuesta</label>
+        <input type="datetime-local" id="nuevaFechaHoraInicio" formControlName="nuevaFechaHoraInicio"
+          [class.error]="isInvalid('nuevaFechaHoraInicio')">
+        @if (isInvalid('nuevaFechaHoraInicio')) {
+          <small class="error-msg" role="alert">La fecha es requerida</small>
+        }
+      </div>
+
+      <div class="form-actions">
+        <a class="btn-cancel" routerLink="/main/mis-citas">Cancelar</a>
+        <button type="submit" class="btn-save" [disabled]="form.invalid || isSubmitting()">
+          @if (isSubmitting()) {
+            <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i> Enviando...
+          } @else {
+            Enviar solicitud
+          }
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

@@ -1,0 +1,93 @@
+<div class="main-content">
+  <header>
+    <div class="header-title">
+      <h1><i class="bx bx-calendar" aria-hidden="true"></i> Mis Citas</h1>
+    </div>
+    <a routerLink="solicitar" class="btn-primary">
+      <i class="bx bx-plus" aria-hidden="true"></i> Solicitar cita
+    </a>
+  </header>
+
+  <!-- Filtros de estado -->
+  <div class="filter-bar" role="group" aria-label="Filtrar por estado">
+    @for (opt of estadoOptions; track opt.value) {
+      <button
+        type="button"
+        class="filter-btn"
+        [class.active]="filtroEstado() === opt.value"
+        (click)="setFiltro(opt.value)"
+      >
+        {{ opt.label }}
+      </button>
+    }
+  </div>
+
+  <div class="table-container">
+    @if (citasResource.isLoading()) {
+      <div class="loading-message"><p>Cargando citas...</p></div>
+    } @else {
+      <table aria-label="Mis citas">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Motivo</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (cita of citasFiltradas(); track cita.id) {
+            <tr>
+              <td data-label="Fecha">{{ formatearFecha(cita.fechaHoraInicio) }}</td>
+              <td data-label="Hora">{{ formatearHora(cita.fechaHoraInicio) }} – {{ formatearHora(cita.fechaHoraFin) }}</td>
+              <td data-label="Motivo">{{ etiquetaMotivo(cita.motivoCita) }}</td>
+              <td data-label="Estado">
+                <span class="badge" [class]="claseEstado(cita.estado)">
+                  {{ etiquetaEstado(cita.estado) }}
+                </span>
+                @if (cita.estado === 'REPROGRAMACION_SOLICITADA' && cita.fechaHoraReprogramacionSolicitada) {
+                  <span class="reprog-hint">
+                    → {{ formatearFecha(cita.fechaHoraReprogramacionSolicitada) }} {{ formatearHora(cita.fechaHoraReprogramacionSolicitada) }}
+                  </span>
+                }
+              </td>
+              <td data-label="Acciones">
+                <div class="actions-cell">
+                  @if (puedeReprogramar(cita)) {
+                    <a
+                      [routerLink]="['reprogramar', cita.id]"
+                      class="btn-icon btn-reprog"
+                      [attr.aria-label]="'Solicitar reprogramación de cita del ' + formatearFecha(cita.fechaHoraInicio)"
+                    >
+                      <i class="bx bx-calendar-edit" aria-hidden="true"></i>
+                    </a>
+                  }
+                  @if (puedeCancelar(cita)) {
+                    <button
+                      type="button"
+                      class="btn-icon btn-cancel"
+                      [attr.aria-label]="'Cancelar cita del ' + formatearFecha(cita.fechaHoraInicio)"
+                      [disabled]="isProcessing() === cita.id"
+                      (click)="cancelarCita(cita)"
+                    >
+                      @if (isProcessing() === cita.id) {
+                        <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i>
+                      } @else {
+                        <i class="bx bx-x-circle" aria-hidden="true"></i>
+                      }
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="empty-message">No hay citas que coincidan con el filtro seleccionado</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>

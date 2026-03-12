@@ -40,6 +40,18 @@ const mainRoutes: Routes = [
         data: { roles: [UserRole.ADMINISTRADOR, UserRole.NUTRIOLOGO] }
       },
       {
+        path: 'citas',
+        loadChildren: () => import('../citas/citas.routes').then(m => m.citasNutriologoRoutes),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.NUTRIOLOGO] }
+      },
+      {
+        path: 'mis-citas',
+        loadChildren: () => import('../citas/citas.routes').then(m => m.citasPacienteRoutes),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.PACIENTE] }
+      },
+      {
         path: 'restauracion',
         loadChildren: () => import('../backup/backup.routes').then(m => m.backupRoutes),
         canMatch: [authGuard],

@@ -1,0 +1,83 @@
+<div class="main-content">
+  <header>
+    <div class="header-title">
+      <h1>
+        <i class="bx" [class.bx-calendar-plus]="!modoEdicion()" [class.bx-calendar-edit]="modoEdicion()" aria-hidden="true"></i>
+        {{ titulo() }}
+      </h1>
+    </div>
+    <a class="btn-back" routerLink="/main/citas">
+      <i class="bx bx-arrow-back" aria-hidden="true"></i> Volver
+    </a>
+  </header>
+
+  <div class="form-container">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+      <h3 class="section-title">Datos de la cita</h3>
+
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="pacienteId">Paciente</label>
+          @if (pacientesResource.isLoading()) {
+            <p class="loading-inline">Cargando pacientes...</p>
+          } @else {
+            <select id="pacienteId" formControlName="pacienteId" [class.error]="isInvalid('pacienteId')">
+              <option [value]="0" disabled>Selecciona un paciente</option>
+              @for (p of pacientesResource.value()?.content ?? []; track p.id) {
+                <option [value]="p.id">{{ p.nombre }} {{ p.apellidoPaterno }}</option>
+              }
+            </select>
+          }
+          @if (isInvalid('pacienteId')) {
+            <small class="error-msg" role="alert">Selecciona un paciente</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="motivo">Motivo</label>
+          <select id="motivo" formControlName="motivoCita" [class.error]="isInvalid('motivoCita')">
+            @for (opt of motivoCitaOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+          @if (isInvalid('motivoCita')) {
+            <small class="error-msg" role="alert">El motivo es requerido</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="fechaHoraInicio">Fecha y hora de inicio</label>
+          <input type="datetime-local" id="fechaHoraInicio" formControlName="fechaHoraInicio"
+            [class.error]="isInvalid('fechaHoraInicio')">
+          @if (isInvalid('fechaHoraInicio')) {
+            <small class="error-msg" role="alert">La fecha de inicio es requerida</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="fechaHoraFin">Fecha y hora de fin</label>
+          <input type="datetime-local" id="fechaHoraFin" formControlName="fechaHoraFin"
+            [class.error]="isInvalid('fechaHoraFin')">
+          @if (isInvalid('fechaHoraFin')) {
+            <small class="error-msg" role="alert">La fecha de fin es requerida</small>
+          }
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+        <a class="btn-cancel" routerLink="/main/citas">Cancelar</a>
+        <button type="submit" class="btn-save" [disabled]="form.invalid || isSubmitting()">
+          @if (isSubmitting()) {
+            <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i> Guardando...
+          } @else {
+            {{ modoEdicion() ? 'Actualizar cita' : 'Crear cita' }}
+          }
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

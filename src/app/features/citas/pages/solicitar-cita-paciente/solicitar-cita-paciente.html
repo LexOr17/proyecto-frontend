@@ -1,0 +1,60 @@
+<div class="main-content">
+  <header>
+    <div class="header-title">
+      <h1>
+        <i class="bx bx-calendar-plus" aria-hidden="true"></i>
+        Solicitar Cita
+      </h1>
+    </div>
+    <a class="btn-back" routerLink="/main/mis-citas">
+      <i class="bx bx-arrow-back" aria-hidden="true"></i> Volver
+    </a>
+  </header>
+
+  <div class="form-container">
+    <p class="form-hint">
+      Elige la fecha y el motivo. Tu nutriólogo recibirá la solicitud y la confirmará.
+      La cita tendrá una duración de 1 hora a partir del horario seleccionado.
+    </p>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="fechaHoraInicio">Fecha y hora preferida</label>
+          <input type="datetime-local" id="fechaHoraInicio" formControlName="fechaHoraInicio"
+            [class.error]="isInvalid('fechaHoraInicio')">
+          @if (isInvalid('fechaHoraInicio')) {
+            <small class="error-msg" role="alert">La fecha es requerida</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="motivo">Motivo de la consulta</label>
+          <select id="motivo" formControlName="motivo" [class.error]="isInvalid('motivo')">
+            @for (opt of motivoCitaOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+          @if (isInvalid('motivo')) {
+            <small class="error-msg" role="alert">El motivo es requerido</small>
+          }
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+        <a class="btn-cancel" routerLink="/main/mis-citas">Cancelar</a>
+        <button type="submit" class="btn-save" [disabled]="form.invalid || isSubmitting()">
+          @if (isSubmitting()) {
+            <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i> Enviando solicitud...
+          } @else {
+            Enviar solicitud
+          }
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

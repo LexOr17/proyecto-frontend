@@ -1,0 +1,144 @@
+<div class="main-content">
+  <header>
+    <a class="btn-back" routerLink="/main/citas">
+      <i class="bx bx-arrow-back" aria-hidden="true"></i> Volver a citas
+    </a>
+  </header>
+
+  @if (citaResource.isLoading()) {
+    <div class="loading-state">
+      <i class="bx bx-loader-alt bx-spin" style="font-size:2rem;" aria-hidden="true"></i>
+      <p>Cargando cita...</p>
+    </div>
+  } @else if (citaResource.value(); as cita) {
+
+    <!-- Tarjeta principal -->
+    <div class="detail-card">
+      <div class="card-banner">
+        <div class="banner-info">
+          <h2>{{ cita.pacienteNombre }}</h2>
+          <p>{{ formatearFecha(cita.fechaHoraInicio) }} · {{ formatearHora(cita.fechaHoraInicio) }} – {{ formatearHora(cita.fechaHoraFin) }}</p>
+        </div>
+        <span class="badge" [class]="claseEstado(cita.estado)">
+          {{ etiquetaEstado(cita.estado) }}
+        </span>
+      </div>
+
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Motivo</span>
+            <span class="info-value">{{ etiquetaMotivo(cita.motivo) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Nutriólogo</span>
+            <span class="info-value">{{ cita.nutriologoNombre }}</span>
+          </div>
+          @if (cita.observaciones) {
+            <div class="info-item full-width">
+              <span class="info-label">Observaciones</span>
+              <span class="info-value">{{ cita.observaciones }}</span>
+            </div>
+          }
+          @if (cita.estado === 'REPROGRAMACION_SOLICITADA' && cita.fechaHoraReprogramacionSolicitada) {
+            <div class="info-item full-width reprog-alert">
+              <i class="bx bx-time-five" aria-hidden="true"></i>
+              <span>El paciente solicita reprogramar para: <strong>{{ formatearFecha(cita.fechaHoraReprogramacionSolicitada) }} a las {{ formatearHora(cita.fechaHoraReprogramacionSolicitada) }}</strong></span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="actions-bar">
+      @if (puedeFinalizarCita(cita.estado)) {
+        <button type="button" class="btn-action btn-finalizar" (click)="abrirPanel('finalizar')">
+          <i class="bx bx-check-circle" aria-hidden="true"></i> Finalizar cita
+        </button>
+      }
+      @if (puedeAceptarReprogramacion(cita.estado)) {
+        <button type="button" class="btn-action btn-reprogramar" (click)="abrirPanel('reprogramar')">
+          <i class="bx bx-calendar-edit" aria-hidden="true"></i> Aceptar/cambiar reprogramación
+        </button>
+      }
+      @if (puedeCancelar(cita.estado)) {
+        <button type="button" class="btn-action btn-cancelar" (click)="cancelarCita(cita)">
+          <i class="bx bx-x-circle" aria-hidden="true"></i> Cancelar cita
+        </button>
+      }
+      <a [routerLink]="['/main/citas/editar', cita.id]" class="btn-action btn-editar"
+         [class.btn-hidden]="cita.estado !== 'PROGRAMADA' && cita.estado !== 'SOLICITADA'">
+        <i class="bx bx-edit" aria-hidden="true"></i> Editar
+      </a>
+    </div>
+
+    <!-- Panel: Finalizar cita -->
+    @if (panelActivo() === 'finalizar') {
+      <div class="panel" role="region" aria-label="Finalizar cita">
+        <h3 class="panel-title">Finalizar cita</h3>
+        <form [formGroup]="finalizarForm" (ngSubmit)="finalizarCita()">
+          <div class="form-group">
+            <label id="asistio-label">¿El paciente asistió?</label>
+            <div class="radio-group" role="radiogroup" aria-labelledby="asistio-label">
+              <label>
+                <input type="radio" formControlName="asistio" [value]="true"> Sí, asistió
+              </label>
+              <label>
+                <input type="radio" formControlName="asistio" [value]="false"> No asistió
+              </label>
+            </div>
+          </div>
+          @if (mostrarObservaciones()) {
+            <div class="form-group">
+              <label for="observaciones">Observaciones</label>
+              <textarea id="observaciones" formControlName="observaciones" rows="4"
+                placeholder="Notas de la consulta..."></textarea>
+            </div>
+          }
+          <div class="panel-actions">
+            <button type="button" class="btn-panel-cancel" (click)="cerrarPanel()">Cancelar</button>
+            <button type="submit" class="btn-panel-confirm" [disabled]="isSubmitting()">
+              @if (isSubmitting()) {
+                <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i>
+              }
+              Guardar
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- Panel: Reprogramar -->
+    @if (panelActivo() === 'reprogramar') {
+      <div class="panel" role="region" aria-label="Aceptar reprogramación">
+        <h3 class="panel-title">Confirmar nueva fecha y hora</h3>
+        <form [formGroup]="reprogramarForm" (ngSubmit)="confirmarReprogramacion()">
+          <div class="form-group">
+            <label for="nuevaFecha">Nueva fecha y hora de la cita</label>
+            <input type="datetime-local" id="nuevaFecha" formControlName="nuevaFechaHoraInicio"
+              [class.error]="reprogramarForm.get('nuevaFechaHoraInicio')?.invalid && reprogramarForm.get('nuevaFechaHoraInicio')?.touched">
+            @if (reprogramarForm.get('nuevaFechaHoraInicio')?.invalid && reprogramarForm.get('nuevaFechaHoraInicio')?.touched) {
+              <small class="error-msg" role="alert">La fecha es requerida</small>
+            }
+          </div>
+          <div class="panel-actions">
+            <button type="button" class="btn-panel-cancel" (click)="cerrarPanel()">Cancelar</button>
+            <button type="submit" class="btn-panel-confirm" [disabled]="isSubmitting()">
+              @if (isSubmitting()) {
+                <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i>
+              }
+              Confirmar
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+
+  } @else {
+    <div class="loading-state">
+      <p>No se encontró la cita.</p>
+      <a routerLink="/main/citas" class="btn-back">Volver</a>
+    </div>
+  }
+</div>

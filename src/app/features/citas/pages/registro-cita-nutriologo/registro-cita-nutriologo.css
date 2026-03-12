@@ -1,0 +1,151 @@
+.main-content {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header-title h1 {
+  font-size: 1.5rem;
+  color: #1B5E20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-back {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #666;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #e0e0e0;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.btn-back:hover { background: #d0d0d0; }
+
+.form-container {
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border-top: 4px solid #4CAF50;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  color: #4CAF50;
+  margin: 0 0 20px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #E8F5E9;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+label {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+input,
+select {
+  padding: 10px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  background: #FAFAFA;
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: 0.3s;
+}
+
+input:focus,
+select:focus {
+  border-color: #4CAF50;
+  background: #fff;
+  outline: none;
+}
+
+input.error,
+select.error {
+  border-color: #EF5350;
+  background: #FFEBEE;
+}
+
+.error-msg {
+  color: #D32F2F;
+  font-size: 0.75rem;
+}
+
+.loading-inline {
+  color: #888;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.form-actions {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  align-items: center;
+}
+
+.btn-cancel {
+  background: transparent;
+  border: 1px solid #ccc;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #666;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.btn-save {
+  background: #4CAF50;
+  color: #fff;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+}
+
+.btn-save:disabled {
+  background: #A5D6A7;
+  cursor: not-allowed;
+}
+
+@media screen and (max-width: 640px) {
+  header { flex-direction: column; align-items: flex-start; gap: 15px; }
+  .btn-back { width: 100%; justify-content: center; }
+  .form-actions { flex-direction: column; }
+  .btn-cancel, .btn-save { width: 100%; justify-content: center; }
+}

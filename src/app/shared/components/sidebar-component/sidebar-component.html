@@ -42,6 +42,34 @@
                 </a>
             </li>
             }
+            @if (currentUserRole() === 'NUTRIOLOGO') {
+            <li>
+                <a routerLink="/main/citas/nueva" routerLinkActive="active">
+                    <span class='bx bx-calendar-plus' aria-hidden="true"></span>
+                    <span>Nueva Cita</span>
+                </a>
+            </li>
+            <li>
+                <a routerLink="/main/citas" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+                    <span class='bx bx-calendar' aria-hidden="true"></span>
+                    <span>Mis Citas</span>
+                </a>
+            </li>
+            }
+            @if (currentUserRole() === 'PACIENTE') {
+            <li>
+                <a routerLink="/main/mis-citas/solicitar" routerLinkActive="active">
+                    <span class='bx bx-calendar-plus' aria-hidden="true"></span>
+                    <span>Solicitar Cita</span>
+                </a>
+            </li>
+            <li>
+                <a routerLink="/main/mis-citas" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+                    <span class='bx bx-calendar' aria-hidden="true"></span>
+                    <span>Mis Citas</span>
+                </a>
+            </li>
+            }
             @if (currentUserRole() === 'ADMINISTRADOR' || currentUserRole() === 'NUTRIOLOGO') {
             <li>
                 <a routerLink="/main/alimentos/nuevo" routerLinkActive="active">
