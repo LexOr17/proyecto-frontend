@@ -83,6 +83,18 @@
                     <span>Catálogo de Alimentos</span>
                 </a>
             </li>
+            <li>
+                <a routerLink="/main/plantillas/nueva" routerLinkActive="active">
+                    <span class='bx bx-plus-circle' aria-hidden="true"></span>
+                    <span>Nueva Plantilla</span>
+                </a>
+            </li>
+            <li>
+                <a routerLink="/main/plantillas" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+                    <span class='bx bx-notepad' aria-hidden="true"></span>
+                    <span>Mis Plantillas</span>
+                </a>
+            </li>
             }
             @if (currentUserRole() === 'ADMINISTRADOR') {
             <li>

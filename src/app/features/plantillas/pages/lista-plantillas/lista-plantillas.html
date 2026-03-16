@@ -1,0 +1,126 @@
+<div class="main-content">
+  <header>
+    <div class="header-title">
+      <h1><i class="bx bx-notepad" aria-hidden="true"></i> Mis Plantillas</h1>
+    </div>
+    <a routerLink="nueva" class="btn-primary">
+      <i class="bx bx-plus" aria-hidden="true"></i> Nueva Plantilla
+    </a>
+  </header>
+
+  <div class="catalog-container">
+
+    @if (plantillasResource.isLoading()) {
+    <div class="loading-message">
+      <p>Cargando plantillas...</p>
+    </div>
+    } @else {
+
+    <div class="cards-grid" role="list" aria-label="Plantillas guardadas">
+      @for (plantilla of plantillasResource.value()?.content ?? []; track plantilla.id) {
+      <article class="plantilla-card" role="listitem">
+
+        @let imgs = getAlimentosConImagen(plantilla.alimentos);
+        @if (imgs.length > 0) {
+          <div class="image-rotator" aria-hidden="true">
+            @for (alimento of imgs; track alimento.id; let i = $index) {
+              <img
+                [src]="alimento.imagenUrl!"
+                [alt]="alimento.nombre"
+                class="rotator-img"
+                [class.active]="i === getActiveImageIndex(imgs.length)">
+            }
+          </div>
+        }
+
+        <div class="card-header">
+          <div class="tipo-badge">
+            <span aria-hidden="true">{{ obtenerIconTipo(plantilla.tipoComida) }}</span>
+            {{ obtenerLabelTipo(plantilla.tipoComida) }}
+          </div>
+          <time class="card-date" [attr.datetime]="plantilla.fechaCreacion">
+            {{ plantilla.fechaCreacion | slice: 0 : 10 }}
+          </time>
+        </div>
+
+        <h3 class="card-title">{{ plantilla.nombre }}</h3>
+
+        <p class="card-alimentos">
+          <strong>Alimentos:</strong>
+          @if (plantilla.alimentos.length > 0) {
+            {{ plantilla.alimentos[0].nombre }}
+            @if (plantilla.alimentos.length > 1) {
+              , {{ plantilla.alimentos[1].nombre }}
+            }
+            @if (plantilla.alimentos.length > 2) {
+              <span class="more-label"> +{{ plantilla.alimentos.length - 2 }} más</span>
+            }
+          } @else {
+            <em>Sin alimentos</em>
+          }
+        </p>
+
+        @let totales = calcularTotales(plantilla.alimentos);
+        <div class="card-macros">
+          <div class="macro-item macro-cal">
+            <span class="macro-value">{{ totales.calorias }}</span>
+            <span class="macro-label">kcal</span>
+          </div>
+          <div class="macro-item macro-p">
+            <span class="macro-value">{{ totales.proteina }}g</span>
+            <span class="macro-label">Prot</span>
+          </div>
+          <div class="macro-item macro-c">
+            <span class="macro-value">{{ totales.carbohidratos }}g</span>
+            <span class="macro-label">Carbs</span>
+          </div>
+          <div class="macro-item macro-g">
+            <span class="macro-value">{{ totales.grasas }}g</span>
+            <span class="macro-label">Grasas</span>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <a
+            [routerLink]="['editar', plantilla.id]"
+            class="btn-edit"
+            [attr.aria-label]="'Editar plantilla ' + plantilla.nombre">
+            <i class="bx bx-edit" aria-hidden="true"></i> Editar
+          </a>
+
+          <button
+            class="btn-delete"
+            [attr.aria-label]="'Eliminar plantilla ' + plantilla.nombre"
+            [disabled]="isDeleting() === plantilla.id"
+            (click)="eliminarPlantilla(plantilla)">
+            @if (isDeleting() === plantilla.id) {
+              <span aria-hidden="true">⏳</span> Eliminando...
+            } @else {
+              <i class="bx bx-trash" aria-hidden="true"></i> Eliminar
+            }
+          </button>
+        </div>
+
+      </article>
+      } @empty {
+      <div class="empty-message">
+        <i class="bx bx-notepad" aria-hidden="true"></i>
+        <p>No hay plantillas creadas aún.</p>
+        <a routerLink="nueva" class="btn-primary-sm">Crear primera plantilla</a>
+      </div>
+      }
+    </div>
+
+    @if ((plantillasResource.value()?.totalPages ?? 0) > 0) {
+    <app-pagination
+      [currentPage]="currentPage()"
+      [totalPages]="plantillasResource.value()?.totalPages ?? 0"
+      [totalElements]="plantillasResource.value()?.totalElements ?? 0"
+      [pageSize]="pageSize()"
+      (pageChange)="onPageChange($event)" />
+    }
+
+    }
+
+  </div>
+</div>

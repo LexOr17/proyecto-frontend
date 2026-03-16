@@ -40,6 +40,12 @@ const mainRoutes: Routes = [
         data: { roles: [UserRole.ADMINISTRADOR, UserRole.NUTRIOLOGO] }
       },
       {
+        path: 'plantillas',
+        loadChildren: () => import('../plantillas/plantillas.routes').then(m => m.default),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.ADMINISTRADOR, UserRole.NUTRIOLOGO] }
+      },
+      {
         path: 'citas',
         loadChildren: () => import('../citas/citas.routes').then(m => m.citasNutriologoRoutes),
         canMatch: [authGuard],

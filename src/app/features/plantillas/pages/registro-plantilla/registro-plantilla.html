@@ -1,0 +1,275 @@
+<div class="page-wrapper">
+
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Nutri<span class="title-accent">Plantillas</span></h1>
+      <p class="page-subtitle">Crea y organiza tus planes de alimentación</p>
+    </div>
+    <a routerLink="/main/plantillas" class="btn-back">
+      <i class="bx bx-arrow-back" aria-hidden="true"></i> Mis Plantillas
+    </a>
+  </header>
+
+  <div class="builder-grid">
+
+    <!-- =============================================
+         COLUMNA IZQUIERDA: Despensa de alimentos
+         ============================================= -->
+    <section class="panel panel-pantry" aria-labelledby="pantry-heading">
+      <h2 id="pantry-heading" class="panel-title">
+        <i class="bx bx-bowl-hot" aria-hidden="true"></i> Despensa de Alimentos
+      </h2>
+
+      <!-- Filtros -->
+      <div class="filter-group">
+        <div class="select-wrapper">
+          <label for="category-filter" class="sr-only">Filtrar por categoría</label>
+          <select
+            id="category-filter"
+            class="input-pill"
+            (change)="onCategoryChange($event)">
+            <option value="">Todas las categorías</option>
+            @for (cat of categorias; track cat.value) {
+              <option [value]="cat.value">{{ cat.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="search-wrapper">
+          <label for="search-alimentos" class="sr-only">Buscar alimento</label>
+          <i class="bx bx-search search-icon" aria-hidden="true"></i>
+          <input
+            type="search"
+            id="search-alimentos"
+            class="input-pill input-search"
+            placeholder="Buscar alimento..."
+            [value]="searchTerm()"
+            (input)="onSearchChange($event)">
+        </div>
+      </div>
+
+      <!-- Lista de alimentos -->
+      @if (alimentosResource.isLoading()) {
+        <div class="panel-loading" aria-live="polite">Cargando alimentos...</div>
+      } @else {
+        <ul class="food-list" role="list" aria-label="Alimentos disponibles">
+          @for (alimento of alimentosFiltrados(); track alimento.id) {
+            <li class="food-item" role="listitem">
+              <div class="food-image-wrap">
+                @if (alimento.imagenUrl) {
+                  <img
+                    [src]="alimento.imagenUrl"
+                    [alt]="alimento.nombre"
+                    class="food-img"
+                    loading="lazy">
+                } @else {
+                  <div class="food-img-placeholder" aria-hidden="true">
+                    <i class="bx bx-bowl-hot"></i>
+                  </div>
+                }
+              </div>
+              <div class="food-info">
+                <p class="food-cat">{{ alimento.categoria }}</p>
+                <h3 class="food-name">
+                  {{ alimento.nombre }}
+                  <span class="food-portion">({{ alimento.porcionBase }}{{ alimento.unidadPorcion }})</span>
+                </h3>
+                <div class="macros-row" aria-label="Información nutricional de {{ alimento.nombre }}">
+                  <span class="badge b-cal">🔥 {{ alimento.calorias }}</span>
+                  <span class="badge b-pro">🥩 {{ alimento.proteina }}g</span>
+                  <span class="badge b-carb">🌾 {{ alimento.carbohidratos }}g</span>
+                  <span class="badge b-fat">🥑 {{ alimento.grasas }}g</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="btn-add"
+                [attr.aria-label]="'Agregar ' + alimento.nombre + ' a la plantilla'"
+                (click)="agregarAlimento(alimento)">
+                <i class="bx bx-plus" aria-hidden="true"></i>
+              </button>
+            </li>
+          } @empty {
+            <li class="empty-pantry">
+              <p>No se encontraron alimentos</p>
+            </li>
+          }
+        </ul>
+
+        @if ((alimentosResource.value()?.totalPages ?? 0) > 1) {
+          <app-pagination
+            [currentPage]="currentPage()"
+            [totalPages]="alimentosResource.value()?.totalPages ?? 0"
+            [totalElements]="alimentosResource.value()?.totalElements ?? 0"
+            [pageSize]="pageSize()"
+            (pageChange)="onPageChange($event)" />
+        }
+      }
+    </section>
+
+    <!-- =============================================
+         COLUMNA DERECHA: Constructor de plantilla
+         ============================================= -->
+    <aside class="panel panel-builder" aria-labelledby="builder-heading">
+      <h2 id="builder-heading" class="panel-title">
+        <i class="bx bx-edit-alt" aria-hidden="true"></i> Diseñar Plantilla
+      </h2>
+
+      <form [formGroup]="plantillaForm" (ngSubmit)="onSubmit()" novalidate>
+        <div class="builder-body">
+          <div class="builder-left">
+
+        <!-- Nombre -->
+        <div class="form-field">
+          <label for="nombre-plantilla" class="field-label">Nombre de la plantilla</label>
+          <input
+            type="text"
+            id="nombre-plantilla"
+            class="input-pill"
+            formControlName="nombre"
+            placeholder="Ej. Desayuno Campeón"
+            maxlength="100"
+            [class.input-error]="isFieldInvalid('nombre')"
+            aria-describedby="nombre-error">
+          @if (isFieldInvalid('nombre')) {
+            <small id="nombre-error" class="error-msg" role="alert">
+              El nombre es requerido (máx. 100 caracteres)
+            </small>
+          }
+        </div>
+
+        <!-- Tipo de comida -->
+        <div class="form-field">
+          <label for="tipo-comida" class="field-label">Momento del día</label>
+          <div class="select-wrapper">
+            <select
+              id="tipo-comida"
+              class="input-pill"
+              formControlName="tipoComida"
+              aria-describedby="tipo-error">
+              @for (tipo of tiposComida; track tipo.value) {
+                <option [value]="tipo.value">{{ tipo.icon }} {{ tipo.label }}</option>
+              }
+            </select>
+          </div>
+          @if (isFieldInvalid('tipoComida')) {
+            <small id="tipo-error" class="error-msg" role="alert">
+              Selecciona un tipo de comida
+            </small>
+          }
+        </div>
+
+        <!-- Alimentos añadidos -->
+        <div class="added-section">
+          <h3 class="added-title">Alimentos Añadidos</h3>
+          @if (items().length === 0) {
+            <p class="empty-added">Agrega alimentos desde la despensa 👈</p>
+          } @else {
+            <ul class="added-list" aria-label="Alimentos en la plantilla">
+              @for (item of items(); track item.alimento.id; let i = $index) {
+                <li class="added-item">
+                  <div class="added-info">
+                    @if (item.alimento.imagenUrl) {
+                      <img
+                        [src]="item.alimento.imagenUrl"
+                        [alt]="item.alimento.nombre"
+                        class="added-img"
+                        loading="lazy">
+                    } @else {
+                      <div class="added-img-placeholder" aria-hidden="true">
+                        <i class="bx bx-bowl-hot"></i>
+                      </div>
+                    }
+                    <div>
+                      <strong class="added-name">{{ item.alimento.nombre }}</strong>
+                      <span class="added-kcal">
+                        {{ item.alimento.porcionBase }}{{ item.alimento.unidadPorcion }} •
+                        <strong>{{ item.alimento.calorias * item.cantidad | number:'1.0-0' }} kcal</strong>
+                      </span>
+                    </div>
+                  </div>
+                  <div class="qty-controls">
+                    <div class="qty-group" role="group" [attr.aria-label]="'Cantidad de ' + item.alimento.nombre">
+                      <button
+                        type="button"
+                        class="qty-btn"
+                        [attr.aria-label]="'Reducir cantidad de ' + item.alimento.nombre"
+                        (click)="actualizarCantidad(i, -1)">−</button>
+                      <span class="qty-value" aria-live="polite">{{ item.cantidad }}</span>
+                      <button
+                        type="button"
+                        class="qty-btn"
+                        [attr.aria-label]="'Aumentar cantidad de ' + item.alimento.nombre"
+                        (click)="actualizarCantidad(i, 1)">+</button>
+                    </div>
+                    <button
+                      type="button"
+                      class="btn-remove"
+                      [attr.aria-label]="'Quitar ' + item.alimento.nombre + ' de la plantilla'"
+                      (click)="quitarAlimento(i)">
+                      <i class="bx bx-x" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+          </div><!-- /builder-left -->
+
+          <div class="builder-right">
+
+        <!-- Totales nutricionales -->
+        <div class="totals-widget" aria-label="Resumen nutricional total">
+          <h3 class="totals-title">📊 Resumen Total</h3>
+          <div class="totals-grid">
+            <div class="tot-card tot-cal">
+              <span class="tot-value">{{ totales().calorias }}</span>
+              <span class="tot-label">Kcal Totales</span>
+            </div>
+            <div class="tot-card tot-pro">
+              <span class="tot-value">{{ totales().proteina }}g</span>
+              <span class="tot-label">Proteína</span>
+            </div>
+            <div class="tot-card tot-carb">
+              <span class="tot-value">{{ totales().carbohidratos }}g</span>
+              <span class="tot-label">Carbohidratos</span>
+            </div>
+            <div class="tot-card tot-fat">
+              <span class="tot-value">{{ totales().grasas }}g</span>
+              <span class="tot-label">Grasas</span>
+            </div>
+          </div>
+
+          <div class="progress-section" aria-label="Distribución de macronutrientes">
+            <div class="progress-bar" role="img" [attr.aria-label]="'Proteína ' + totales().pctProteina + '%, Carbohidratos ' + totales().pctCarbohidratos + '%, Grasas ' + totales().pctGrasas + '%'">
+              <div class="bar-fill bar-pro" [style.width.%]="totales().barProteina"></div>
+              <div class="bar-fill bar-carb" [style.width.%]="totales().barCarbohidratos"></div>
+              <div class="bar-fill bar-fat" [style.width.%]="totales().barGrasas"></div>
+            </div>
+            <div class="progress-legend">
+              <span class="leg-pro">● Prot {{ totales().pctProteina }}%</span>
+              <span class="leg-carb">● Carb {{ totales().pctCarbohidratos }}%</span>
+              <span class="leg-fat">● Gras {{ totales().pctGrasas }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botón guardar -->
+        <button
+          type="submit"
+          class="btn-save"
+          [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i> Guardando...
+          } @else {
+            <i class="bx bx-save" aria-hidden="true"></i> Guardar Plantilla
+          }
+        </button>
+          </div><!-- /builder-right -->
+        </div><!-- /builder-body -->
+
+      </form>
+    </aside>
+
+  </div>
+</div>
