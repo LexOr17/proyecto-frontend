@@ -64,6 +64,14 @@ const citasPacienteRoutes: Routes = [
       ),
     title: 'Reprogramar Cita',
   },
+  {
+    path: 'cancelar/:id',
+    loadComponent: () =>
+      import('./pages/cancelar-cita-paciente/cancelar-cita-paciente').then(
+        (m) => m.CancelarCitaPaciente
+      ),
+    title: 'Solicitar Cancelación',
+  },
 ];
 
 export { citasNutriologoRoutes, citasPacienteRoutes };

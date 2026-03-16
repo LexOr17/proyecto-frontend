@@ -2,6 +2,7 @@ export type EstadoCita =
   | 'PROGRAMADA'
   | 'SOLICITADA'
   | 'CANCELADA'
+  | 'CANCELACION_SOLICITADA'
   | 'REPROGRAMACION_SOLICITADA'
   | 'ASISTIO'
   | 'NO_ASISTIO';
@@ -27,6 +28,7 @@ export interface CitaResponse {
   motivoCita: MotivoCita;
   estado: EstadoCita;
   observaciones?: string;
+  detalleAdicional?: string;
   fechaHoraReprogramacionSolicitada?: string;
 }
 
@@ -45,11 +47,9 @@ export interface CitaSolicitudRequest {
   motivoCita: MotivoCita;
 }
 
-export interface CitaReprogramarRequest {
-  nuevaFechaHoraInicio: string;
-}
-
-export interface FinalizarCitaRequest {
-  asistio: boolean;
+export interface CitaEstadoUpdateDTO {
+  nuevoEstado: EstadoCita;
+  motivo?: string;
+  nuevaFechaHoraInicio?: string;
   observaciones?: string;
 }

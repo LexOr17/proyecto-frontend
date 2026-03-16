@@ -16,7 +16,7 @@
     <div class="detail-card">
       <div class="card-banner">
         <div class="banner-info">
-          <h2>{{ cita.pacienteNombre }}</h2>
+          <h2>{{ cita.nombrePaciente }}</h2>
           <p>{{ formatearFecha(cita.fechaHoraInicio) }} · {{ formatearHora(cita.fechaHoraInicio) }} – {{ formatearHora(cita.fechaHoraFin) }}</p>
         </div>
         <span class="badge" [class]="claseEstado(cita.estado)">
@@ -28,11 +28,11 @@
         <div class="info-grid">
           <div class="info-item">
             <span class="info-label">Motivo</span>
-            <span class="info-value">{{ etiquetaMotivo(cita.motivo) }}</span>
+            <span class="info-value">{{ etiquetaMotivo(cita.motivoCita) }}</span>
           </div>
           <div class="info-item">
             <span class="info-label">Nutriólogo</span>
-            <span class="info-value">{{ cita.nutriologoNombre }}</span>
+            <span class="info-value">{{ cita.nombreNutriologo }}</span>
           </div>
           @if (cita.observaciones) {
             <div class="info-item full-width">
@@ -46,12 +46,28 @@
               <span>El paciente solicita reprogramar para: <strong>{{ formatearFecha(cita.fechaHoraReprogramacionSolicitada) }} a las {{ formatearHora(cita.fechaHoraReprogramacionSolicitada) }}</strong></span>
             </div>
           }
+          @if (cita.estado === 'CANCELACION_SOLICITADA') {
+            <div class="info-item full-width cancelacion-alert">
+              <i class="bx bx-error-circle" aria-hidden="true"></i>
+              <span>
+                El paciente ha solicitado cancelar esta cita.
+                @if (cita.detalleAdicional) {
+                  <br><strong>Motivo:</strong> {{ cita.detalleAdicional }}
+                }
+              </span>
+            </div>
+          }
         </div>
       </div>
     </div>
 
     <!-- Acciones -->
     <div class="actions-bar">
+      @if (puedeAceptarCita(cita.estado)) {
+        <button type="button" class="btn-action btn-reprogramar" (click)="aceptarSolicitudCita(cita)" [disabled]="isSubmitting()">
+          <i class="bx bx-check" aria-hidden="true"></i> Aceptar cita
+        </button>
+      }
       @if (puedeFinalizarCita(cita.estado)) {
         <button type="button" class="btn-action btn-finalizar" (click)="abrirPanel('finalizar')">
           <i class="bx bx-check-circle" aria-hidden="true"></i> Finalizar cita
@@ -59,7 +75,12 @@
       }
       @if (puedeAceptarReprogramacion(cita.estado)) {
         <button type="button" class="btn-action btn-reprogramar" (click)="abrirPanel('reprogramar')">
-          <i class="bx bx-calendar-edit" aria-hidden="true"></i> Aceptar/cambiar reprogramación
+          <i class="bx bx-calendar-edit" aria-hidden="true"></i> Aceptar reprogramación
+        </button>
+      }
+      @if (puedeAceptarCancelacion(cita.estado)) {
+        <button type="button" class="btn-action btn-cancelar" (click)="aceptarCancelacion(cita)" [disabled]="isSubmitting()">
+          <i class="bx bx-check-circle" aria-hidden="true"></i> Aceptar cancelación
         </button>
       }
       @if (puedeCancelar(cita.estado)) {
@@ -112,26 +133,23 @@
     <!-- Panel: Reprogramar -->
     @if (panelActivo() === 'reprogramar') {
       <div class="panel" role="region" aria-label="Aceptar reprogramación">
-        <h3 class="panel-title">Confirmar nueva fecha y hora</h3>
-        <form [formGroup]="reprogramarForm" (ngSubmit)="confirmarReprogramacion()">
-          <div class="form-group">
-            <label for="nuevaFecha">Nueva fecha y hora de la cita</label>
-            <input type="datetime-local" id="nuevaFecha" formControlName="nuevaFechaHoraInicio"
-              [class.error]="reprogramarForm.get('nuevaFechaHoraInicio')?.invalid && reprogramarForm.get('nuevaFechaHoraInicio')?.touched">
-            @if (reprogramarForm.get('nuevaFechaHoraInicio')?.invalid && reprogramarForm.get('nuevaFechaHoraInicio')?.touched) {
-              <small class="error-msg" role="alert">La fecha es requerida</small>
+        <h3 class="panel-title">Aceptar reprogramación</h3>
+        @if (citaResource.value()?.fechaHoraReprogramacionSolicitada; as fechaSolicitada) {
+          <p class="form-hint">
+            El paciente solicitó reprogramar para:
+            <strong>{{ formatearFecha(fechaSolicitada) }} a las {{ formatearHora(fechaSolicitada) }}</strong>.
+            Al confirmar, la cita quedará programada en esa fecha.
+          </p>
+        }
+        <div class="panel-actions">
+          <button type="button" class="btn-panel-cancel" (click)="cerrarPanel()">Cancelar</button>
+          <button type="button" class="btn-panel-confirm" (click)="confirmarReprogramacion()" [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i>
             }
-          </div>
-          <div class="panel-actions">
-            <button type="button" class="btn-panel-cancel" (click)="cerrarPanel()">Cancelar</button>
-            <button type="submit" class="btn-panel-confirm" [disabled]="isSubmitting()">
-              @if (isSubmitting()) {
-                <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i>
-              }
-              Confirmar
-            </button>
-          </div>
-        </form>
+            Confirmar
+          </button>
+        </div>
       </div>
     }
 

@@ -106,6 +106,18 @@
   font-size: 0.9rem;
 }
 
+.cancelacion-alert {
+  background: #FFEBEE;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start;
+  gap: 10px;
+  color: #B71C1C;
+  font-size: 0.9rem;
+}
+
 /* ── Badges ─────────────────────────────────────────────────── */
 .badge {
   padding: 5px 12px;

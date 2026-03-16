@@ -19,7 +19,7 @@ export class UsuarioService {
     return this.http.post<ApiResponse<Usuario>>(`${this.baseUrl}/usuarios/registro`, usuario);
   }
 
-  obtenerUsuarios(page = 0, size = 10): Observable<Page<Usuario> | null> {
+  obtenerUsuarios(page = 0, size = 5): Observable<Page<Usuario> | null> {
     const params = new HttpParams()
       .set('page', page)
       .set('size', size);

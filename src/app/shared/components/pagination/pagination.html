@@ -1,29 +1,31 @@
-<div class="pagination-wrapper">
-  <div class="pagination-info">
-    <span>Mostrando {{ showingFrom() }}-{{ showingTo() }} de {{ totalElements() }}</span>
-
-    <div class="page-size-selector">
-      <label for="pageSize">Mostrar</label>
-      <select id="pageSize" [value]="pageSize()" (change)="onPageSizeChange($event)">
+<div class="pagination-container">
+  <div class="pagination-header">
+    <div class="items-per-page">
+      <label for="perPage">Mostrar</label>
+      <select id="perPage" (change)="onPageSizeChange($event)">
         @for (option of pageSizeOptions; track option) {
-          <option [value]="option">{{ option }}</option>
+          <option [value]="option" [selected]="option === pageSize()">{{ option }}</option>
         }
       </select>
+    </div>
+
+    <div class="pagination-info">
+      Mostrando {{ showingFrom() }} - {{ showingTo() }} de {{ totalElements() }} resultados
     </div>
   </div>
 
   @if (totalPages() > 1) {
-    <nav class="page-controls" aria-label="Paginación">
-      <button class="page-btn"
+    <nav class="pagination" aria-label="Paginación">
+      <button class="page-btn nav-btn prev-btn"
               [disabled]="currentPage() === 0"
               (click)="goToPage(currentPage() - 1)"
               aria-label="Página anterior">
-        <i class="bx bx-chevron-left" aria-hidden="true"></i>
+        <span>Anterior</span>
       </button>
 
       @for (page of pages(); track $index) {
         @if (page === '...') {
-          <span class="page-ellipsis">...</span>
+          <button class="page-btn dots" disabled aria-hidden="true">...</button>
         } @else {
           <button class="page-btn"
                   [class.active]="page === currentPage()"
@@ -34,11 +36,11 @@
         }
       }
 
-      <button class="page-btn"
+      <button class="page-btn nav-btn next-btn"
               [disabled]="currentPage() === totalPages() - 1"
               (click)="goToPage(currentPage() + 1)"
               aria-label="Página siguiente">
-        <i class="bx bx-chevron-right" aria-hidden="true"></i>
+        <span>Siguiente</span>
       </button>
     </nav>
   }

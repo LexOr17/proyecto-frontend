@@ -2,16 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
   inject,
   signal,
 } from '@angular/core';
-import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { CitaService } from '../../service/cita-service';
 import { AuthService } from '../../../../core/services/auth-service';
-import { ConfirmDialogService } from '../../../../shared/service/confirm-dialog-service';
-import { NotificationService } from '../../../../shared/service/notification-service';
 import { CitaResponse, EstadoCita } from '../../interfaces/cita.interface';
 
 @Component({
@@ -24,9 +21,6 @@ import { CitaResponse, EstadoCita } from '../../interfaces/cita.interface';
 export class ListaCitasPaciente {
   private readonly citaService = inject(CitaService);
   private readonly authService = inject(AuthService);
-  private readonly confirmDialog = inject(ConfirmDialogService);
-  private readonly notificationService = inject(NotificationService);
-  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly filtroEstado = signal<EstadoCita | 'TODAS'>('TODAS');
   protected readonly isProcessing = signal<number | null>(null);
@@ -53,6 +47,7 @@ export class ListaCitasPaciente {
     { value: 'SOLICITADA', label: 'Solicitadas' },
     { value: 'PROGRAMADA', label: 'Programadas' },
     { value: 'REPROGRAMACION_SOLICITADA', label: 'Reprogramación' },
+    { value: 'CANCELACION_SOLICITADA', label: 'Cancelación solicitada' },
     { value: 'ASISTIO', label: 'Asistí' },
     { value: 'NO_ASISTIO', label: 'No asistí' },
     { value: 'CANCELADA', label: 'Canceladas' },
@@ -93,6 +88,7 @@ export class ListaCitasPaciente {
       PROGRAMADA: 'Programada',
       SOLICITADA: 'Solicitada',
       CANCELADA: 'Cancelada',
+      CANCELACION_SOLICITADA: 'Cancelación solicitada',
       REPROGRAMACION_SOLICITADA: 'Reprogramación solicitada',
       ASISTIO: 'Asistió',
       NO_ASISTIO: 'No asistió',
@@ -105,6 +101,7 @@ export class ListaCitasPaciente {
       PROGRAMADA: 'badge-programada',
       SOLICITADA: 'badge-solicitada',
       CANCELADA: 'badge-cancelada',
+      CANCELACION_SOLICITADA: 'badge-cancelacion-solicitada',
       REPROGRAMACION_SOLICITADA: 'badge-reprogramacion',
       ASISTIO: 'badge-asistio',
       NO_ASISTIO: 'badge-no-asistio',
@@ -112,32 +109,11 @@ export class ListaCitasPaciente {
     return map[estado] ?? '';
   }
 
-  protected puedeCancelar(cita: CitaResponse): boolean {
+  protected puedeSolicitarCancelacion(cita: CitaResponse): boolean {
     return cita.estado === 'PROGRAMADA' || cita.estado === 'SOLICITADA';
   }
 
   protected puedeReprogramar(cita: CitaResponse): boolean {
     return cita.estado === 'PROGRAMADA';
-  }
-
-  protected async cancelarCita(cita: CitaResponse): Promise<void> {
-    const confirmed = await this.confirmDialog.open(
-      'Cancelar cita',
-      `¿Deseas cancelar esta cita programada para el ${this.formatearFecha(cita.fechaHoraInicio)}?`
-    );
-    if (!confirmed) return;
-
-    this.isProcessing.set(cita.id);
-    this.citaService
-      .cancelarCita(cita.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.notificationService.success('Cita cancelada correctamente');
-          this.citasResource.reload();
-          this.isProcessing.set(null);
-        },
-        error: () => this.isProcessing.set(null),
-      });
   }
 }

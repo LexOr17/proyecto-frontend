@@ -63,20 +63,14 @@
                       <i class="bx bx-calendar-edit" aria-hidden="true"></i>
                     </a>
                   }
-                  @if (puedeCancelar(cita)) {
-                    <button
-                      type="button"
+                  @if (puedeSolicitarCancelacion(cita)) {
+                    <a
+                      [routerLink]="['cancelar', cita.id]"
                       class="btn-icon btn-cancel"
-                      [attr.aria-label]="'Cancelar cita del ' + formatearFecha(cita.fechaHoraInicio)"
-                      [disabled]="isProcessing() === cita.id"
-                      (click)="cancelarCita(cita)"
+                      [attr.aria-label]="'Solicitar cancelación de cita del ' + formatearFecha(cita.fechaHoraInicio)"
                     >
-                      @if (isProcessing() === cita.id) {
-                        <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i>
-                      } @else {
-                        <i class="bx bx-x-circle" aria-hidden="true"></i>
-                      }
-                    </button>
+                      <i class="bx bx-x-circle" aria-hidden="true"></i>
+                    </a>
                   }
                 </div>
               </td>

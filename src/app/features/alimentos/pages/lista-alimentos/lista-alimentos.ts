@@ -36,7 +36,7 @@ export class ListaAlimentos {
 
   // Paginación
   protected currentPage = signal(0);
-  protected pageSize = signal(10);
+  protected pageSize = signal(5);
 
   // rxResource: carga reactiva de alimentos
   protected alimentosResource = rxResource({

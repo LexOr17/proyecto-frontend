@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CitaService } from '../../service/cita-service';
 import { NotificationService } from '../../../../shared/service/notification-service';
@@ -25,7 +25,6 @@ type PanelActivo = 'ninguno' | 'finalizar' | 'reprogramar';
 })
 export class DetalleCitaNutriologo {
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly citaService = inject(CitaService);
   private readonly notificationService = inject(NotificationService);
   private readonly confirmDialog = inject(ConfirmDialogService);
@@ -51,11 +50,6 @@ export class DetalleCitaNutriologo {
   protected readonly mostrarObservaciones = computed(
     () => this.finalizarForm.get('asistio')?.value === true
   );
-
-  // ── Formulario: Reprogramar (acepta solicitud) ───────────────────────────
-  protected readonly reprogramarForm = this.fb.nonNullable.group({
-    nuevaFechaHoraInicio: ['', Validators.required],
-  });
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -86,6 +80,7 @@ export class DetalleCitaNutriologo {
       PROGRAMADA: 'Programada',
       SOLICITADA: 'Solicitada',
       CANCELADA: 'Cancelada',
+      CANCELACION_SOLICITADA: 'Cancelación solicitada',
       REPROGRAMACION_SOLICITADA: 'Reprogramación solicitada',
       ASISTIO: 'Asistió',
       NO_ASISTIO: 'No asistió',
@@ -98,6 +93,7 @@ export class DetalleCitaNutriologo {
       PROGRAMADA: 'badge-programada',
       SOLICITADA: 'badge-solicitada',
       CANCELADA: 'badge-cancelada',
+      CANCELACION_SOLICITADA: 'badge-cancelacion-solicitada',
       REPROGRAMACION_SOLICITADA: 'badge-reprogramacion',
       ASISTIO: 'badge-asistio',
       NO_ASISTIO: 'badge-no-asistio',
@@ -107,41 +103,38 @@ export class DetalleCitaNutriologo {
 
   protected abrirPanel(panel: PanelActivo): void {
     this.panelActivo.set(panel);
-
-    // Pre-fill reprogramar with solicitud date if available
-    if (panel === 'reprogramar') {
-      const cita = this.citaResource.value();
-      if (cita?.fechaHoraReprogramacionSolicitada) {
-        const fechaLocal = this.isoToDatetimeLocal(cita.fechaHoraReprogramacionSolicitada);
-        this.reprogramarForm.patchValue({ nuevaFechaHoraInicio: fechaLocal });
-      } else {
-        this.reprogramarForm.reset();
-      }
-    }
   }
 
   protected cerrarPanel(): void {
     this.panelActivo.set('ninguno');
     this.finalizarForm.reset({ asistio: true });
-    this.reprogramarForm.reset();
+  }
+
+  // ── Aceptar cita solicitada (SOLICITADA → PROGRAMADA) ───────────────────
+  protected aceptarSolicitudCita(cita: CitaResponse): void {
+    this.isSubmitting.set(true);
+    this.citaService
+      .aceptarCita(cita.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.notificationService.success('Cita aceptada y programada correctamente');
+          this.citaResource.reload();
+          this.isSubmitting.set(false);
+        },
+        error: () => this.isSubmitting.set(false),
+      });
   }
 
   // ── Confirmar reprogramación (nutriólogo acepta la solicitud del paciente) ──
   protected confirmarReprogramacion(): void {
-    if (this.reprogramarForm.invalid) {
-      this.reprogramarForm.markAllAsTouched();
-      return;
-    }
     this.isSubmitting.set(true);
-    const raw = this.reprogramarForm.getRawValue();
-    const nuevaFecha = this.datetimeLocalToIso(raw.nuevaFechaHoraInicio);
-
     this.citaService
-      .reprogramarCita(this.citaId(), { nuevaFechaHoraInicio: nuevaFecha })
+      .aceptarCita(this.citaId())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.notificationService.success('Solicitud de reprogramación procesada correctamente');
+          this.notificationService.success('Reprogramación aceptada correctamente');
           this.cerrarPanel();
           this.citaResource.reload();
           this.isSubmitting.set(false);
@@ -160,15 +153,38 @@ export class DetalleCitaNutriologo {
     const raw = this.finalizarForm.getRawValue();
 
     this.citaService
-      .finalizarCita(this.citaId(), {
-        asistio: raw.asistio,
-        observaciones: raw.asistio ? raw.observaciones || undefined : undefined,
-      })
+      .finalizarCita(
+        this.citaId(),
+        raw.asistio,
+        raw.asistio ? raw.observaciones || undefined : undefined,
+      )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.notificationService.success('Cita finalizada correctamente');
           this.cerrarPanel();
+          this.citaResource.reload();
+          this.isSubmitting.set(false);
+        },
+        error: () => this.isSubmitting.set(false),
+      });
+  }
+
+  // ── Aceptar cancelación solicitada por el paciente ─────────────────────
+  protected async aceptarCancelacion(cita: CitaResponse): Promise<void> {
+    const confirmed = await this.confirmDialog.open(
+      'Aceptar cancelación',
+      `¿Confirmas la cancelación de esta cita? El paciente la ha solicitado.`
+    );
+    if (!confirmed) return;
+
+    this.isSubmitting.set(true);
+    this.citaService
+      .cancelarCita(cita.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.notificationService.success('Cancelación aceptada');
           this.citaResource.reload();
           this.isSubmitting.set(false);
         },
@@ -199,6 +215,10 @@ export class DetalleCitaNutriologo {
   }
 
   // ── Acciones disponibles por estado ────────────────────────────────────
+  protected puedeAceptarCita(estado: string): boolean {
+    return estado === 'SOLICITADA';
+  }
+
   protected puedeFinalizarCita(estado: string): boolean {
     return estado === 'PROGRAMADA' || estado === 'REPROGRAMACION_SOLICITADA';
   }
@@ -211,14 +231,7 @@ export class DetalleCitaNutriologo {
     return estado === 'REPROGRAMACION_SOLICITADA';
   }
 
-  // ── Utilidades de fecha ─────────────────────────────────────────────────
-  private isoToDatetimeLocal(iso: string): string {
-    const d = new Date(iso);
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }
-
-  private datetimeLocalToIso(datetimeLocal: string): string {
-    return new Date(datetimeLocal).toISOString();
+  protected puedeAceptarCancelacion(estado: string): boolean {
+    return estado === 'CANCELACION_SOLICITADA';
   }
 }

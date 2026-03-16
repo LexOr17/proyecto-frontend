@@ -16,40 +16,25 @@ export class Pagination {
 
   pageChange = output<PageEvent>();
 
-  protected readonly pageSizeOptions = [5, 10, 15, 20];
+  protected readonly pageSizeOptions = [5, 10, 15, 20, 50];
 
   protected pages = computed(() => {
     const total = this.totalPages();
     const current = this.currentPage();
-    const pages: (number | '...')[] = [];
 
     if (total <= 7) {
-      for (let i = 0; i < total; i++) pages.push(i);
-      return pages;
+      return Array.from({ length: total }, (_, i) => i) as (number | '...')[];
     }
 
-    // Siempre mostrar primera página
-    pages.push(0);
-
-    if (current > 2) {
-      pages.push('...');
+    if (current <= 3) {
+      return [0, 1, 2, 3, 4, '...', total - 1] as (number | '...')[];
     }
 
-    // Páginas alrededor de la actual
-    const start = Math.max(1, current - 1);
-    const end = Math.min(total - 2, current + 1);
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
+    if (current >= total - 4) {
+      return [0, '...', total - 5, total - 4, total - 3, total - 2, total - 1] as (number | '...')[];
     }
 
-    if (current < total - 3) {
-      pages.push('...');
-    }
-
-    // Siempre mostrar última página
-    pages.push(total - 1);
-
-    return pages;
+    return [0, '...', current - 1, current, current + 1, '...', total - 1] as (number | '...')[];
   });
 
   protected readonly showingFrom = computed(() => {

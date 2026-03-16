@@ -106,6 +106,7 @@ export class RegistroCitaNutriologo {
     const raw = this.form.getRawValue();
     const nutriologoId = this.authService.userId()!;
 
+
     const request = {
       pacienteId: raw.pacienteId,
       nutriologoId,
@@ -114,12 +115,14 @@ export class RegistroCitaNutriologo {
       motivoCita: raw.motivoCita,
     };
 
+
     const op$ = this.modoEdicion()
       ? this.citaService.actualizarCita(this.citaId()!, request)
       : this.citaService.crearCita(request);
 
     op$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
+      next: (res) => {
+
         const msg = this.modoEdicion()
           ? 'Cita actualizada correctamente'
           : 'Cita creada correctamente';
@@ -128,7 +131,9 @@ export class RegistroCitaNutriologo {
           .then(() => this.isSubmitting.set(false))
           .catch(() => this.isSubmitting.set(false));
       },
-      error: () => this.isSubmitting.set(false),
+      error: (err) => {
+        this.isSubmitting.set(false);
+      },
     });
   }
 
@@ -139,6 +144,10 @@ export class RegistroCitaNutriologo {
   }
 
   private datetimeLocalToIso(datetimeLocal: string): string {
-    return new Date(datetimeLocal).toISOString();
+    // `datetime-local` returns a string without timezone (e.g. "2026-03-16T09:00").
+    // Converting with `new Date(...).toISOString()` transforms it to UTC and
+    // changes the hour. To preserve the hour the user selected, send the
+    // local datetime string without converting to UTC (no trailing 'Z').
+    return `${datetimeLocal}:00`;
   }
 }

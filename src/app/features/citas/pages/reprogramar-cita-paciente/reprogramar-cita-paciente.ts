@@ -48,9 +48,7 @@ export class ReprogramarCitaPaciente {
     const raw = this.form.getRawValue();
 
     this.citaService
-      .reprogramarCita(this.citaId(), {
-        nuevaFechaHoraInicio: new Date(raw.nuevaFechaHoraInicio).toISOString(),
-      })
+      .reprogramarCita(this.citaId(), new Date(raw.nuevaFechaHoraInicio).toISOString())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
