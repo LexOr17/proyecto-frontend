@@ -1,0 +1,107 @@
+<div class="chat-layout">
+  <!-- Sidebar with contact list (nutriólogo only) -->
+  @if (isNutriologo()) {
+  <aside class="contacts-panel" aria-label="Lista de pacientes">
+    <div class="contacts-header">
+      <h2><span class="bx bx-group" aria-hidden="true"></span> Pacientes</h2>
+    </div>
+    <ul class="contacts-list" role="listbox" aria-label="Selecciona un paciente">
+      @for (contact of contacts(); track contact.id) {
+      <li>
+        <button
+          type="button"
+          class="contact-item"
+          [class.active]="selectedContact()?.id === contact.id"
+          (click)="selectContact(contact)"
+          [attr.aria-pressed]="selectedContact()?.id === contact.id"
+          [attr.aria-label]="'Chatear con ' + fullName(contact)"
+        >
+          <div class="avatar" aria-hidden="true">{{ getInitials(contact) }}</div>
+          <div class="contact-info">
+            <span class="contact-name">{{ fullName(contact) }}</span>
+            <span class="contact-role">Paciente</span>
+          </div>
+        </button>
+      </li>
+      } @empty {
+      <li class="empty-contacts">
+        <span>Sin pacientes asignados</span>
+      </li>
+      }
+    </ul>
+  </aside>
+  }
+
+  <!-- Chat window -->
+  <section class="chat-window" aria-label="Ventana de chat">
+    @if (selectedContact(); as contact) {
+    <div class="chat-header">
+      <div class="avatar" aria-hidden="true">{{ getInitials(contact) }}</div>
+      <div>
+        <p class="chat-header-name">{{ fullName(contact) }}</p>
+        <p class="chat-header-status" [class.online]="isConnected()">
+          {{ isConnected() ? 'Conectado' : 'Desconectado' }}
+        </p>
+      </div>
+    </div>
+
+    <div class="messages-area" #messagesContainer role="log" aria-live="polite" aria-label="Mensajes">
+      @if (isLoadingHistory()) {
+      <div class="loading-messages" aria-busy="true">
+        <span class="bx bx-loader-circle bx-spin" aria-hidden="true"></span>
+        Cargando mensajes...
+      </div>
+      } @else { @for (msg of messages(); track msg.chatId || ($index)) {
+      <div class="message-wrapper" [class.mine]="isMine(msg)" [class.theirs]="!isMine(msg)">
+        <div
+          class="bubble"
+          [attr.aria-label]="(isMine(msg) ? 'Tú: ' : fullName(contact) + ': ') + msg.content"
+        >
+          <p>{{ msg.content }}</p>
+          <time class="timestamp" [attr.datetime]="msg.timestamp">{{
+            formatTime(msg.timestamp)
+          }}</time>
+        </div>
+      </div>
+      } @empty {
+      <div class="empty-messages">
+        <span class="bx bx-message-dots" aria-hidden="true"></span>
+        <p>Aún no hay mensajes. ¡Inicia la conversación!</p>
+      </div>
+      } }
+    </div>
+
+    <form class="message-form" (submit)="send()" aria-label="Enviar mensaje">
+      <label for="message-input" class="sr-only">Escribe un mensaje</label>
+      <textarea
+        id="message-input"
+        class="message-input"
+        placeholder="Escribe un mensaje..."
+        [value]="newMessage()"
+        (input)="updateMessage($any($event.target).value)"
+        (keydown)="onEnter($event)"
+        rows="1"
+        aria-label="Mensaje"
+        maxlength="2000"
+      ></textarea>
+      <button
+        type="submit"
+        class="send-btn"
+        [disabled]="!newMessage().trim()"
+        aria-label="Enviar"
+      >
+        <span class="bx bx-send" aria-hidden="true"></span>
+      </button>
+    </form>
+    } @else {
+    <div class="empty-state" role="status">
+      <span class="bx bx-chat" aria-hidden="true"></span>
+      @if (isNutriologo()) {
+      <p>Selecciona un paciente para iniciar el chat</p>
+      } @else {
+      <p>Cargando chat...</p>
+      }
+    </div>
+    }
+  </section>
+</div>

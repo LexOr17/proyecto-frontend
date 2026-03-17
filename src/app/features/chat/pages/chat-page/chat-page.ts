@@ -1,0 +1,212 @@
+import {
+  AfterViewChecked,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+  ViewChild,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
+import { map, switchMap } from 'rxjs';
+import { ChatService } from '../../service/chat-service';
+import { PacienteService } from '../../../pacientes/service/paciente-service';
+import { CitaService } from '../../../citas/service/cita-service';
+import { UsuarioService } from '../../../usuarios/service/usuario-service';
+import { AuthService } from '../../../../core/services/auth-service';
+import { ChatMessageDTO, ChatContact } from '../../interfaces/chat.interface';
+import { UserRole } from '../../../../core/interfaces/auth-response';
+
+@Component({
+  selector: 'app-chat-page',
+  imports: [FormsModule],
+  templateUrl: './chat-page.html',
+  styleUrl: './chat-page.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
+  @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLElement>;
+
+  private readonly chatService = inject(ChatService);
+  private readonly pacienteService = inject(PacienteService);
+  private readonly citaService = inject(CitaService);
+  private readonly usuarioService = inject(UsuarioService);
+  private readonly authService = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  protected readonly currentUserId = this.authService.userId;
+  protected readonly currentUserRole = this.authService.currentUserRole;
+
+  protected readonly contacts = signal<ChatContact[]>([]);
+  protected readonly selectedContact = signal<ChatContact | null>(null);
+
+  protected readonly messages = signal<ChatMessageDTO[]>([]);
+  protected readonly newMessage = signal('');
+  protected readonly isLoadingHistory = signal(false);
+  protected readonly isConnected = this.chatService.isConnected;
+
+  private shouldScrollToBottom = false;
+
+  protected readonly isNutriologo = computed(
+    () => this.currentUserRole() === UserRole.NUTRIOLOGO,
+  );
+
+  ngOnInit(): void {
+    const userId = this.currentUserId();
+    if (!userId) return;
+
+    this.chatService.connect((msg) => {
+      const selected = this.selectedContact();
+      const myId = this.currentUserId();
+      if (!myId) return;
+
+      const isRelevant =
+        (msg.senderId === selected?.id && msg.recipientId === myId) ||
+        (msg.senderId === myId && msg.recipientId === selected?.id);
+
+      if (isRelevant) {
+        this.messages.update((prev) => [...prev, msg]);
+        this.shouldScrollToBottom = true;
+      }
+    });
+
+    if (this.isNutriologo()) {
+      this.pacienteService
+        .obtenerPacientes(0, 200)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((page) => this.contacts.set(page.content.map(p => ({
+          id: p.id!,
+          nombre: p.nombre,
+          apellidoPaterno: p.apellidoPaterno,
+          apellidoMaterno: p.apellidoMaterno,
+        }))));
+    } else {
+      // PACIENTE: get their citas to find the assigned nutriologoId,
+      // then fetch the nutriólogo's full details.
+      this.citaService
+        .obtenerCitasPorPaciente(userId)
+        .pipe(
+          takeUntilDestroyed(this.destroyRef),
+          map((citas) => {
+            const nutriologoId = citas[0]?.nutriologoId;
+            if (!nutriologoId) throw new Error('Sin nutriólogo asignado');
+            return nutriologoId;
+          }),
+          switchMap((nutriologoId) => this.usuarioService.obtenerUsuarioPorId(nutriologoId)),
+        )
+        .subscribe({
+          next: (nutriologo) => {
+            if (!nutriologo) return;
+            const contact: ChatContact = {
+              id: nutriologo.id!,
+              nombre: nutriologo.nombre,
+              apellidoPaterno: nutriologo.apellidoPaterno,
+              apellidoMaterno: nutriologo.apellidoMaterno,
+            };
+            this.contacts.set([contact]);
+            this.selectContact(contact);
+          },
+        });
+    }
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.shouldScrollToBottom) {
+      this.scrollToBottom();
+      this.shouldScrollToBottom = false;
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.chatService.disconnect();
+  }
+
+  protected selectContact(contact: ChatContact): void {
+    this.selectedContact.set(contact);
+    this.messages.set([]);
+    this.loadHistory(contact);
+  }
+
+  private loadHistory(contact: ChatContact): void {
+    const myId = this.currentUserId();
+    if (!myId) return;
+
+    this.isLoadingHistory.set(true);
+    this.chatService
+      .getChatHistory(myId, contact.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (msgs) => {
+          this.messages.set(msgs);
+          this.isLoadingHistory.set(false);
+          this.shouldScrollToBottom = true;
+        },
+        error: () => this.isLoadingHistory.set(false),
+      });
+  }
+
+  protected send(): void {
+    const content = this.newMessage().trim();
+    const myId = this.currentUserId();
+    const recipient = this.selectedContact();
+
+    if (!content || !myId || !recipient) return;
+
+    const msg: ChatMessageDTO = {
+      chatId: '',
+      senderId: myId,
+      recipientId: recipient.id,
+      content,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.chatService.sendMessage(msg);
+    this.messages.update((prev) => [...prev, msg]);
+    this.newMessage.set('');
+    this.shouldScrollToBottom = true;
+  }
+
+  protected isMine(msg: ChatMessageDTO): boolean {
+    return msg.senderId === this.currentUserId();
+  }
+
+  protected formatTime(timestamp: string): string {
+    const d = new Date(timestamp);
+    return d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  protected onEnter(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.send();
+    }
+  }
+
+  private scrollToBottom(): void {
+    try {
+      const el = this.messagesContainer?.nativeElement;
+      if (el) el.scrollTop = el.scrollHeight;
+    } catch {}
+  }
+
+  protected getInitials(contact: ChatContact): string {
+    const first = contact.nombre?.charAt(0).toUpperCase() ?? '';
+    const last = contact.apellidoPaterno?.charAt(0).toUpperCase() ?? '';
+    return first + last;
+  }
+
+  protected fullName(contact: ChatContact): string {
+    return [contact.nombre, contact.apellidoPaterno, contact.apellidoMaterno]
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  protected updateMessage(value: string): void {
+    this.newMessage.set(value);
+  }
+}

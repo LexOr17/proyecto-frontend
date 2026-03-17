@@ -64,6 +64,12 @@ const mainRoutes: Routes = [
         data: { roles: [UserRole.ADMINISTRADOR] }
       },
       {
+        path: 'chat',
+        loadChildren: () => import('../chat/chat.routes').then(m => m.default),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.NUTRIOLOGO, UserRole.PACIENTE] }
+      },
+      {
         path: '**',
         redirectTo: 'dashboard',
       }

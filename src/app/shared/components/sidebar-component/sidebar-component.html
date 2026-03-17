@@ -104,6 +104,14 @@
                 </a>
             </li>
             }
+            @if (currentUserRole() === 'NUTRIOLOGO' || currentUserRole() === 'PACIENTE') {
+            <li>
+                <a routerLink="/main/chat" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+                    <span class='bx bx-chat' aria-hidden="true"></span>
+                    <span>Chat</span>
+                </a>
+            </li>
+            }
             <li>
                 <button type="button" class="sidebar-logout" (click)="logout()">
                     <span class='bx bx-log-out' aria-hidden="true"></span>
