@@ -1,0 +1,377 @@
+<div class="editor-wrapper">
+
+  <!-- ── Top bar ─────────────────────────────────────────────────────── -->
+  <div class="editor-topbar">
+    <button class="btn-back" type="button" (click)="volver()">
+      <span class="bx bx-arrow-back" aria-hidden="true"></span>
+      Volver
+    </button>
+
+    <div class="plan-meta">
+      <h1 class="plan-titulo">{{ planNombre() }}</h1>
+      <p class="plan-subtitulo">
+        <span class="bx bx-user" aria-hidden="true"></span>
+        {{ pacienteNombre() || 'Cargando...' }}
+        &nbsp;·&nbsp;
+        <span class="bx bx-time" aria-hidden="true"></span>
+        {{ planDuracionDias() }} días
+        &nbsp;·&nbsp; Inicio: {{ formatearFechaInicio() }}
+      </p>
+    </div>
+
+    <div class="topbar-actions">
+      @if (modoCopiaActivo()) {
+        <span class="copia-badge" aria-live="polite">
+          📋 {{ etiquetaCopia() }}
+        </span>
+        <button class="btn-cancel-copy" type="button" (click)="cancelarCopia()">
+          <span class="bx bx-x" aria-hidden="true"></span>
+          Cancelar copia
+        </button>
+      }
+      @if (modoEdicion()) {
+        <button
+          class="btn-danger-outline"
+          type="button"
+          (click)="eliminarPlan()"
+        >
+          <span class="bx bx-trash" aria-hidden="true"></span>
+          Eliminar
+        </button>
+      }
+      <button
+        class="btn-save"
+        type="button"
+        (click)="guardarPlan()"
+        [disabled]="isSaving()"
+      >
+        @if (isSaving()) {
+          <span class="spinner" aria-hidden="true"></span>
+          Guardando...
+        } @else {
+          <span class="bx bx-save" aria-hidden="true"></span>
+          {{ modoEdicion() ? 'Actualizar Plan' : 'Guardar Plan' }}
+        }
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Loading (edit mode) ─────────────────────────────────────────── -->
+  @if (modoEdicion() && planResource.isLoading()) {
+    <div class="loading-state" aria-live="polite">
+      <span class="spinner-lg" aria-hidden="true"></span>
+      Cargando plan...
+    </div>
+  } @else if (diasPlan().length === 0 && !planResource.isLoading()) {
+    <div class="empty-state">
+      <span class="bx bx-calendar-x" aria-hidden="true"></span>
+      <p>No hay días configurados para este plan.</p>
+    </div>
+  } @else {
+
+    <!-- ── Calendar ────────────────────────────────────────────────── -->
+    <div class="table-responsive">
+      <table class="calendario-table" aria-label="Calendario del plan alimenticio">
+        <thead>
+          <tr>
+            <th scope="col" class="th-dia">Día / Fecha</th>
+            @for (horario of HORARIOS; track horario.value) {
+              <th scope="col" class="th-horario">{{ horario.icon }} {{ horario.label }}</th>
+            }
+            <th scope="col" class="th-acciones">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (diaInfo of diasPlan(); track diaInfo.dia) {
+            <tr class="fila-dia">
+
+              <!-- Day cell -->
+              <td class="td-dia">
+                <strong class="dia-num">Día {{ diaInfo.dia }}</strong>
+                <span class="dia-fecha">{{ diaInfo.fechaStr }}</span>
+              </td>
+
+              <!-- Meal cells -->
+              @for (horario of HORARIOS; track horario.value) {
+                <td class="td-comida">
+
+                  @if (getComida(diaInfo.dia, horario.value); as comida) {
+                    <!-- ── Assigned cell ── -->
+                    <div class="celda asignada">
+                      <button
+                        class="celda-btn-editar"
+                        type="button"
+                        (click)="abrirEditorComida(comida)"
+                        [attr.aria-label]="'Editar ' + horario.label + ' del Día ' + diaInfo.dia + ': ' + comida.plantillaNombre"
+                      >
+                        <span class="comida-nombre">{{ comida.plantillaNombre }}</span>
+                        @if (comida.observaciones) {
+                          <span class="comida-nota" title="Observaciones">📝 {{ comida.observaciones }}</span>
+                        } @else {
+                          <span class="comida-kcal">🔥 {{ getKcal(comida.plantillaId) }} kcal</span>
+                        }
+                      </button>
+                      <div class="celda-mini-acciones">
+                        <button
+                          class="btn-mini"
+                          type="button"
+                          (click)="copiarComida(comida, $event)"
+                          title="Copiar esta comida"
+                          aria-label="Copiar comida"
+                        >📄</button>
+                        <button
+                          class="btn-mini btn-mini-danger"
+                          type="button"
+                          (click)="eliminarComidaDirecta(comida, $event)"
+                          title="Quitar comida"
+                          aria-label="Quitar comida"
+                        >✕</button>
+                      </div>
+                    </div>
+
+                  } @else {
+                    <!-- ── Empty cell ── -->
+                    <div class="celda vacia" [class.celda-pasteable]="puedesPegarComida(horario.value)">
+                      <button
+                        class="btn-agregar"
+                        type="button"
+                        (click)="abrirBancoAlimentos(diaInfo.dia, horario.value)"
+                        [attr.aria-label]="'Agregar ' + horario.label + ' al Día ' + diaInfo.dia"
+                      >
+                        <span class="icono-add" aria-hidden="true">+</span>
+                        <span class="add-label">Agregar</span>
+                      </button>
+                      @if (puedesPegarComida(horario.value)) {
+                        <button
+                          class="btn-pegar-comida"
+                          type="button"
+                          (click)="pegarComidaEnCelda(diaInfo.dia, horario.value, $event)"
+                          [attr.aria-label]="'Pegar ' + horario.label + ' en Día ' + diaInfo.dia"
+                        >
+                          📋 Pegar
+                        </button>
+                      }
+                    </div>
+                  }
+
+                </td>
+              }
+
+              <!-- Actions column -->
+              <td class="td-acciones">
+                @if (diaCopiado() === diaInfo.dia) {
+                  <span class="copied-label">✓ Copiado</span>
+                } @else if (diaCopiado() !== null) {
+                  <button
+                    class="btn-pegar-dia"
+                    type="button"
+                    (click)="pegarDia(diaInfo.dia, $event)"
+                    [attr.aria-label]="'Pegar en Día ' + diaInfo.dia"
+                  >
+                    📋 Pegar Día
+                  </button>
+                } @else {
+                  <button
+                    class="btn-copiar-dia"
+                    type="button"
+                    (click)="copiarDia(diaInfo.dia, $event)"
+                    [attr.aria-label]="'Copiar Día ' + diaInfo.dia"
+                  >
+                    📄 Copiar Día
+                  </button>
+                }
+              </td>
+
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── Footer save bar ─────────────────────────────────────────── -->
+    <div class="editor-footer">
+      <span class="comidas-count">
+        <span class="bx bx-receipt" aria-hidden="true"></span>
+        {{ comidas().length }} comida{{ comidas().length !== 1 ? 's' : '' }} programada{{ comidas().length !== 1 ? 's' : '' }}
+      </span>
+      <button
+        class="btn-save btn-save-lg"
+        type="button"
+        (click)="guardarPlan()"
+        [disabled]="isSaving()"
+      >
+        @if (isSaving()) {
+          <span class="spinner" aria-hidden="true"></span>
+          Guardando...
+        } @else {
+          <span class="bx bx-save" aria-hidden="true"></span>
+          {{ modoEdicion() ? 'Actualizar Plan' : 'Guardar Plan' }}
+        }
+      </button>
+    </div>
+
+  }
+
+</div>
+
+
+<!-- ── Modal: Banco de alimentos ────────────────────────────────────── -->
+@if (bancalAbierto()) {
+  <div
+    class="modal-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="banco-titulo"
+    (click)="cerrarBancoAlimentos()"
+  >
+    <div class="modal-content modal-wide" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <div>
+          <h2 id="banco-titulo">
+            @if (celdaActiva(); as celda) {
+              Asignar {{ getLabelHorario(celda.horario) }} · Día {{ celda.diaPlan }}
+            } @else {
+              Banco de Plantillas
+            }
+          </h2>
+          <p class="text-muted">Selecciona una plantilla del catálogo.</p>
+        </div>
+        <button
+          class="close-btn"
+          type="button"
+          (click)="cerrarBancoAlimentos()"
+          aria-label="Cerrar banco de alimentos"
+        >
+          <span class="bx bx-x" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <!-- Search -->
+      <div class="banco-search">
+        <span class="bx bx-search" aria-hidden="true"></span>
+        <input
+          type="text"
+          class="buscador-input"
+          placeholder="Buscar por nombre..."
+          [value]="buscadorTermino()"
+          (input)="onBuscadorChange($event)"
+          aria-label="Buscar plantilla"
+          autocomplete="off"
+        >
+      </div>
+
+      <!-- Filters -->
+      <div class="filtros-horario" role="group" aria-label="Filtrar por tipo de comida">
+        @for (tipo of HORARIOS_FILTRO; track tipo.value) {
+          <button
+            class="chip-filtro"
+            type="button"
+            [class.activo]="filtroTipoComida() === tipo.value"
+            (click)="setFiltroTipoComida(tipo.value)"
+            [attr.aria-pressed]="filtroTipoComida() === tipo.value"
+          >
+            {{ tipo.icon }} {{ tipo.label }}
+          </button>
+        }
+      </div>
+
+      <!-- List -->
+      <div class="plantillas-lista" role="list">
+        @if (plantillasResource.isLoading()) {
+          <p class="text-muted text-center">Cargando plantillas...</p>
+        } @else {
+          @for (plantilla of plantillasFiltradas(); track plantilla.id) {
+            <button
+              class="plantilla-item"
+              type="button"
+              role="listitem"
+              (click)="asignarPlantilla(plantilla)"
+            >
+              <div class="plantilla-nombre">{{ plantilla.nombre }}</div>
+              <div class="plantilla-footer">
+                <span class="plantilla-tipo-badge">{{ plantilla.tipoComida }}</span>
+                <span class="plantilla-kcal-badge">🔥 {{ getKcal(plantilla.id) }} kcal</span>
+              </div>
+            </button>
+          } @empty {
+            <p class="text-muted text-center" role="status">
+              No hay plantillas para este filtro.
+            </p>
+          }
+        }
+      </div>
+
+    </div>
+  </div>
+}
+
+
+<!-- ── Modal: Editar comida ──────────────────────────────────────────── -->
+@if (editModalAbierto()) {
+  <div
+    class="modal-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="edit-comida-titulo"
+    (click)="cerrarEditModal()"
+  >
+    <div class="modal-content" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <div>
+          <h2 id="edit-comida-titulo">
+            @if (comidaEditando(); as comida) {
+              Día {{ comida.diaPlan }} · {{ getLabelHorario(comida.horario) }}
+            } @else {
+              Editar Comida
+            }
+          </h2>
+          @if (comidaEditando(); as comida) {
+            <p class="comida-editando-nombre">{{ comida.plantillaNombre }}</p>
+          }
+        </div>
+        <button
+          class="close-btn"
+          type="button"
+          (click)="cerrarEditModal()"
+          aria-label="Cerrar"
+        >
+          <span class="bx bx-x" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <div class="form-group">
+        <label for="obs-input">Observaciones personalizadas (opcional)</label>
+        <input
+          id="obs-input"
+          type="text"
+          class="form-control"
+          [value]="observacionesEdit()"
+          (input)="onObservacionesChange($event)"
+          placeholder="Ej: Sin sal, porción pequeña..."
+          autocomplete="off"
+        >
+        <small class="form-hint">Esta nota aplica solo para este día y horario específico.</small>
+      </div>
+
+      <div class="modal-actions">
+        <button
+          class="btn-danger-outline"
+          type="button"
+          (click)="eliminarComidaEditando()"
+          style="margin-right: auto;"
+        >
+          <span class="bx bx-trash" aria-hidden="true"></span>
+          Quitar comida
+        </button>
+        <button class="btn-outline" type="button" (click)="cerrarEditModal()">Cancelar</button>
+        <button class="btn-save" type="button" (click)="guardarObservaciones()">
+          <span class="bx bx-check" aria-hidden="true"></span>
+          Guardar
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

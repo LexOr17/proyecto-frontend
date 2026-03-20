@@ -2,9 +2,11 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../services/auth-service';
+import { NotificationService } from '../../shared/service/notification-service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
+  const notificationService = inject(NotificationService);
   const token = authService.token();
 
   // 1. Clonar la petición si existe el token
@@ -24,7 +26,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       // Si el backend nos dice "No autorizado" (Token vencido o inválido)
       if (error.status === 401) {
-        // Ejecutamos el logout del servicio para limpiar el estado y redirigir
+        const message = error.error?.mensaje || 'Sesión expirada. Por favor, inicia sesión de nuevo';
+        notificationService.error(message);
         authService.logout();
       }
 

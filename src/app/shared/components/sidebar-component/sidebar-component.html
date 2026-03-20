@@ -96,6 +96,14 @@
                 </a>
             </li>
             }
+            @if (currentUserRole() === 'NUTRIOLOGO') {
+            <li>
+                <a routerLink="/main/planes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
+                    <span class='bx bx-food-menu' aria-hidden="true"></span>
+                    <span>Planes Alimenticios</span>
+                </a>
+            </li>
+            }
             @if (currentUserRole() === 'ADMINISTRADOR') {
             <li>
                 <a routerLink="/main/restauracion" routerLinkActive="active">

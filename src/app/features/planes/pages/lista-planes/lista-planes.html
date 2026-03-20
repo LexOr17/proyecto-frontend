@@ -1,0 +1,226 @@
+<div class="main-content">
+
+  <!-- ── Header ─────────────────────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="header-title">
+      <h1><span class="bx bx-food-menu" aria-hidden="true"></span> Planes Alimenticios</h1>
+      <p class="subtitle">Crea y gestiona los planes de comida de tus pacientes.</p>
+    </div>
+  </header>
+
+  <!-- ── Loading ────────────────────────────────────────────────────── -->
+  @if (pacientesResource.isLoading()) {
+    <div class="loading-grid" aria-live="polite" aria-label="Cargando pacientes">
+      @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+        <div class="skeleton-card">
+          <div class="skeleton-avatar"></div>
+          <div class="skeleton-lines">
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (pacientesResource.error()) {
+    <div class="error-state" role="alert">
+      <span class="bx bx-error-circle" aria-hidden="true"></span>
+      <p>Error al cargar los pacientes. Intenta recargar la página.</p>
+    </div>
+  } @else {
+
+    <!-- ── Patient grid ─────────────────────────────────────────────── -->
+    <div class="pacientes-grid">
+      @for (paciente of pacientesResource.value()?.content ?? []; track paciente.id; let idx = $index) {
+        <article class="patient-card">
+
+          <!-- Card header -->
+          <div class="patient-card-top">
+            <div
+              class="avatar"
+              [style.backgroundColor]="obtenerColorAvatar(paciente.id ?? idx).bg"
+              [style.color]="obtenerColorAvatar(paciente.id ?? idx).text"
+              aria-hidden="true"
+            >
+              {{ obtenerIniciales(paciente) }}
+            </div>
+            <div class="patient-details">
+              <h2 class="patient-name">{{ getNombreCompleto(paciente) }}</h2>
+              <p class="patient-email">{{ paciente.correo }}</p>
+              <p class="patient-phone">
+                <span class="bx bx-phone" aria-hidden="true"></span>
+                {{ paciente.telefono }}
+              </p>
+            </div>
+            <button
+              class="btn-nuevo-plan"
+              type="button"
+              (click)="abrirModal(paciente)"
+              [attr.aria-label]="'Crear nuevo plan para ' + paciente.nombre"
+            >
+              <span class="bx bx-plus" aria-hidden="true"></span>
+              Nuevo Plan
+            </button>
+          </div>
+
+          <!-- Plans section -->
+          <div class="patient-plans-section">
+            <h3 class="plans-label">
+              <span class="bx bx-calendar-check" aria-hidden="true"></span>
+              Planes activos
+            </h3>
+
+            @if (isPatientLoading(paciente.id!)) {
+              <div class="plans-loading" aria-live="polite">
+                <span class="spinner" aria-hidden="true"></span>
+                Cargando planes...
+              </div>
+            } @else {
+              @let planes = getPatientPlans(paciente.id!);
+              @if (planes.length > 0) {
+                <ul class="planes-lista" aria-label="Planes del paciente">
+                  @for (plan of planes; track plan.id) {
+                    <li class="plan-chip">
+                      <button
+                        class="plan-chip-btn"
+                        type="button"
+                        (click)="irAEditorPlan(plan.id)"
+                        [attr.aria-label]="'Editar plan ' + plan.nombre"
+                      >
+                        <span class="bx bx-calendar" aria-hidden="true"></span>
+                        <span class="plan-chip-nombre">{{ plan.nombre }}</span>
+                        <span class="plan-chip-fecha">{{ formatearFecha(plan.fechaInicio) }} · {{ plan.duracionDias }}d</span>
+                      </button>
+                      <button
+                        class="plan-chip-delete"
+                        type="button"
+                        (click)="eliminarPlan(plan, paciente.id!, $event)"
+                        [disabled]="isDeletingPlan() === plan.id"
+                        [attr.aria-label]="'Eliminar plan ' + plan.nombre"
+                        title="Eliminar plan"
+                      >
+                        <span class="bx bx-trash" aria-hidden="true"></span>
+                      </button>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="no-planes">No hay planes creados aún.</p>
+              }
+            }
+          </div>
+        </article>
+      }
+    </div>
+
+    <!-- ── Pagination ───────────────────────────────────────────────── -->
+    @if ((pacientesResource.value()?.totalPages ?? 0) > 1) {
+      <app-pagination
+        [currentPage]="currentPage()"
+        [totalPages]="pacientesResource.value()?.totalPages ?? 0"
+        [totalElements]="pacientesResource.value()?.totalElements ?? 0"
+        [pageSize]="pageSize()"
+        (pageChange)="onPageChange($event)"
+      />
+    }
+
+  }
+
+</div>
+
+<!-- ── Modal: Crear nuevo plan ──────────────────────────────────────── -->
+@if (modalAbierto()) {
+  <div
+    class="modal-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-crear-titulo"
+    (click)="cerrarModal()"
+  >
+    <div class="modal-content" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <h2 id="modal-crear-titulo">Crear Nuevo Plan</h2>
+        <button
+          class="close-btn"
+          type="button"
+          (click)="cerrarModal()"
+          aria-label="Cerrar"
+        >
+          <span class="bx bx-x" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+        <div class="form-group">
+          <label>Paciente</label>
+          <input
+            type="text"
+            class="form-control"
+            [value]="pacienteModal() ? getNombreCompleto(pacienteModal()!) : ''"
+            readonly
+            aria-readonly="true"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="modal-plan-nombre">Nombre del Plan <span aria-hidden="true">*</span></label>
+          <input
+            id="modal-plan-nombre"
+            type="text"
+            class="form-control"
+            [class.invalid]="form.get('nombre')?.invalid && form.get('nombre')?.touched"
+            formControlName="nombre"
+            placeholder="Ej: Plan Descenso Fase 1"
+            autocomplete="off"
+          >
+          @if (form.get('nombre')?.touched && form.get('nombre')?.hasError('required')) {
+            <span class="error-msg" role="alert">El nombre del plan es obligatorio</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="modal-plan-fecha">Fecha de Inicio <span aria-hidden="true">*</span></label>
+          <input
+            id="modal-plan-fecha"
+            type="date"
+            class="form-control"
+            [class.invalid]="form.get('fechaInicio')?.invalid && form.get('fechaInicio')?.touched"
+            formControlName="fechaInicio"
+          >
+          @if (form.get('fechaInicio')?.touched && form.get('fechaInicio')?.hasError('required')) {
+            <span class="error-msg" role="alert">La fecha de inicio es obligatoria</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="modal-plan-duracion">Duración (días) <span aria-hidden="true">*</span></label>
+          <input
+            id="modal-plan-duracion"
+            type="number"
+            class="form-control"
+            [class.invalid]="form.get('duracionDias')?.invalid && form.get('duracionDias')?.touched"
+            formControlName="duracionDias"
+            min="1"
+            max="90"
+          >
+          @if (form.get('duracionDias')?.touched && form.get('duracionDias')?.hasError('required')) {
+            <span class="error-msg" role="alert">La duración es obligatoria</span>
+          }
+          @if (form.get('duracionDias')?.touched && form.get('duracionDias')?.hasError('min')) {
+            <span class="error-msg" role="alert">La duración mínima es 1 día</span>
+          }
+          @if (form.get('duracionDias')?.touched && form.get('duracionDias')?.hasError('max')) {
+            <span class="error-msg" role="alert">La duración máxima es 90 días</span>
+          }
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-outline" (click)="cerrarModal()">Cancelar</button>
+          <button type="submit" class="btn-primary">Generar Calendario →</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+}

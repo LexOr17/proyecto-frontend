@@ -36,6 +36,8 @@ export class AuthService {
     localStorage.getItem(this.USER_ID_KEY) ? Number(localStorage.getItem(this.USER_ID_KEY)) : null
   );
 
+  private _isLoggingOut = false;
+
   // 2. Estado Público (Solo Lectura para los componentes)
   public readonly token = this._token.asReadonly();
   public readonly currentUserRole = this._currentUserRole.asReadonly();
@@ -70,6 +72,9 @@ export class AuthService {
   }
 
   logout() {
+    if (this._isLoggingOut) return;
+    this._isLoggingOut = true;
+
     // 1. Limpiar estado reactivo
     this._token.set(null);
     this._currentUserRole.set(null);
@@ -85,7 +90,9 @@ export class AuthService {
     localStorage.removeItem(this.USER_ID_KEY);
 
     // 3. Redirigir
-    this.router.navigate(['/auth/login']);
+    this.router.navigate(['/auth/login']).then(() => {
+      this._isLoggingOut = false;
+    });
   }
 
   recoverPassword(email: string): Observable<ApiResponse<string>> {
@@ -99,6 +106,7 @@ export class AuthService {
 
   private setSession(token: string, role: UserRole, nombre: string, apellidos: string, id: string) {
     const userId = Number(id);
+    this._isLoggingOut = false;
 
     // Actualizamos Signals
     this._token.set(token);
