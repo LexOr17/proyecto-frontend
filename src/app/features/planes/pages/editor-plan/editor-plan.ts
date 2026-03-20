@@ -111,6 +111,9 @@ export class EditorPlan {
   protected celdaActiva = signal<{ diaPlan: number; horario: TipoComida } | null>(null);
   protected buscadorTermino = signal('');
   protected filtroTipoComida = signal<TipoComida | 'TODOS'>('TODOS');
+  // Confirmation step inside the banco modal
+  protected plantillaSeleccionada = signal<Plantilla | null>(null);
+  protected observacionesBanco = signal('');
 
   // ─── Edit meal modal ──────────────────────────────────────────────────
   protected editModalAbierto = signal(false);
@@ -236,18 +239,33 @@ export class EditorPlan {
     this.celdaActiva.set({ diaPlan, horario });
     this.filtroTipoComida.set(horario);
     this.buscadorTermino.set('');
+    this.plantillaSeleccionada.set(null);
+    this.observacionesBanco.set('');
     this.bancalAbierto.set(true);
   }
 
-  protected asignarPlantilla(plantilla: Plantilla): void {
+  /** Step 1: user picks a plantilla — show confirmation panel */
+  protected seleccionarPlantilla(plantilla: Plantilla): void {
+    this.plantillaSeleccionada.set(plantilla);
+    this.observacionesBanco.set('');
+  }
+
+  protected volverALista(): void {
+    this.plantillaSeleccionada.set(null);
+    this.observacionesBanco.set('');
+  }
+
+  /** Step 2: confirm and actually assign */
+  protected confirmarAsignacion(): void {
     const celda = this.celdaActiva();
-    if (!celda) return;
+    const plantilla = this.plantillaSeleccionada();
+    if (!celda || !plantilla) return;
     const nuevaComida: ComidaLocal = {
       plantillaId: plantilla.id,
       plantillaNombre: plantilla.nombre,
       diaPlan: celda.diaPlan,
       horario: celda.horario,
-      observaciones: '',
+      observaciones: this.observacionesBanco().trim(),
     };
     this.comidas.update(comidas => [
       ...comidas.filter(c => !(c.diaPlan === celda.diaPlan && c.horario === celda.horario)),
@@ -255,11 +273,15 @@ export class EditorPlan {
     ]);
     this.bancalAbierto.set(false);
     this.celdaActiva.set(null);
+    this.plantillaSeleccionada.set(null);
+    this.observacionesBanco.set('');
   }
 
   protected cerrarBancoAlimentos(): void {
     this.bancalAbierto.set(false);
     this.celdaActiva.set(null);
+    this.plantillaSeleccionada.set(null);
+    this.observacionesBanco.set('');
   }
 
   protected setFiltroTipoComida(filtro: TipoComida | 'TODOS'): void {
@@ -268,6 +290,10 @@ export class EditorPlan {
 
   protected onBuscadorChange(event: Event): void {
     this.buscadorTermino.set((event.target as HTMLInputElement).value);
+  }
+
+  protected onObservacionesBancoChange(event: Event): void {
+    this.observacionesBanco.set((event.target as HTMLInputElement).value);
   }
 
   // ─── Edit meal modal ──────────────────────────────────────────────────

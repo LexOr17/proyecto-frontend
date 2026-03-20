@@ -64,6 +64,12 @@ const mainRoutes: Routes = [
         data: { roles: [UserRole.PACIENTE] }
       },
       {
+        path: 'mis-planes',
+        loadChildren: () => import('../planes/mis-planes.routes').then(m => m.default),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.PACIENTE] }
+      },
+      {
         path: 'restauracion',
         loadChildren: () => import('../backup/backup.routes').then(m => m.backupRoutes),
         canMatch: [authGuard],

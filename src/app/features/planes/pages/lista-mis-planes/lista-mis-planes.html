@@ -1,0 +1,86 @@
+<div class="page-wrapper">
+
+  <!-- ── Header ─────────────────────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="header-top">
+      <div class="greeting-box">
+        <h1>Hola, {{ userName() }} ✨</h1>
+        <p>Estos son tus planes alimenticios.</p>
+      </div>
+      <div class="avatar-badge" aria-hidden="true">{{ userInitials() }}</div>
+    </div>
+  </header>
+
+  <!-- ── Content ───────────────────────────────────────────────────── -->
+  <main class="main-container">
+
+    @if (planesResource.isLoading()) {
+      <div class="loading-state" aria-live="polite" aria-label="Cargando planes">
+        @for (i of [1, 2, 3]; track i) {
+          <div class="skeleton-card">
+            <div class="sk-title"></div>
+            <div class="sk-subtitle"></div>
+            <div class="sk-bar"></div>
+          </div>
+        }
+      </div>
+
+    } @else if (planesResource.error()) {
+      <div class="empty-state" role="alert">
+        <span class="empty-icon">⚠️</span>
+        <h2>Error al cargar</h2>
+        <p>No pudimos obtener tus planes. Intenta recargar la página.</p>
+      </div>
+
+    } @else if (planesOrdenados().length === 0) {
+      <div class="empty-state">
+        <span class="empty-icon">🥗</span>
+        <h2>Sin planes por ahora</h2>
+        <p>Tu nutriólogo todavía no ha creado ningún plan alimenticio para ti.</p>
+      </div>
+
+    } @else {
+      <ul class="planes-lista" aria-label="Mis planes alimenticios">
+        @for (plan of planesOrdenados(); track plan.id) {
+          @let progreso = calcularProgreso(plan);
+          @let activo = esPlanActivo(plan);
+
+          <li>
+            <button
+              class="plan-card"
+              type="button"
+              (click)="verPlan(plan)"
+              [attr.aria-label]="'Ver plan ' + plan.nombre"
+            >
+              <div class="plan-card-top">
+                <div class="plan-icon" aria-hidden="true">🥗</div>
+                <div class="plan-info">
+                  <div class="plan-name-row">
+                    <span class="plan-nombre">{{ plan.nombre }}</span>
+                    @if (activo) {
+                      <span class="badge-activo">Activo</span>
+                    }
+                  </div>
+                  <p class="plan-fecha">Inicio: {{ formatearFecha(plan.fechaInicio) }}</p>
+                  <p class="plan-duracion">{{ plan.duracionDias }} días · Día {{ progreso.diaActual }} de {{ plan.duracionDias }}</p>
+                </div>
+                <span class="bx bx-chevron-right chevron" aria-hidden="true"></span>
+              </div>
+
+              <div class="progreso-bar-wrapper" aria-hidden="true">
+                <div
+                  class="progreso-bar"
+                  [class.activo]="activo"
+                  [style.width.%]="progreso.porcentaje"
+                ></div>
+              </div>
+              <p class="progreso-pct">{{ progreso.porcentaje }}% completado</p>
+
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+  </main>
+</div>

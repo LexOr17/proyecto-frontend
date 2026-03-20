@@ -1,0 +1,168 @@
+<div class="page-wrapper">
+
+  <!-- ── Header ─────────────────────────────────────────────────────── -->
+  <header class="page-header">
+    <button class="btn-back" type="button" (click)="volver()" aria-label="Volver a mis planes">
+      <span class="bx bx-arrow-back" aria-hidden="true"></span>
+    </button>
+
+    <div class="header-top">
+      <div class="greeting-box">
+        <h1>Hola, {{ userName() }} ✨</h1>
+        <p>Aquí tienes tu menú de hoy.</p>
+      </div>
+      <div class="avatar-badge" aria-hidden="true">{{ userInitials() }}</div>
+    </div>
+
+    @if (planResource.value(); as plan) {
+      <div class="plan-summary">
+        <div class="plan-icon" aria-hidden="true">🥗</div>
+        <div class="plan-info">
+          <h2>{{ plan.nombre }}</h2>
+          <p>Día {{ diaSeleccionado() }} de {{ plan.duracionDias }}</p>
+        </div>
+      </div>
+    } @else if (planResource.isLoading()) {
+      <div class="plan-summary skeleton-summary">
+        <div class="sk-icon"></div>
+        <div class="sk-lines">
+          <div class="sk-line"></div>
+          <div class="sk-line short"></div>
+        </div>
+      </div>
+    }
+  </header>
+
+  @if (planResource.isLoading()) {
+
+    <!-- ── Skeleton ─────────────────────────────────────────────────── -->
+    <div class="days-wrapper" aria-hidden="true">
+      <div class="days-container">
+        @for (i of [1,2,3,4,5,6,7]; track i) {
+          <div class="day-bubble sk-bubble"></div>
+        }
+      </div>
+    </div>
+    <div class="meals-container">
+      @for (i of [1,2,3]; track i) {
+        <div class="meal-card sk-meal-card">
+          <div class="sk-tag"></div>
+          <div class="sk-line sk-long"></div>
+          <div class="sk-line sk-med"></div>
+          <div class="sk-line sk-med"></div>
+        </div>
+      }
+    </div>
+
+  } @else if (planResource.error()) {
+
+    <div class="empty-state" role="alert">
+      <span class="empty-icon">⚠️</span>
+      <h3>No pudimos cargar el plan</h3>
+      <p>Intenta volver e intentarlo de nuevo.</p>
+    </div>
+
+  } @else {
+
+    <!-- ── Day bubbles ───────────────────────────────────────────────── -->
+    <div class="days-wrapper">
+      <div class="days-container" role="list" aria-label="Selector de día">
+        @for (diaInfo of diasPlan(); track diaInfo.dia) {
+          <button
+            class="day-bubble"
+            type="button"
+            role="listitem"
+            [class.active]="diaSeleccionado() === diaInfo.dia"
+            (click)="seleccionarDia(diaInfo.dia)"
+            [attr.aria-label]="'Día ' + diaInfo.dia + ', ' + diaInfo.diaSemana + ' ' + diaInfo.numeroDia"
+            [attr.aria-pressed]="diaSeleccionado() === diaInfo.dia"
+          >
+            <span class="d-name">{{ diaInfo.diaSemana }}</span>
+            <span class="d-num">{{ diaInfo.numeroDia }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- ── Meals ─────────────────────────────────────────────────────── -->
+    <main class="meals-container">
+
+      <div class="date-divider" aria-live="polite">
+        📅 {{ fechaDiaActual() }}
+      </div>
+
+      @if (comidasDelDia().length === 0) {
+        <div class="empty-state">
+          <span class="empty-icon">🧘‍♀️</span>
+          <h3>Día de descanso</h3>
+          <p>No tienes comidas asignadas en tu plan para este día.</p>
+        </div>
+      } @else {
+        @for (comida of comidasDelDia(); track comida.id) {
+          @let config = MEAL_CONFIG[comida.horario];
+          <article
+            class="meal-card"
+            [attr.data-type]="comida.horario"
+            [attr.aria-label]="config.label + ': ' + comida.plantillaNombre"
+          >
+            <div class="meal-visual">
+              @if (getImagenPrincipal(comida.plantillaId); as imagen) {
+                <img
+                  class="meal-image"
+                  [src]="imagen"
+                  [alt]="'Imagen de referencia de ' + comida.plantillaNombre"
+                  loading="lazy"
+                >
+              } @else {
+                <div class="meal-image-placeholder" aria-hidden="true">
+                  <span>{{ config.emoji }}</span>
+                </div>
+              }
+
+              <div class="meal-visual-overlay">
+                <div class="meal-tag">
+                  <span aria-hidden="true">{{ config.emoji }}</span>
+                  {{ config.label }}
+                </div>
+
+                @if (getCantidadImagenes(comida.plantillaId) > 1) {
+                  <span class="meal-image-count">+{{ getCantidadImagenes(comida.plantillaId) - 1 }} imágenes</span>
+                }
+              </div>
+            </div>
+
+            <div class="meal-tag">
+              <span aria-hidden="true">{{ config.emoji }}</span>
+              {{ config.label }}
+            </div>
+
+            <div class="meal-header-row">
+              <h2 class="meal-title">{{ comida.plantillaNombre }}</h2>
+              @if (getKcal(comida.plantillaId); as kcal) {
+                @if (kcal > 0) {
+                  <span class="meal-calories">{{ kcal }} cal</span>
+                }
+              }
+            </div>
+
+            @if (getDescripcion(comida.plantillaId); as desc) {
+              @if (desc) {
+                <p class="meal-desc">{{ desc }}</p>
+              }
+            }
+
+            @if (comida.observaciones) {
+              <div class="meal-notes" role="note">
+                <span aria-hidden="true" style="font-size: 1.2rem; flex-shrink: 0;">💡</span>
+                <p>{{ comida.observaciones }}</p>
+              </div>
+            }
+          </article>
+        }
+      }
+
+    </main>
+
+  }
+
+</div>

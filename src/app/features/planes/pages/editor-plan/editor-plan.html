@@ -247,60 +247,111 @@
         </button>
       </div>
 
-      <!-- Search -->
-      <div class="banco-search">
-        <span class="bx bx-search" aria-hidden="true"></span>
-        <input
-          type="text"
-          class="buscador-input"
-          placeholder="Buscar por nombre..."
-          [value]="buscadorTermino()"
-          (input)="onBuscadorChange($event)"
-          aria-label="Buscar plantilla"
-          autocomplete="off"
-        >
-      </div>
+      @if (plantillaSeleccionada(); as p) {
+        <!-- Step 2: confirmation + observations -->
+        <div class="banco-confirmar">
+          <div class="banco-confirmar-card">
+            <span class="bx bx-bowl-hot banco-confirmar-icon" aria-hidden="true"></span>
+            <div class="banco-confirmar-info">
+              <p class="banco-confirmar-nombre">{{ p.nombre }}</p>
+              <p class="banco-confirmar-meta">
+                <span class="plantilla-tipo-badge">{{ p.tipoComida }}</span>
+                <span class="plantilla-kcal-badge">🔥 {{ getKcal(p.id) }} kcal</span>
+              </p>
+            </div>
+          </div>
 
-      <!-- Filters -->
-      <div class="filtros-horario" role="group" aria-label="Filtrar por tipo de comida">
-        @for (tipo of HORARIOS_FILTRO; track tipo.value) {
-          <button
-            class="chip-filtro"
-            type="button"
-            [class.activo]="filtroTipoComida() === tipo.value"
-            (click)="setFiltroTipoComida(tipo.value)"
-            [attr.aria-pressed]="filtroTipoComida() === tipo.value"
-          >
-            {{ tipo.icon }} {{ tipo.label }}
-          </button>
-        }
-      </div>
+          <div class="form-group">
+            <label for="banco-obs-input" class="form-label">
+              Observaciones <span class="label-optional">(opcional)</span>
+            </label>
+            <textarea
+              id="banco-obs-input"
+              class="form-control"
+              rows="3"
+              placeholder="Ej: Sin sal, porción reducida…"
+              [value]="observacionesBanco()"
+              (input)="onObservacionesBancoChange($event)"
+              aria-label="Observaciones para esta comida"
+            ></textarea>
+          </div>
 
-      <!-- List -->
-      <div class="plantillas-lista" role="list">
-        @if (plantillasResource.isLoading()) {
-          <p class="text-muted text-center">Cargando plantillas...</p>
-        } @else {
-          @for (plantilla of plantillasFiltradas(); track plantilla.id) {
+          <div class="banco-confirmar-actions">
             <button
-              class="plantilla-item"
               type="button"
-              role="listitem"
-              (click)="asignarPlantilla(plantilla)"
+              class="btn btn-secondary"
+              (click)="volverALista()"
             >
-              <div class="plantilla-nombre">{{ plantilla.nombre }}</div>
-              <div class="plantilla-footer">
-                <span class="plantilla-tipo-badge">{{ plantilla.tipoComida }}</span>
-                <span class="plantilla-kcal-badge">🔥 {{ getKcal(plantilla.id) }} kcal</span>
-              </div>
+              <span class="bx bx-arrow-back" aria-hidden="true"></span>
+              Volver
             </button>
-          } @empty {
-            <p class="text-muted text-center" role="status">
-              No hay plantillas para este filtro.
-            </p>
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="confirmarAsignacion()"
+            >
+              <span class="bx bx-check" aria-hidden="true"></span>
+              Confirmar
+            </button>
+          </div>
+        </div>
+      } @else {
+        <!-- Step 1: search + list -->
+        <!-- Search -->
+        <div class="banco-search">
+          <span class="bx bx-search" aria-hidden="true"></span>
+          <input
+            type="text"
+            class="buscador-input"
+            placeholder="Buscar por nombre..."
+            [value]="buscadorTermino()"
+            (input)="onBuscadorChange($event)"
+            aria-label="Buscar plantilla"
+            autocomplete="off"
+          >
+        </div>
+
+        <!-- Filters -->
+        <div class="filtros-horario" role="group" aria-label="Filtrar por tipo de comida">
+          @for (tipo of HORARIOS_FILTRO; track tipo.value) {
+            <button
+              class="chip-filtro"
+              type="button"
+              [class.activo]="filtroTipoComida() === tipo.value"
+              (click)="setFiltroTipoComida(tipo.value)"
+              [attr.aria-pressed]="filtroTipoComida() === tipo.value"
+            >
+              {{ tipo.icon }} {{ tipo.label }}
+            </button>
           }
-        }
-      </div>
+        </div>
+
+        <!-- List -->
+        <div class="plantillas-lista" role="list">
+          @if (plantillasResource.isLoading()) {
+            <p class="text-muted text-center">Cargando plantillas...</p>
+          } @else {
+            @for (plantilla of plantillasFiltradas(); track plantilla.id) {
+              <button
+                class="plantilla-item"
+                type="button"
+                role="listitem"
+                (click)="seleccionarPlantilla(plantilla)"
+              >
+                <div class="plantilla-nombre">{{ plantilla.nombre }}</div>
+                <div class="plantilla-footer">
+                  <span class="plantilla-tipo-badge">{{ plantilla.tipoComida }}</span>
+                  <span class="plantilla-kcal-badge">🔥 {{ getKcal(plantilla.id) }} kcal</span>
+                </div>
+              </button>
+            } @empty {
+              <p class="text-muted text-center" role="status">
+                No hay plantillas para este filtro.
+              </p>
+            }
+          }
+        </div>
+      }
 
     </div>
   </div>

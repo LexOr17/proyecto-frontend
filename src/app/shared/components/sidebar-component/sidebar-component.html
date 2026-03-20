@@ -69,6 +69,12 @@
                     <span>Mis Citas</span>
                 </a>
             </li>
+            <li>
+                <a routerLink="/main/mis-planes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
+                    <span class='bx bx-food-menu' aria-hidden="true"></span>
+                    <span>Mis Planes</span>
+                </a>
+            </li>
             }
             @if (currentUserRole() === 'ADMINISTRADOR' || currentUserRole() === 'NUTRIOLOGO') {
             <li>
