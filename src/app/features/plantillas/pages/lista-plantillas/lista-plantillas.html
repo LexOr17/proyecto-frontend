@@ -20,19 +20,6 @@
       @for (plantilla of plantillasResource.value()?.content ?? []; track plantilla.id) {
       <article class="plantilla-card" role="listitem">
 
-        @let imgs = getAlimentosConImagen(plantilla.alimentos);
-        @if (imgs.length > 0) {
-          <div class="image-rotator" aria-hidden="true">
-            @for (alimento of imgs; track alimento.id; let i = $index) {
-              <img
-                [src]="alimento.imagenUrl!"
-                [alt]="alimento.nombre"
-                class="rotator-img"
-                [class.active]="i === getActiveImageIndex(imgs.length)">
-            }
-          </div>
-        }
-
         <div class="card-header">
           <div class="tipo-badge">
             <span aria-hidden="true">{{ obtenerIconTipo(plantilla.tipoComida) }}</span>
@@ -47,35 +34,34 @@
 
         <p class="card-alimentos">
           <strong>Alimentos:</strong>
-          @if (plantilla.alimentos.length > 0) {
-            {{ plantilla.alimentos[0].nombre }}
-            @if (plantilla.alimentos.length > 1) {
-              , {{ plantilla.alimentos[1].nombre }}
+          @if (plantilla.detalles.length > 0) {
+            {{ plantilla.detalles[0].nombreAlimento }}
+            @if (plantilla.detalles.length > 1) {
+              , {{ plantilla.detalles[1].nombreAlimento }}
             }
-            @if (plantilla.alimentos.length > 2) {
-              <span class="more-label"> +{{ plantilla.alimentos.length - 2 }} más</span>
+            @if (plantilla.detalles.length > 2) {
+              <span class="more-label"> +{{ plantilla.detalles.length - 2 }} más</span>
             }
           } @else {
             <em>Sin alimentos</em>
           }
         </p>
 
-        @let totales = calcularTotales(plantilla.alimentos);
         <div class="card-macros">
           <div class="macro-item macro-cal">
-            <span class="macro-value">{{ totales.calorias }}</span>
+            <span class="macro-value">{{ plantilla.totalCalorias | number: '1.0-0' }}</span>
             <span class="macro-label">kcal</span>
           </div>
           <div class="macro-item macro-p">
-            <span class="macro-value">{{ totales.proteina }}g</span>
+            <span class="macro-value">{{ plantilla.totalProteinas | number: '1.1-1' }}g</span>
             <span class="macro-label">Prot</span>
           </div>
           <div class="macro-item macro-c">
-            <span class="macro-value">{{ totales.carbohidratos }}g</span>
+            <span class="macro-value">{{ plantilla.totalCarbohidratos | number: '1.1-1' }}g</span>
             <span class="macro-label">Carbs</span>
           </div>
           <div class="macro-item macro-g">
-            <span class="macro-value">{{ totales.grasas }}g</span>
+            <span class="macro-value">{{ plantilla.totalGrasas | number: '1.1-1' }}g</span>
             <span class="macro-label">Grasas</span>
           </div>
         </div>

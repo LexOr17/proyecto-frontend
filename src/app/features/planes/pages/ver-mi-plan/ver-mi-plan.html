@@ -2,16 +2,15 @@
 
   <!-- ── Header ─────────────────────────────────────────────────────── -->
   <header class="page-header">
-    <button class="btn-back" type="button" (click)="volver()" aria-label="Volver a mis planes">
-      <span class="bx bx-arrow-back" aria-hidden="true"></span>
-    </button>
-
     <div class="header-top">
       <div class="greeting-box">
         <h1>Hola, {{ userName() }} ✨</h1>
         <p>Aquí tienes tu menú de hoy.</p>
       </div>
-      <div class="avatar-badge" aria-hidden="true">{{ userInitials() }}</div>
+      <button class="btn-back" type="button" (click)="volver()" aria-label="Volver a mis planes">
+        <span class="bx bx-arrow-back" aria-hidden="true"></span>
+        <span>Mis planes</span>
+      </button>
     </div>
 
     @if (planResource.value(); as plan) {

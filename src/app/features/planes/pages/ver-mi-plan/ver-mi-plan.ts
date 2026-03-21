@@ -136,24 +136,22 @@ export class VerMiPlan {
   // ─── Helpers ──────────────────────────────────────────────────────────
   protected getKcal(plantillaId: number): number {
     const p = this.plantillasMap().get(plantillaId);
-    return p ? p.alimentos.reduce((sum, a) => sum + a.calorias, 0) : 0;
+    return p ? p.totalCalorias : 0;
   }
 
-  protected getImagenPrincipal(plantillaId: number): string | null {
-    const p = this.plantillasMap().get(plantillaId);
-    return p?.alimentos.find(a => !!a.imagenUrl)?.imagenUrl ?? null;
+  protected getImagenPrincipal(_plantillaId: number): string | null {
+    return null;
   }
 
-  protected getCantidadImagenes(plantillaId: number): number {
-    const p = this.plantillasMap().get(plantillaId);
-    return p?.alimentos.filter(a => !!a.imagenUrl).length ?? 0;
+  protected getCantidadImagenes(_plantillaId: number): number {
+    return 0;
   }
 
   protected getDescripcion(plantillaId: number): string {
     const p = this.plantillasMap().get(plantillaId);
-    if (!p || p.alimentos.length === 0) return '';
-    return p.alimentos
-      .map(a => `${a.nombre} (${a.porcionBase}\u00a0${a.unidadPorcion})`)
+    if (!p || p.detalles.length === 0) return '';
+    return p.detalles
+      .map(d => `${d.nombreAlimento} (${d.cantidad}\u00a0${d.unidadPorcion})`)
       .join(' · ');
   }
 

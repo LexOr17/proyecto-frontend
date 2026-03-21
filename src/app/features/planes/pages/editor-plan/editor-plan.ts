@@ -147,7 +147,7 @@ export class EditorPlan {
   private readonly kcalById = computed(() => {
     const m = new Map<number, number>();
     for (const p of (this.plantillasResource.value()?.content ?? [])) {
-      m.set(p.id, p.alimentos.reduce((sum, a) => sum + a.calorias, 0));
+      m.set(p.id, p.totalCalorias);
     }
     return m;
   });

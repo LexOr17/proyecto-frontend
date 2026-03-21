@@ -1,5 +1,4 @@
-import {
-  ChangeDetectionStrategy,
+import { ChangeDetectionStrategy,
   Component,
   computed,
   DestroyRef,
@@ -10,10 +9,10 @@ import {
 import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { forkJoin, map } from 'rxjs';
 import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlimentoService } from '../../../alimentos/service/alimento-service';
 import { PlantillaService } from '../../service/plantilla-service';
-import { AuthService } from '../../../../core/services/auth-service';
 import { NotificationService } from '../../../../shared/service/notification-service';
 import { Alimento, CATEGORIAS_ALIMENTO } from '../../../alimentos/interfaces/alimento.interface';
 import { TIPOS_COMIDA, TipoComida } from '../../interfaces/plantilla.interface';
@@ -36,7 +35,6 @@ export class EditarPlantilla {
   private readonly fb = inject(FormBuilder);
   private readonly alimentoService = inject(AlimentoService);
   private readonly plantillaService = inject(PlantillaService);
-  private readonly authService = inject(AuthService);
   private readonly notificationService = inject(NotificationService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -119,17 +117,20 @@ export class EditarPlantilla {
         tipoComida: plantilla.tipoComida,
       });
 
-      // Reconstruct items with quantities from the flat alimentos list
-      const result: ItemPlantilla[] = [];
-      for (const alimento of plantilla.alimentos) {
-        const existing = result.find((i) => i.alimento.id === alimento.id);
-        if (existing) {
-          existing.cantidad++;
-        } else {
-          result.push({ alimento, cantidad: 1 });
-        }
+      if (plantilla.detalles.length === 0) {
+        this.items.set([]);
+        return;
       }
-      this.items.set(result);
+
+      forkJoin(
+        plantilla.detalles.map((detalle) =>
+          this.alimentoService.obtenerAlimentoPorId(detalle.alimentoId).pipe(
+            map((alimento) => ({ alimento: alimento!, cantidad: Number(detalle.cantidad) }))
+          )
+        )
+      )
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((items) => this.items.set(items));
     });
   }
 
@@ -191,24 +192,17 @@ export class EditarPlantilla {
       this.notificationService.warning('Agrega al menos un alimento a la plantilla');
       return;
     }
-    const userId = this.authService.userId();
-    if (!userId) {
-      this.notificationService.error('No se pudo identificar al usuario actual');
-      return;
-    }
 
     this.isSubmitting.set(true);
     const { nombre, tipoComida } = this.plantillaForm.getRawValue();
 
-    const alimentoIds: number[] = [];
-    for (const item of this.items()) {
-      for (let i = 0; i < item.cantidad; i++) {
-        alimentoIds.push(item.alimento.id!);
-      }
-    }
+    const alimentos = this.items().map((item) => ({
+      alimentoId: item.alimento.id!,
+      cantidad: item.cantidad,
+    }));
 
     this.plantillaService
-      .actualizarPlantilla(this.plantillaId, { nombre, tipoComida, usuarioId: userId, alimentoIds })
+      .actualizarPlantilla(this.plantillaId, { nombre, tipoComida, alimentos })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {

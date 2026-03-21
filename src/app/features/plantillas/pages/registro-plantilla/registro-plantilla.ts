@@ -12,7 +12,6 @@ import { Router, RouterLink } from '@angular/router';
 import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlimentoService } from '../../../alimentos/service/alimento-service';
 import { PlantillaService } from '../../service/plantilla-service';
-import { AuthService } from '../../../../core/services/auth-service';
 import { NotificationService } from '../../../../shared/service/notification-service';
 import { Alimento, CATEGORIAS_ALIMENTO } from '../../../alimentos/interfaces/alimento.interface';
 import { TIPOS_COMIDA, TipoComida } from '../../interfaces/plantilla.interface';
@@ -35,7 +34,6 @@ export class RegistroPlantilla {
   private readonly fb = inject(FormBuilder);
   private readonly alimentoService = inject(AlimentoService);
   private readonly plantillaService = inject(PlantillaService);
-  private readonly authService = inject(AuthService);
   private readonly notificationService = inject(NotificationService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -163,24 +161,17 @@ export class RegistroPlantilla {
       this.notificationService.warning('Agrega al menos un alimento a la plantilla');
       return;
     }
-    const userId = this.authService.userId();
-    if (!userId) {
-      this.notificationService.error('No se pudo identificar al usuario actual');
-      return;
-    }
 
     this.isSubmitting.set(true);
     const { nombre, tipoComida } = this.plantillaForm.getRawValue();
 
-    const alimentoIds: number[] = [];
-    for (const item of this.items()) {
-      for (let i = 0; i < item.cantidad; i++) {
-        alimentoIds.push(item.alimento.id!);
-      }
-    }
+    const alimentos = this.items().map((item) => ({
+      alimentoId: item.alimento.id!,
+      cantidad: item.cantidad,
+    }));
 
     this.plantillaService
-      .crearPlantilla({ nombre, tipoComida, usuarioId: userId, alimentoIds })
+      .crearPlantilla({ nombre, tipoComida, alimentos })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
