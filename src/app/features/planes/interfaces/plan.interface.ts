@@ -2,10 +2,9 @@ import { TipoComida } from '../../plantillas/interfaces/plantilla.interface';
 
 export interface PlanAlimenticioRequest {
   nombre: string;
-  fechaInicio: string;
-  duracionDias: number;
-  pacienteId: number;
-  nutriologoId: number;
+  fecha_inicio: string;
+  duracion_dias: number;
+  paciente_id: number;
   comidas: ComidaProgramadaRequest[];
 }
 

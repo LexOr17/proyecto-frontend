@@ -1,0 +1,345 @@
+<div class="main-content">
+
+  @if (historialResource.isLoading() || planesResource.isLoading()) {
+  <div class="loading-state" role="status" aria-live="polite">
+    <span class="bx bx-loader-alt bx-spin" aria-hidden="true"></span>
+    <p>Cargando diario de comidas...</p>
+  </div>
+  } @else if (historialResource.error()) {
+  <div class="error-state" role="alert">
+    <span class="bx bx-error-circle" aria-hidden="true"></span>
+    <p>No se pudo cargar el diario. Intenta de nuevo.</p>
+    <button type="button" class="btn-retry" (click)="historialResource.reload()">Reintentar</button>
+  </div>
+  } @else {
+
+  <!-- Banner de progreso -->
+  <div class="progress-banner" role="region" aria-label="Resumen de hoy">
+    <div class="banner-left">
+      <div class="banner-icon" aria-hidden="true">
+        <span class="bx bx-book-heart"></span>
+      </div>
+      <div class="banner-text">
+        <h1 class="banner-title">Mi Diario de Comidas</h1>
+        <p class="banner-subtitle">Registra tu alimentación diaria</p>
+        @if (activePlan()) {
+          <p class="banner-plan-name">
+            <span class="bx bx-clipboard" aria-hidden="true"></span>
+            {{ activePlan()!.nombre }}
+            <span class="banner-plan-day">— Día {{ diaDePlan() }}</span>
+          </p>
+        }
+        <p class="banner-hint">
+          Puedes registrar tus comidas con un margen de
+          <strong>12 horas</strong> adicionales al día siguiente.
+        </p>
+      </div>
+    </div>
+    <div
+      class="progress-circle-wrap"
+      [attr.aria-label]="registeredCount() + ' de ' + totalMeals() + ' comidas registradas hoy'"
+    >
+      <svg class="progress-circle" viewBox="0 0 72 72" aria-hidden="true">
+        <circle cx="36" cy="36" r="28" stroke="#c8e6c9" stroke-width="6" fill="none" />
+        <circle
+          cx="36" cy="36" r="28"
+          stroke="#4CAF50"
+          stroke-width="6"
+          fill="none"
+          stroke-linecap="round"
+          transform="rotate(-90 36 36)"
+          [attr.stroke-dasharray]="circumference"
+          [attr.stroke-dashoffset]="strokeDashoffset()"
+        />
+      </svg>
+      <div class="progress-label" aria-hidden="true">
+        <span class="progress-count">{{ registeredCount() }}/{{ totalMeals() }}</span>
+        <span class="progress-today">hoy</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navegación de fechas -->
+  <nav class="date-nav" aria-label="Navegación de fechas">
+    <button
+      type="button"
+      class="date-nav-btn"
+      (click)="changeDate(-1)"
+      aria-label="Día anterior"
+    >
+      <span class="bx bx-chevron-left" aria-hidden="true"></span>
+    </button>
+
+    <div class="date-display">
+      <span class="bx bx-calendar" aria-hidden="true"></span>
+      <span class="date-text">{{ selectedDateDisplay() }}</span>
+    </div>
+
+    <button
+      type="button"
+      class="date-nav-btn"
+      (click)="changeDate(1)"
+      aria-label="Día siguiente"
+    >
+      <span class="bx bx-chevron-right" aria-hidden="true"></span>
+    </button>
+
+    <div class="date-picker-wrap">
+      <label class="sr-only" for="date-picker">Ir a fecha específica</label>
+      <input
+        id="date-picker"
+        type="date"
+        [value]="selectedDateStr()"
+        (change)="jumpToDate($any($event.target).value)"
+        class="date-picker-input"
+      />
+    </div>
+  </nav>
+
+  <!-- Comidas del plan -->
+  @if (activePlan()) {
+  <section aria-labelledby="meals-heading">
+    <h2 id="meals-heading" class="section-heading">
+      {{ isToday() ? 'Mis Comidas de Hoy' : 'Comidas del Día' }}
+    </h2>
+
+    @if (comidasDelPlan().length === 0) {
+    <div class="empty-plan-day">
+      <span class="bx bx-calendar-x" aria-hidden="true"></span>
+      <p>No hay comidas programadas para este día del plan.</p>
+    </div>
+    } @else {
+    <div class="meals-grid">
+      @for (comida of comidasDelPlan(); track comida.id) {
+        @let entry = entriesByComidaId().get(comida.id);
+        <div
+          class="meal-card"
+          [class.meal-card--cumplido]="entry?.estado === 'CUMPLIDO'"
+          [class.meal-card--modificado]="entry?.estado === 'MODIFICADO'"
+          [class.meal-card--saltada]="entry?.estado === 'SALTADA'"
+        >
+          <div class="meal-card-header">
+            <div class="meal-icon" aria-hidden="true">
+              <span class="bx {{ getMealIcon(comida.horario) }}"></span>
+            </div>
+            @if (entry) {
+              <span class="meal-badge meal-badge--{{ toLower(entry.estado) }}">
+                {{ estadosLabel[entry.estado] }}
+              </span>
+            } @else {
+              <span class="meal-badge meal-badge--pending">Pendiente</span>
+            }
+          </div>
+
+          <div class="meal-card-body">
+            <p class="meal-horario-label">{{ horariosLabel[comida.horario] }}</p>
+            <p class="meal-nombre-plan">
+              <span class="bx bx-food-menu" aria-hidden="true"></span>
+              {{ comida.plantillaNombre }}
+            </p>
+            @if (comida.observaciones) {
+              <p class="meal-observaciones-plan">{{ comida.observaciones }}</p>
+            }
+            @if (entry?.detallesComidaReal) {
+              <blockquote class="meal-detalles">"{{ entry!.detallesComidaReal }}"</blockquote>
+            }
+            @if (entry?.observacionNutriologo) {
+              <div class="obs-nutriologo" role="note" aria-label="Observación del nutriólogo">
+                <span class="bx bx-user-voice obs-icon" aria-hidden="true"></span>
+                <p>{{ entry!.observacionNutriologo }}</p>
+              </div>
+            }
+          </div>
+
+          <div class="meal-card-footer">
+            @if (entry) {
+              <button
+                type="button"
+                class="btn-edit"
+                (click)="openFromPlan(comida, entry)"
+                [attr.aria-label]="'Editar registro de ' + horariosLabel[comida.horario]"
+              >
+                <span class="bx bx-edit" aria-hidden="true"></span>
+                Corregir
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="btn-register"
+                (click)="openFromPlan(comida)"
+                [attr.aria-label]="'Registrar ' + horariosLabel[comida.horario]"
+              >
+                <span class="bx bx-plus-circle" aria-hidden="true"></span>
+                Registrar
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+    }
+  </section>
+  } @else {
+  <!-- Sin plan activo -->
+  <section aria-labelledby="meals-heading">
+    <h2 id="meals-heading" class="section-heading">
+      {{ isToday() ? 'Mis Comidas de Hoy' : 'Comidas del Día' }}
+    </h2>
+    <div class="no-plan-banner" role="status">
+      <span class="bx bx-info-circle" aria-hidden="true"></span>
+      <p>No tienes un plan de alimentación activo para este día.</p>
+    </div>
+  </section>
+  }
+
+  <!-- Historial reciente -->
+  @if (historialReciente().length > 0) {
+  <section class="history-section" aria-labelledby="history-heading">
+    <h2 id="history-heading" class="section-heading">Historial Reciente</h2>
+    <ul class="history-list" role="list">
+      @for (entry of historialReciente(); track entry.id) {
+        <li class="history-item">
+          <div
+            class="history-bar"
+            [class.history-bar--cumplido]="entry.estado === 'CUMPLIDO'"
+            [class.history-bar--modificado]="entry.estado === 'MODIFICADO'"
+            [class.history-bar--saltada]="entry.estado === 'SALTADA'"
+            aria-hidden="true"
+          ></div>
+          <div class="history-info">
+            <div class="history-meta">
+              <span class="history-date">{{ formatDate(entry.fecha) }}</span>
+              <span class="history-sep" aria-hidden="true">·</span>
+              <span class="history-horario">{{ horariosLabel[entry.horario] }}</span>
+            </div>
+            <p
+              class="history-estado"
+              [class.history-estado--cumplido]="entry.estado === 'CUMPLIDO'"
+              [class.history-estado--modificado]="entry.estado === 'MODIFICADO'"
+              [class.history-estado--saltada]="entry.estado === 'SALTADA'"
+            >
+              {{ estadosLabel[entry.estado] }}
+            </p>
+            @if (entry.detallesComidaReal) {
+              <p class="history-detalles">"{{ entry.detallesComidaReal }}"</p>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  </section>
+  }
+
+  } <!-- end loaded state -->
+</div>
+
+<!-- Modal de registro / edición -->
+@if (isModalOpen()) {
+<div
+  class="modal-overlay"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="modal-title"
+  (click)="closeModal()"
+  (keydown.escape)="closeModal()"
+>
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h2 id="modal-title" class="modal-title">
+          {{ entryBeingEdited() ? 'Editar Registro' : 'Nuevo Registro' }}
+        </h2>
+        @if (modalContext()) {
+          <p class="modal-meal-name">
+            <span class="bx bx-food-menu" aria-hidden="true"></span>
+            {{ modalContext()!.nombre }}
+            <span class="modal-horario-tag">— {{ horariosLabel[modalContext()!.horario] }}</span>
+          </p>
+        }
+      </div>
+      <button
+        type="button"
+        class="modal-close"
+        (click)="closeModal()"
+        aria-label="Cerrar modal"
+      >
+        <span class="bx bx-x" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <form [formGroup]="registroForm" (ngSubmit)="onSubmit()" class="modal-form" novalidate>
+
+      <!-- Selector de estado -->
+      <fieldset class="form-group">
+        <legend class="form-label">¿Cuál fue el resultado?</legend>
+        <div class="estado-buttons">
+          <button
+            type="button"
+            class="estado-btn"
+            [class.estado-btn--cumplido]="registroForm.get('estado')?.value === 'CUMPLIDO'"
+            (click)="onEstadoChange('CUMPLIDO')"
+            [attr.aria-pressed]="registroForm.get('estado')?.value === 'CUMPLIDO'"
+          >
+            <span class="bx bx-check-circle" aria-hidden="true"></span>
+            Cumplido
+          </button>
+          <button
+            type="button"
+            class="estado-btn"
+            [class.estado-btn--modificado]="registroForm.get('estado')?.value === 'MODIFICADO'"
+            (click)="onEstadoChange('MODIFICADO')"
+            [attr.aria-pressed]="registroForm.get('estado')?.value === 'MODIFICADO'"
+          >
+            <span class="bx bx-edit-alt" aria-hidden="true"></span>
+            Modificado
+          </button>
+          <button
+            type="button"
+            class="estado-btn"
+            [class.estado-btn--saltada]="registroForm.get('estado')?.value === 'SALTADA'"
+            (click)="onEstadoChange('SALTADA')"
+            [attr.aria-pressed]="registroForm.get('estado')?.value === 'SALTADA'"
+          >
+            <span class="bx bx-minus-circle" aria-hidden="true"></span>
+            Saltada
+          </button>
+        </div>
+      </fieldset>
+
+      <!-- Detalles (solo para MODIFICADO) -->
+      @if (showDetalles) {
+        <div class="form-group">
+          <label for="form-detalles" class="form-label">¿Qué consumiste realmente?</label>
+          <textarea
+            id="form-detalles"
+            formControlName="detallesComidaReal"
+            class="form-textarea"
+            rows="3"
+            placeholder="Ej: No tenía espárragos, así que los cambié por brócoli..."
+            maxlength="255"
+          ></textarea>
+          @if (registroForm.get('detallesComidaReal')?.hasError('maxlength')) {
+            <p class="form-error" role="alert">Máximo 255 caracteres.</p>
+          }
+        </div>
+      }
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="registroForm.invalid || isSubmitting()"
+        >
+          @if (isSubmitting()) {
+            <span class="bx bx-loader-alt bx-spin" aria-hidden="true"></span>
+            Guardando...
+          } @else {
+            {{ entryBeingEdited() ? 'Actualizar' : 'Registrar' }}
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+}

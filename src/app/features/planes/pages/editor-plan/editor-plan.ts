@@ -14,7 +14,6 @@ import { map } from 'rxjs';
 import { PlanAlimenticioService } from '../../service/plan-service';
 import { PlantillaService } from '../../../plantillas/service/plantilla-service';
 import { PacienteService } from '../../../pacientes/service/paciente-service';
-import { AuthService } from '../../../../core/services/auth-service';
 import { ConfirmDialogService } from '../../../../shared/service/confirm-dialog-service';
 import { NotificationService } from '../../../../shared/service/notification-service';
 import { TIPOS_COMIDA, TipoComida } from '../../../plantillas/interfaces/plantilla.interface';
@@ -36,7 +35,6 @@ export class EditorPlan {
   private readonly planService = inject(PlanAlimenticioService);
   private readonly plantillaService = inject(PlantillaService);
   private readonly pacienteService = inject(PacienteService);
-  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly confirmDialog = inject(ConfirmDialogService);
@@ -397,10 +395,9 @@ export class EditorPlan {
 
     const request: PlanAlimenticioRequest = {
       nombre: this.planNombre(),
-      fechaInicio: this.planFechaInicio(),
-      duracionDias: this.planDuracionDias(),
-      pacienteId: this.pacienteId(),
-      nutriologoId: this.authService.userId()!,
+      fecha_inicio: this.planFechaInicio(),
+      duracion_dias: this.planDuracionDias(),
+      paciente_id: this.pacienteId(),
       comidas: this.comidas().map(c => ({
         plantillaId: c.plantillaId,
         diaPlan: c.diaPlan,

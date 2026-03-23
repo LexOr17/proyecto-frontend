@@ -82,6 +82,24 @@ const mainRoutes: Routes = [
         data: { roles: [UserRole.NUTRIOLOGO, UserRole.PACIENTE] }
       },
       {
+        path: 'mi-diario',
+        loadChildren: () => import('../diario/mis-diario.routes').then(m => m.default),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.PACIENTE] }
+      },
+      {
+        path: 'diario',
+        loadChildren: () => import('../diario/diario.routes').then(m => m.diarioNutriologoRoutes),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.NUTRIOLOGO] }
+      },
+      {
+        path: 'diario-admin',
+        loadChildren: () => import('../diario/diario.routes').then(m => m.diarioAdminRoutes),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.ADMINISTRADOR] }
+      },
+      {
         path: '**',
         redirectTo: 'dashboard',
       }

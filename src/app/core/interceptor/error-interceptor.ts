@@ -23,7 +23,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           notificationService.error(backendMessage || 'Solicitud inválida');
           break;
         case 403:
-          notificationService.error('No tienes permisos para realizar esta acción');
+          notificationService.error(backendMessage || 'No tienes permisos para realizar esta acción');
           break;
         case 404:
           notificationService.error(backendMessage || 'Recurso no encontrado');

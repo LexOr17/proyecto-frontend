@@ -75,6 +75,12 @@
                     <span>Mis Planes</span>
                 </a>
             </li>
+            <li>
+                <a routerLink="/main/mi-diario" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
+                    <span class='bx bx-book-heart' aria-hidden="true"></span>
+                    <span>Mi Diario</span>
+                </a>
+            </li>
             }
             @if (currentUserRole() === 'ADMINISTRADOR' || currentUserRole() === 'NUTRIOLOGO') {
             <li>
@@ -109,12 +115,24 @@
                     <span>Planes Alimenticios</span>
                 </a>
             </li>
+            <li>
+                <a routerLink="/main/diario" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
+                    <span class='bx bx-notepad' aria-hidden="true"></span>
+                    <span>Diario de Pacientes</span>
+                </a>
+            </li>
             }
             @if (currentUserRole() === 'ADMINISTRADOR') {
             <li>
                 <a routerLink="/main/restauracion" routerLinkActive="active">
                     <span class='bx bx-history'></span>
                     <span>Restauración del Sistema</span>
+                </a>
+            </li>
+            <li>
+                <a routerLink="/main/diario-admin" routerLinkActive="active">
+                    <span class='bx bx-calendar-check'></span>
+                    <span>Control de Diarios</span>
                 </a>
             </li>
             }

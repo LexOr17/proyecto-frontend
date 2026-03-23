@@ -1,0 +1,150 @@
+<div class="main-content">
+
+  <!-- Banner de advertencia admin -->
+  <div class="admin-banner" role="region" aria-label="Información del modo administrador">
+    <div class="admin-banner-icon" aria-hidden="true">
+      <span class="bx bx-shield-x"></span>
+    </div>
+    <div class="admin-banner-text">
+      <div class="admin-banner-tag">
+        <span class="bx bx-error-circle" aria-hidden="true"></span>
+        Modo Administrador
+      </div>
+      <h1 class="admin-banner-title">Mantenimiento de Historial</h1>
+      <p class="admin-banner-desc">
+        Tiene permisos para realizar <strong>borrado permanente</strong> de registros.
+        Estas acciones no pueden deshacerse y afectan los reportes de adherencia.
+      </p>
+    </div>
+  </div>
+
+  <!-- Búsqueda de paciente -->
+  <div class="search-panel">
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="search-form" novalidate>
+      <div class="form-group">
+        <label for="admin-paciente-id" class="form-label">ID del Paciente</label>
+        <div class="input-wrap">
+          <span class="input-icon bx bx-user" aria-hidden="true"></span>
+          <input
+            id="admin-paciente-id"
+            type="number"
+            formControlName="pacienteId"
+            class="form-input"
+            placeholder="Ej: 42"
+            min="1"
+          />
+        </div>
+        @if (searchForm.get('pacienteId')?.invalid && searchForm.get('pacienteId')?.touched) {
+          <p class="form-error" role="alert">Ingresa un ID de paciente válido.</p>
+        }
+      </div>
+      <button
+        type="submit"
+        class="btn-search"
+        [disabled]="searchForm.invalid"
+      >
+        <span class="bx bx-search" aria-hidden="true"></span>
+        Cargar Registros
+      </button>
+    </form>
+
+    <!-- Filtro de resultados -->
+    @if ((historialResource.value()?.length ?? 0) > 0) {
+      <div class="filter-wrap">
+        <label for="filter-input" class="sr-only">Filtrar resultados</label>
+        <div class="input-wrap">
+          <span class="input-icon bx bx-filter" aria-hidden="true"></span>
+          <input
+            id="filter-input"
+            type="search"
+            class="form-input"
+            placeholder="Filtrar por fecha, horario, estado..."
+            (input)="onFilterChange($event)"
+          />
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Resultados -->
+  @if (historialResource.isLoading()) {
+    <div class="loading-state" role="status" aria-live="polite">
+      <span class="bx bx-loader-alt bx-spin" aria-hidden="true"></span>
+      <p>Cargando registros...</p>
+    </div>
+  } @else if (historialResource.error()) {
+    <div class="error-state" role="alert">
+      <span class="bx bx-error-circle" aria-hidden="true"></span>
+      <p>No se pudieron cargar los registros. Verifica el ID e intenta de nuevo.</p>
+      <button type="button" class="btn-retry" (click)="historialResource.reload()">Reintentar</button>
+    </div>
+  } @else if (searchedPacienteId() !== null) {
+    <!-- Cabecera de resultados -->
+    <div class="results-header">
+      <h2 class="results-title">Registros del Sistema</h2>
+      <span class="results-count" aria-live="polite">
+        {{ filteredEntries().length }} registro(s) encontrado(s)
+      </span>
+    </div>
+
+    @if (filteredEntries().length === 0) {
+      <div class="empty-state">
+        <span class="bx bx-folder-open" aria-hidden="true"></span>
+        <p class="empty-text">Sin registros para este paciente.</p>
+      </div>
+    } @else {
+      <ul class="records-list" role="list">
+        @for (entry of filteredEntries(); track entry.id) {
+          <li class="record-card">
+            <div class="record-id" aria-label="ID del registro">
+              <span>#{{ entry.id }}</span>
+            </div>
+            <div class="record-info">
+              <div class="record-meta">
+                <span class="record-fecha">{{ entry.fecha }}</span>
+                <span class="record-dot" aria-hidden="true">·</span>
+                <span class="record-horario">{{ horariosLabel[entry.horario] }}</span>
+              </div>
+              <p
+                class="record-estado"
+                [class.record-estado--cumplido]="entry.estado === 'CUMPLIDO'"
+                [class.record-estado--modificado]="entry.estado === 'MODIFICADO'"
+                [class.record-estado--saltada]="entry.estado === 'SALTADA'"
+              >
+                {{ estadosLabel[entry.estado] }}
+              </p>
+              @if (entry.nombreComidaSugerida) {
+                <p class="record-sugerida">{{ entry.nombreComidaSugerida }}</p>
+              }
+              @if (entry.detallesComidaReal) {
+                <p class="record-detalles">"{{ entry.detallesComidaReal }}"</p>
+              }
+            </div>
+            <div class="record-actions">
+              <button
+                type="button"
+                class="btn-delete"
+                (click)="eliminar(entry)"
+                [disabled]="isDeletingId() === entry.id"
+                [attr.aria-label]="'Eliminar registro #' + entry.id"
+              >
+                @if (isDeletingId() === entry.id) {
+                  <span class="bx bx-loader-alt bx-spin" aria-hidden="true"></span>
+                } @else {
+                  <span class="bx bx-trash" aria-hidden="true"></span>
+                }
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  } @else {
+    <!-- Estado inicial (sin buscar) -->
+    <div class="initial-state">
+      <span class="bx bx-search-alt" aria-hidden="true"></span>
+      <p>Ingresa el ID de un paciente para cargar su historial.</p>
+    </div>
+  }
+
+</div>

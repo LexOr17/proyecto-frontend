@@ -1,0 +1,260 @@
+<div class="main-content">
+
+  <!-- Modo búsqueda: sin pacienteId en la ruta -->
+  @if (pacienteId() === null) {
+  <div class="search-page">
+    <div class="search-card">
+      <div class="search-icon" aria-hidden="true">
+        <span class="bx bx-search-alt"></span>
+      </div>
+      <h1 class="search-title">Diario de Pacientes</h1>
+      <p class="search-desc">Ingresa el ID del paciente para ver su historial de comidas.</p>
+
+      <form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="search-form" novalidate>
+        <div class="form-group">
+          <label for="search-paciente-id" class="form-label">ID del Paciente</label>
+          <input
+            id="search-paciente-id"
+            type="number"
+            formControlName="pacienteId"
+            class="form-input"
+            placeholder="Ej: 42"
+            min="1"
+          />
+          @if (searchForm.get('pacienteId')?.invalid && searchForm.get('pacienteId')?.touched) {
+            <p class="form-error" role="alert">Ingresa un ID válido (número entero).</p>
+          }
+        </div>
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="searchForm.invalid"
+        >
+          <span class="bx bx-search" aria-hidden="true"></span>
+          Ver Historial
+        </button>
+      </form>
+    </div>
+  </div>
+
+  } @else {
+
+  <!-- Cabecera del historial -->
+  <div class="page-header">
+    <div class="header-left">
+      <a routerLink="/main/diario" class="back-link" aria-label="Buscar otro paciente">
+        <span class="bx bx-arrow-back" aria-hidden="true"></span>
+      </a>
+      <div class="header-icon" aria-hidden="true">
+        <span class="bx bx-clipboard"></span>
+      </div>
+      <div class="header-text">
+        @if (pacienteResource.isLoading()) {
+          <h1 class="page-title">Cargando...</h1>
+        } @else {
+          <h1 class="page-title">Historial de {{ pacienteNombre() }}</h1>
+        }
+        <p class="page-subtitle">Seguimiento de Diario Alimenticio</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navegación de fechas -->
+  <nav class="date-nav" aria-label="Navegación de fechas">
+    <button
+      type="button"
+      class="date-nav-btn"
+      (click)="changeDate(-1)"
+      aria-label="Día anterior"
+    >
+      <span class="bx bx-chevron-left" aria-hidden="true"></span>
+    </button>
+
+    <div class="date-display">
+      <span class="bx bx-calendar" aria-hidden="true"></span>
+      <span class="date-text">{{ selectedDateDisplay() }}</span>
+    </div>
+
+    <button
+      type="button"
+      class="date-nav-btn"
+      (click)="changeDate(1)"
+      aria-label="Día siguiente"
+    >
+      <span class="bx bx-chevron-right" aria-hidden="true"></span>
+    </button>
+
+    <div class="date-picker-wrap">
+      <label class="sr-only" for="date-picker-nutri">Ir a fecha</label>
+      <input
+        id="date-picker-nutri"
+        type="date"
+        [value]="selectedDateStr()"
+        (change)="jumpToDate($any($event.target).value)"
+        class="date-picker-input"
+      />
+    </div>
+  </nav>
+
+  <!-- Entradas del día -->
+  @if (historialResource.isLoading()) {
+    <div class="loading-state" role="status" aria-live="polite">
+      <span class="bx bx-loader-alt bx-spin" aria-hidden="true"></span>
+      <p>Cargando historial...</p>
+    </div>
+  } @else if (historialResource.error()) {
+    <div class="error-state" role="alert">
+      <span class="bx bx-error-circle" aria-hidden="true"></span>
+      <p>No se pudo cargar el historial del paciente.</p>
+      <button type="button" class="btn-retry" (click)="historialResource.reload()">Reintentar</button>
+    </div>
+  } @else if (filteredEntries().length === 0) {
+    <div class="empty-state">
+      <span
+        class="bx"
+        [class.bx-calendar-plus]="isFutureDate"
+        [class.bx-calendar-x]="!isFutureDate"
+        aria-hidden="true"
+      ></span>
+      <h3 class="empty-title">No hay registros para este día</h3>
+      <p class="empty-desc">
+        {{ isFutureDate ? 'Esta fecha aún no ha llegado.' : 'El paciente no registró actividad este día.' }}
+      </p>
+    </div>
+  } @else {
+    <section aria-labelledby="entries-heading">
+      <h2 id="entries-heading" class="sr-only">Entradas del {{ selectedDateDisplay() }}</h2>
+      <div class="entries-list">
+        @for (entry of filteredEntries(); track entry.id) {
+          <article
+            class="diary-entry"
+            [class.diary-entry--cumplido]="entry.estado === 'CUMPLIDO'"
+            [class.diary-entry--modificado]="entry.estado === 'MODIFICADO'"
+            [class.diary-entry--saltada]="entry.estado === 'SALTADA'"
+          >
+            <div class="entry-body">
+              <div class="entry-top">
+                <div>
+                  <p class="entry-horario">{{ horariosLabel[entry.horario] }}</p>
+                  @if (entry.nombreComidaSugerida) {
+                    <p class="entry-titulo">{{ entry.nombreComidaSugerida }}</p>
+                  } @else {
+                    <p class="entry-titulo">Registro manual</p>
+                  }
+                </div>
+                <span class="entry-badge entry-badge--{{ toLower(entry.estado) }}">
+                  {{ estadosLabel[entry.estado] }}
+                </span>
+              </div>
+
+              @if (entry.detallesComidaReal) {
+                <div class="entry-detalles">
+                  <p class="entry-detalles-label">Consumo real:</p>
+                  <blockquote class="entry-detalles-text">"{{ entry.detallesComidaReal }}"</blockquote>
+                </div>
+              } @else if (entry.estado === 'CUMPLIDO') {
+                <p class="entry-cumplido-msg">
+                  <span class="bx bx-check-circle" aria-hidden="true"></span>
+                  Sin cambios respecto al plan.
+                </p>
+              }
+
+              @if (entry.observacionNutriologo) {
+                <div class="entry-obs" role="note" aria-label="Tu observación">
+                  <p class="entry-obs-label">Tu Observación:</p>
+                  <p class="entry-obs-text">{{ entry.observacionNutriologo }}</p>
+                </div>
+              }
+            </div>
+
+            <!-- Acción de observación -->
+            <div class="entry-actions">
+              <button
+                type="button"
+                class="btn-obs"
+                (click)="openObsModal(entry)"
+                [attr.aria-label]="(entry.observacionNutriologo ? 'Editar' : 'Añadir') + ' observación para ' + horariosLabel[entry.horario]"
+              >
+                <span class="bx bx-message-dots" aria-hidden="true"></span>
+                {{ entry.observacionNutriologo ? 'Editar nota' : 'Añadir nota' }}
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    </section>
+  }
+
+  } <!-- end @else (con pacienteId) -->
+</div>
+
+<!-- Modal de observación -->
+@if (isObsModalOpen()) {
+<div
+  class="modal-overlay"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="obs-modal-title"
+  (click)="closeObsModal()"
+  (keydown.escape)="closeObsModal()"
+>
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h2 id="obs-modal-title" class="modal-title">Nota Profesional</h2>
+        @if (obsEntry()) {
+          <p class="modal-subtitle">
+            {{ horariosLabel[obsEntry()!.horario] }} — {{ formatDate(obsEntry()!.fecha) }}
+          </p>
+        }
+      </div>
+      <button
+        type="button"
+        class="modal-close"
+        (click)="closeObsModal()"
+        aria-label="Cerrar modal"
+      >
+        <span class="bx bx-x" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <form [formGroup]="obsForm" (ngSubmit)="onSubmitObs()" class="modal-form" novalidate>
+      <div class="form-group">
+        <label for="obs-text" class="form-label">Observaciones y Recomendaciones</label>
+        <textarea
+          id="obs-text"
+          formControlName="observacion"
+          class="form-textarea"
+          rows="4"
+          placeholder="Escribe tu consejo o comentario para el paciente..."
+          maxlength="500"
+        ></textarea>
+        @if (obsForm.get('observacion')?.invalid && obsForm.get('observacion')?.touched) {
+          @if (obsForm.get('observacion')?.hasError('required')) {
+            <p class="form-error" role="alert">La observación no puede estar vacía.</p>
+          }
+          @if (obsForm.get('observacion')?.hasError('maxlength')) {
+            <p class="form-error" role="alert">Máximo 500 caracteres.</p>
+          }
+        }
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeObsModal()">Cancelar</button>
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="obsForm.invalid || isSubmittingObs()"
+        >
+          @if (isSubmittingObs()) {
+            <span class="bx bx-loader-alt bx-spin" aria-hidden="true"></span>
+            Guardando...
+          } @else {
+            Guardar Observación
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+}
