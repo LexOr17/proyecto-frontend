@@ -45,6 +45,7 @@ export interface CitaRequest {
 export interface CitaSolicitudRequest {
   fechaHoraInicio: string;
   motivoCita: MotivoCita;
+  detalleAdicional?: string;
 }
 
 export interface CitaEstadoUpdateDTO {

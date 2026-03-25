@@ -25,9 +25,6 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         case 403:
           notificationService.error(backendMessage || 'No tienes permisos para realizar esta acción');
           break;
-        case 404:
-          notificationService.error(backendMessage || 'Recurso no encontrado');
-          break;
         case 409:
           notificationService.error(backendMessage || 'Conflicto con los datos enviados');
           break;

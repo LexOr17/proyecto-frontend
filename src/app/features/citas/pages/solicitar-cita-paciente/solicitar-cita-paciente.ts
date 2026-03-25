@@ -42,6 +42,7 @@ export class SolicitarCitaPaciente {
   protected readonly form = this.fb.nonNullable.group({
     fechaHoraInicio: ['', Validators.required],
     motivo: ['PRIMERA_VEZ' as MotivoCita, Validators.required],
+    detalleAdicional: ['', Validators.maxLength(500)],
   });
 
   protected isInvalid(field: string): boolean {
@@ -66,8 +67,9 @@ export class SolicitarCitaPaciente {
 
     this.citaService
       .solicitarCita(pacienteId, {
-        fechaHoraInicio: new Date(raw.fechaHoraInicio).toISOString(),
+        fechaHoraInicio: raw.fechaHoraInicio.length === 16 ? `${raw.fechaHoraInicio}:00` : raw.fechaHoraInicio,
         motivoCita: raw.motivo,
+        ...(raw.detalleAdicional ? { detalleAdicional: raw.detalleAdicional } : {}),
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({

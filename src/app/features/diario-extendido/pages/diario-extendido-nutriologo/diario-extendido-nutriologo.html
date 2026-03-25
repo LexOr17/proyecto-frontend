@@ -1,0 +1,271 @@
+<div class="main-content">
+
+    <!-- CABECERA -->
+    <header class="page-header">
+        <div>
+            <h1>Panel de Bienestar Clínico</h1>
+            <p>Monitoreo de adherencia y programación de sugerencias.</p>
+        </div>
+        @if (pacienteResource.value(); as paciente) {
+        <div class="patient-badge">
+            <div class="avatar">{{ pacienteInitials() }}</div>
+            <div>
+                <div class="patient-name">{{ paciente.nombre }} {{ paciente.apellidoPaterno }}</div>
+                <div class="patient-id">ID: #{{ paciente.id }}</div>
+            </div>
+        </div>
+        }
+        @if (!pacienteId()) {
+        <a routerLink="/main/pacientes" class="btn-select-patient">
+            <span class="bx bx-group" aria-hidden="true"></span>
+            Seleccionar Paciente
+        </a>
+        }
+    </header>
+
+    @if (!pacienteId()) {
+    <!-- NO PATIENT SELECTED -->
+    <div class="empty-state" role="status">
+        <div class="empty-icon" aria-hidden="true">🧑‍⚕️</div>
+        <h2>Selecciona un paciente</h2>
+        <p>Elige un paciente desde tu lista para ver su historial de bienestar y programar sugerencias.</p>
+        <a routerLink="/main/pacientes" class="btn-primary">Ir a Mis Pacientes</a>
+    </div>
+    } @else {
+
+    <!-- STATS SECTION -->
+    <div class="stats-grid" role="region" aria-label="Estadísticas del paciente">
+
+        <div class="metric-card" style="border-left-color: #6366f1">
+            <div class="metric-info">
+                <h3>Bienestar Emocional</h3>
+                <p>{{ animoStats().label }}</p>
+            </div>
+            <div class="metric-score" style="color: #6366f1">{{ animoStats().score }}</div>
+        </div>
+
+        <div class="metric-card" style="border-left-color: #10b981">
+            <div class="metric-info">
+                <h3>Adherencia a Actividades</h3>
+                <p>{{ adherenciaStats().label }}</p>
+            </div>
+            <div class="adherencia-bar-wrapper">
+                <div class="adherencia-bar">
+                    <div class="adherencia-bar-fill" [style.width.%]="adherenciaStats().porcentaje" role="progressbar"
+                        [attr.aria-valuenow]="adherenciaStats().porcentaje" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card" style="border-left-color: #f59e0b">
+            <div class="metric-info">
+                <h3>Análisis de Descanso</h3>
+                <p>{{ suenoStats().label }}</p>
+            </div>
+            <div class="metric-score" style="color: #92400e">{{ suenoStats().horas }} hrs</div>
+        </div>
+
+        <div class="metric-card" style="border-left-color: #ef4444">
+            <div class="metric-info">
+                <h3>Alertas de Síntomas</h3>
+                <p>{{ sintomaStats().alerta }}</p>
+            </div>
+            <div class="metric-freq">{{ sintomaStats().frecuencia }}</div>
+        </div>
+
+    </div>
+
+    <!-- WEEKLY PLANNER -->
+    <section class="planner-section" aria-labelledby="planner-title">
+        <div class="planner-header">
+            <h2 id="planner-title">Programador de Sugerencias</h2>
+            <span class="selected-date-label" aria-live="polite">{{ selectedDateLabel() }}</span>
+        </div>
+
+        <div class="week-selector" role="group" aria-label="Seleccionar día">
+            @for (day of weekDays(); track day.iso) {
+            <button type="button" class="day-btn" [class.active]="day.iso === selectedDateIso()"
+                (click)="onDateSelect(day.iso)" [attr.aria-pressed]="day.iso === selectedDateIso()"
+                [attr.aria-label]="day.dayName + ' ' + day.dayNum">
+                <span class="day-name">{{ day.dayName }}</span>
+                <span class="day-num">{{ day.dayNum }}</span>
+                @if (hasEntryForDate(day.iso)) {
+                <span class="has-entry-dot" title="Tiene registro" aria-hidden="true"></span>
+                }
+            </button>
+            }
+        </div>
+
+        <!-- SUGGESTION FORM -->
+        <form class="suggestion-form" [formGroup]="suggestionForm" (ngSubmit)="onSuggestionSubmit()" novalidate>
+            <div class="form-group">
+                <label class="form-label" for="tipoActividad">Tipo de Actividad Sugerida</label>
+                <select id="tipoActividad" formControlName="tipoActividadSugerida" class="form-select">
+                    @for (tipo of tiposActividad; track tipo) {
+                    <option [value]="tipo">{{ TIPO_ACTIVIDAD_LABEL[tipo] }}</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="actividadDetalle">Detalles de la Actividad</label>
+                <textarea id="actividadDetalle" formControlName="actividadDetalle" class="form-textarea"
+                    placeholder="Ej: 20 min a paso suave antes de cenar." rows="3"></textarea>
+            </div>
+
+            <div class="form-group form-group-full">
+                <label class="form-label" for="obsClinicas">Observaciones Clínicas</label>
+                <textarea id="obsClinicas" formControlName="observacionesNutriologo" class="form-textarea"
+                    placeholder="Notas sobre el progreso, ajustes en el plan nutricional o síntomas reportados..."
+                    rows="3"></textarea>
+            </div>
+
+            <div class="form-group form-group-full form-actions">
+                <button type="submit" class="btn-primary" [disabled]="isSaving()">
+                    @if (isSaving()) {
+                    Guardando...
+                    } @else {
+                    Guardar Sugerencia
+                    }
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <!-- HISTORY TABLE -->
+    <section class="history-section" aria-labelledby="history-title">
+        <div class="history-header">
+            <div>
+                <h2 id="history-title">Historial de Bienestar</h2>
+                <p>Registros del paciente ordenados por fecha.</p>
+            </div>
+        </div>
+
+        @if (historyResource.isLoading()) {
+        <div class="loading-state" aria-live="polite" aria-busy="true">
+            <span class="spinner" aria-hidden="true"></span>
+            <p>Cargando historial...</p>
+        </div>
+        } @else if (historyContent().length === 0) {
+        <div class="empty-table-state">
+            <p>El paciente aún no tiene registros de bienestar.</p>
+        </div>
+        } @else {
+        <div class="table-wrapper">
+            <table aria-label="Historial de bienestar del paciente">
+                <thead>
+                    <tr>
+                        <th scope="col">Fecha</th>
+                        <th scope="col">Ánimo</th>
+                        <th scope="col">Sueño</th>
+                        <th scope="col">Síntoma Principal</th>
+                        <th scope="col">Hidratación</th>
+                        <th scope="col">Actividad</th>
+                        <th scope="col"><span class="sr-only">Acciones</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (entry of historyContent(); track entry.id) {
+                    <tr>
+                        <td class="td-fecha" data-label="Fecha">{{ formatFecha(entry.fecha) }}</td>
+                        <!-- <td data-label="Ánimo">
+                    <span class="emoji-cell" [attr.aria-label]="ESTADO_ANIMO_MAP[entry.estadoAnimo].label">
+                      {{ ESTADO_ANIMO_MAP[entry.estadoAnimo].emoji }}
+                    </span>
+                  </td> -->
+                        <td data-label="Ánimo">
+                            @if (entry.estadoAnimo) {
+                            <span class="emoji-cell" [attr.aria-label]="ESTADO_ANIMO_MAP[entry.estadoAnimo].label">
+                                {{ ESTADO_ANIMO_MAP[entry.estadoAnimo].emoji }}
+                            </span>
+                            } @else {
+                            <span class="td-secondary td-italic">Pendiente</span>
+                            }
+                        </td>
+                        <!-- <td data-label="Sueño">
+                            <span class="td-primary">{{ CALIDAD_SUENO_MAP[entry.calidadSueno].label }}</span>
+                            <span class="td-secondary">~{{ CALIDAD_SUENO_MAP[entry.calidadSueno].horas }}h est.</span>
+                        </td> -->
+                        <td data-label="Sueño">
+                            @if (entry.calidadSueno) {
+                            <span class="td-primary">{{ CALIDAD_SUENO_MAP[entry.calidadSueno].label }}</span>
+                            <span class="td-secondary">~{{ CALIDAD_SUENO_MAP[entry.calidadSueno].horas }}h est.</span>
+                            } @else {
+                            <span class="td-secondary td-italic">Sin registro</span>
+                            }
+                        </td>
+                        <td data-label="Síntoma">
+                            <span class="td-primary">{{ SINTOMA_LABEL[entry.sintomaPrincipal] }}</span>
+                            @if (entry.sintomaDetalle) {
+                            <span class="td-secondary td-italic">"{{ entry.sintomaDetalle }}"</span>
+                            }
+                        </td>
+                        <td data-label="Hidratación">
+                            <span class="td-hydration">{{ formatBebidas(entry) }}</span>
+                        </td>
+                        <td data-label="Actividad">
+                            @if (entry.tipoActividadSugerida && entry.tipoActividadSugerida !== 'NINGUNA') {
+                            <span class="badge" [class.badge-success]="entry.actividadRealizada"
+                                [class.badge-pending]="!entry.actividadRealizada">
+                                {{ entry.actividadRealizada ? 'Realizada' : 'Sin Realizar' }}
+                            </span>
+                            } @else {
+                            <span class="td-secondary">Sin actividad</span>
+                            }
+                        </td>
+                        <td>
+                            <button type="button" class="btn-revisar" (click)="toggleRow(entry.id)"
+                                [attr.aria-expanded]="expandedRowId() === entry.id"
+                                [attr.aria-controls]="'detail-' + entry.id">
+                                {{ expandedRowId() === entry.id ? 'CERRAR' : 'DETALLE' }}
+                            </button>
+                        </td>
+                    </tr>
+                    @if (expandedRowId() === entry.id) {
+                    <tr [id]="'detail-' + entry.id" class="detail-row">
+                        <td colspan="7">
+                            <div class="detail-panel">
+                                @if (entry.tipoActividadSugerida && entry.tipoActividadSugerida !== 'NINGUNA') {
+                                <div class="detail-item">
+                                    <span class="detail-label">Actividad sugerida</span>
+                                    <span>{{ TIPO_ACTIVIDAD_LABEL[entry.tipoActividadSugerida] }}
+                                        @if (entry.actividadDetalle) {
+                                        — {{ entry.actividadDetalle }}
+                                        }
+                                    </span>
+                                </div>
+                                }
+                                @if (entry.observacionesNutriologo) {
+                                <div class="detail-item">
+                                    <span class="detail-label">Observaciones clínicas</span>
+                                    <span>{{ entry.observacionesNutriologo }}</span>
+                                </div>
+                                }
+                                @if (entry.bebidas && entry.bebidas.length > 0) {
+                                <div class="detail-item">
+                                    <span class="detail-label">Bebidas consumidas</span>
+                                    <span>{{ formatBebidas(entry) }}</span>
+                                </div>
+                                }
+                                @if (!entry.observacionesNutriologo && (!entry.bebidas || entry.bebidas.length === 0)) {
+                                <p class="detail-empty">No hay observaciones adicionales para este registro.</p>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if ((historyResource.value()?.totalPages ?? 0) > 0) {
+        <app-pagination [currentPage]="currentPage()" [totalPages]="historyResource.value()?.totalPages ?? 0"
+            [totalElements]="historyResource.value()?.totalElements ?? 0" [pageSize]="pageSize()"
+            (pageChange)="onPageChange($event)" />
+        }
+        }
+    </section>
+
+    }
+</div>

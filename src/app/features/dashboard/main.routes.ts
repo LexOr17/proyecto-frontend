@@ -100,6 +100,24 @@ const mainRoutes: Routes = [
         data: { roles: [UserRole.ADMINISTRADOR] }
       },
       {
+        path: 'mi-bienestar',
+        loadChildren: () => import('../diario-extendido/mis-diario-extendido.routes').then(m => m.default),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.PACIENTE] }
+      },
+      {
+        path: 'bienestar',
+        loadChildren: () => import('../diario-extendido/diario-extendido.routes').then(m => m.diarioExtendidoNutriologoRoutes),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.NUTRIOLOGO] }
+      },
+      {
+        path: 'bienestar-admin',
+        loadChildren: () => import('../diario-extendido/diario-extendido.routes').then(m => m.diarioExtendidoAdminRoutes),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.ADMINISTRADOR] }
+      },
+      {
         path: '**',
         redirectTo: 'dashboard',
       }

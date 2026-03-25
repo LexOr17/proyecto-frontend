@@ -81,6 +81,12 @@
                     <span>Mi Diario</span>
                 </a>
             </li>
+            <li>
+                <a routerLink="/main/mi-bienestar" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
+                    <span class='bx bx-heart' aria-hidden="true"></span>
+                    <span>Mi Bienestar</span>
+                </a>
+            </li>
             }
             @if (currentUserRole() === 'ADMINISTRADOR' || currentUserRole() === 'NUTRIOLOGO') {
             <li>
@@ -121,6 +127,12 @@
                     <span>Diario de Pacientes</span>
                 </a>
             </li>
+            <li>
+                <a routerLink="/main/bienestar" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
+                    <span class='bx bx-heart-circle' aria-hidden="true"></span>
+                    <span>Bienestar Pacientes</span>
+                </a>
+            </li>
             }
             @if (currentUserRole() === 'ADMINISTRADOR') {
             <li>
@@ -133,6 +145,12 @@
                 <a routerLink="/main/diario-admin" routerLinkActive="active">
                     <span class='bx bx-calendar-check'></span>
                     <span>Control de Diarios</span>
+                </a>
+            </li>
+            <li>
+                <a routerLink="/main/bienestar-admin" routerLinkActive="active">
+                    <span class='bx bx-heart-square'></span>
+                    <span>Diarios de Bienestar</span>
                 </a>
             </li>
             }

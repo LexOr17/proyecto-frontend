@@ -44,6 +44,16 @@
 
       </div>
 
+      <div class="form-group">
+        <label for="detalleAdicional">Detalle adicional <span class="optional">(opcional)</span></label>
+        <textarea id="detalleAdicional" formControlName="detalleAdicional" rows="4"
+          placeholder="Describe brevemente tus síntomas u otros detalles relevantes..."
+          [class.error]="isInvalid('detalleAdicional')"></textarea>
+        @if (isInvalid('detalleAdicional')) {
+          <small class="error-msg" role="alert">El detalle no puede superar los 500 caracteres</small>
+        }
+      </div>
+
       <div class="form-actions">
         <a class="btn-cancel" routerLink="/main/mis-citas">Cancelar</a>
         <button type="submit" class="btn-save" [disabled]="form.invalid || isSubmitting()">

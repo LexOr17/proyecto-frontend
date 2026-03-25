@@ -1,0 +1,157 @@
+<div class="main-content">
+
+  <!-- CABECERA -->
+  <header class="page-header">
+    <div>
+      <h1>Auditoría de Diarios de Bienestar</h1>
+      <p>Panel administrativo para consulta y eliminación permanente de registros.</p>
+    </div>
+    <div class="danger-badge" aria-label="Zona de borrado permanente">🗑️ BORRADO PERMANENTE</div>
+  </header>
+
+  <!-- BUSCADOR -->
+  <section class="search-section" aria-label="Buscar diarios por paciente">
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch()" novalidate class="search-form">
+      <div class="search-wrapper">
+        <label class="form-label" for="pacienteIdInput">ID del Paciente</label>
+        <input
+          type="number"
+          id="pacienteIdInput"
+          class="input-field"
+          placeholder="Ej: 42"
+          formControlName="pacienteId"
+          min="1"
+          (keyup.enter)="onSearch()"
+        />
+      </div>
+      <button type="submit" class="btn-search" [disabled]="searchForm.invalid">
+        <span class="bx bx-search" aria-hidden="true"></span>
+        Buscar Historial
+      </button>
+    </form>
+
+    @if (searchedPacienteId()) {
+      <p class="search-context" aria-live="polite">
+        Mostrando registros del Paciente ID:
+        <strong>#{{ searchedPacienteId() }}</strong>
+        — {{ totalElements() }} registro(s) encontrado(s)
+      </p>
+    }
+  </section>
+
+  <!-- TABLA DE REGISTROS -->
+  @if (!searchedPacienteId()) {
+    <div class="idle-state" role="status">
+      <div class="idle-icon" aria-hidden="true">🔍</div>
+      <h2>Ingresa un ID de paciente para comenzar</h2>
+      <p>Los diarios de bienestar se buscan por ID de paciente.</p>
+    </div>
+  } @else if (historyResource.isLoading()) {
+    <div class="loading-state" aria-live="polite" aria-busy="true">
+      <span class="spinner" aria-hidden="true"></span>
+      <p>Cargando registros...</p>
+    </div>
+  } @else if (historyResource.error()) {
+    <div class="error-state" role="alert">
+      <div class="error-icon" aria-hidden="true">⚠️</div>
+      <h2>No se pudo cargar el historial</h2>
+      <p>Verifica que el ID del paciente sea correcto o que tengas los permisos necesarios.</p>
+    </div>
+  } @else if (diarios().length === 0) {
+    <div class="empty-state" role="status">
+      <div class="empty-icon" aria-hidden="true">📋</div>
+      <h2>Sin registros</h2>
+      <p>Este paciente no tiene diarios de bienestar registrados.</p>
+    </div>
+  } @else {
+    <div class="content-card">
+      <div class="card-header">
+        <div>
+          <h2>Diarios del Paciente #{{ searchedPacienteId() }}</h2>
+          <p>Selecciona un registro para eliminarlo de forma permanente.</p>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table aria-label="Registros de diario del paciente">
+          <thead>
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Fecha</th>
+              <th scope="col">Ánimo</th>
+              <th scope="col">Sueño</th>
+              <th scope="col">Síntoma</th>
+              <th scope="col">Actividad</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (diario of diarios(); track diario.id) {
+              <tr>
+                <td class="td-id" data-label="ID">#{{ diario.id }}</td>
+                <td class="td-fecha" data-label="Fecha">{{ formatFecha(diario.fecha) }}</td>
+                <td data-label="Ánimo">
+                  <span [attr.aria-label]="ESTADO_ANIMO_MAP[diario.estadoAnimo].label">
+                    {{ ESTADO_ANIMO_MAP[diario.estadoAnimo].emoji }}
+                    <span class="td-label-text">{{ ESTADO_ANIMO_MAP[diario.estadoAnimo].label }}</span>
+                  </span>
+                </td>
+                <td data-label="Sueño">
+                  <span class="badge badge-sleep">{{ CALIDAD_SUENO_MAP[diario.calidadSueno].label }}</span>
+                </td>
+                <td data-label="Síntoma">
+                  @if (diario.sintomaPrincipal !== 'NINGUNO') {
+                    <span class="badge badge-symptom">{{ SINTOMA_LABEL[diario.sintomaPrincipal] }}</span>
+                  } @else {
+                    <span class="td-none">—</span>
+                  }
+                </td>
+                <td data-label="Actividad">
+                  @if (diario.tipoActividadSugerida && diario.tipoActividadSugerida !== 'NINGUNA') {
+                    <span
+                      class="badge"
+                      [class.badge-success]="diario.actividadRealizada"
+                      [class.badge-pending]="!diario.actividadRealizada"
+                    >
+                      {{ diario.actividadRealizada ? 'Realizada' : 'Pendiente' }}
+                    </span>
+                  } @else {
+                    <span class="td-none">—</span>
+                  }
+                </td>
+                <td data-label="Acciones">
+                  <button
+                    type="button"
+                    class="btn-delete"
+                    (click)="eliminarDiario(diario)"
+                    [disabled]="isDeleting() === diario.id"
+                    [attr.aria-label]="'Eliminar diario #' + diario.id"
+                    [attr.aria-busy]="isDeleting() === diario.id"
+                  >
+                    @if (isDeleting() === diario.id) {
+                      <span class="bx bx-loader-alt bx-spin" aria-hidden="true"></span>
+                    } @else {
+                      <span class="bx bx-trash" aria-hidden="true"></span>
+                    }
+                    ELIMINAR
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if ((historyResource.value()?.totalPages ?? 0) > 1) {
+        <app-pagination
+          [currentPage]="currentPage()"
+          [totalPages]="historyResource.value()?.totalPages ?? 0"
+          [totalElements]="totalElements()"
+          [pageSize]="pageSize()"
+          (pageChange)="onPageChange($event)"
+        />
+      }
+    </div>
+  }
+
+</div>
