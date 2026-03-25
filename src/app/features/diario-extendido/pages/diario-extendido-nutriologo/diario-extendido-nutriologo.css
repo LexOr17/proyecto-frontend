@@ -1,4 +1,4 @@
-:root {
+:host {
   --primary: #10b981;
   --primary-dark: #065f46;
   --primary-soft: #ecfdf5;
@@ -10,6 +10,7 @@
   --border: #e2e8f0;
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
   --radius: 20px;
+  display: block;
 }
 
 .sr-only {
@@ -28,6 +29,10 @@
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 /* --- HEADER --- */
@@ -35,7 +40,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 28px;
   flex-wrap: wrap;
   gap: 16px;
 }
@@ -170,7 +174,6 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
-  margin-bottom: 24px;
 }
 
 .metric-card {
@@ -238,7 +241,6 @@
   padding: 28px;
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
-  margin-bottom: 24px;
 }
 
 .planner-header {
@@ -382,6 +384,8 @@
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   overflow: hidden;
+  position: relative;
+  overflow-x: auto;
 }
 
 .history-header {
@@ -434,6 +438,33 @@
 
 .table-wrapper {
   overflow-x: auto;
+  padding-bottom: 0;
+  margin-bottom: 0;
+  position: relative;
+}
+
+/* --- PAGINATION DENTRO DEL CARD --- */
+.history-section app-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 0 8px 0;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+  .history-section app-pagination {
+    padding: 18px 0 4px 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .history-section app-pagination {
+    padding: 12px 0 2px 0;
+  }
 }
 
 table {
