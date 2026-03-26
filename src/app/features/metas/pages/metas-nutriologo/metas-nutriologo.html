@@ -1,0 +1,355 @@
+<div class="metas-page">
+
+  <!-- PATIENT HEADER -->
+  <header class="patient-header">
+    <div class="patient-info">
+      <span class="patient-label">Seguimiento de Metas</span>
+      @if (pacienteResource.isLoading()) {
+        <h1 class="patient-name">Cargando...</h1>
+      } @else {
+        <h1 class="patient-name">{{ nombrePaciente() }}</h1>
+        <p class="patient-meta">
+          ID: #{{ pacienteResource.value()?.id }} &bull;
+          <a [routerLink]="['/main/pacientes', pacienteResource.value()?.id]" class="back-link" aria-label="Volver al perfil del paciente">
+            Ver perfil
+          </a>
+        </p>
+      }
+    </div>
+    <div class="patient-stats" aria-label="Porcentaje de éxito">
+      <span class="stats-label">Metas logradas</span>
+      <span class="stats-value">{{ conteoResource.value()?.porcentaje ?? 0 }}%</span>
+    </div>
+  </header>
+
+  <!-- STATS WIDGETS -->
+  <section class="widgets-row" aria-label="Resumen de metas">
+    <div class="widget-card w-total">
+      <div class="widget-icon" aria-hidden="true">
+        <i class="bx bx-clipboard"></i>
+      </div>
+      <div class="widget-data">
+        <strong>{{ conteoResource.value()?.total ?? 0 }}</strong>
+        <span>Total Metas</span>
+      </div>
+    </div>
+    <div class="widget-card w-pending">
+      <div class="widget-icon" aria-hidden="true">
+        <i class="bx bx-time-five"></i>
+      </div>
+      <div class="widget-data">
+        <strong>{{ conteoResource.value()?.porValidar ?? 0 }}</strong>
+        <span>Por Validar</span>
+      </div>
+    </div>
+    <div class="widget-card w-success">
+      <div class="widget-icon" aria-hidden="true">
+        <i class="bx bx-check-circle"></i>
+      </div>
+      <div class="widget-data">
+        <strong>{{ conteoResource.value()?.cumplidas ?? 0 }}</strong>
+        <span>Logradas</span>
+      </div>
+    </div>
+    <div class="widget-card w-active">
+      <div class="widget-icon" aria-hidden="true">
+        <i class="bx bx-run"></i>
+      </div>
+      <div class="widget-data">
+        <strong>{{ conteoResource.value()?.pendientes ?? 0 }}</strong>
+        <span>En Curso</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTENT GRID: FORM SIDEBAR + MAIN -->
+  <div class="content-grid">
+
+    <!-- SIDEBAR: NEW GOAL FORM -->
+    <aside class="form-sidebar">
+      <div class="form-card">
+        <h2 class="card-title">
+          <i class="bx bx-plus-circle" aria-hidden="true"></i>
+          Nuevo Objetivo
+        </h2>
+        <form [formGroup]="nuevaMetaForm" (ngSubmit)="crearMeta()" novalidate>
+          <div class="form-group">
+            <label for="descripcion">Descripción Clínica</label>
+            <textarea
+              id="descripcion"
+              formControlName="descripcion"
+              rows="4"
+              placeholder="Ej. Aumentar consumo de proteínas magras..."
+              [class.input-error]="validator.isFieldInvalid(nuevaMetaForm.get('descripcion'))">
+            </textarea>
+            @if (validator.isFieldInvalid(nuevaMetaForm.get('descripcion'))) {
+              <span class="error-msg" role="alert">
+                {{ validator.getErrorMessage(nuevaMetaForm.get('descripcion'), 'descripción') }}
+              </span>
+            }
+          </div>
+          <div class="form-group">
+            <label for="fechaObjetivo">Fecha Objetivo de Evaluación</label>
+            <input
+              id="fechaObjetivo"
+              type="date"
+              formControlName="fechaObjetivo"
+              [class.input-error]="validator.isFieldInvalid(nuevaMetaForm.get('fechaObjetivo'))">
+            @if (validator.isFieldInvalid(nuevaMetaForm.get('fechaObjetivo'))) {
+              <span class="error-msg" role="alert">
+                {{ validator.getErrorMessage(nuevaMetaForm.get('fechaObjetivo'), 'fecha objetivo') }}
+              </span>
+            }
+          </div>
+          <button type="submit" class="btn-submit" [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i> Asignando...
+            } @else {
+              <i class="bx bx-send" aria-hidden="true"></i> Asignar al Paciente
+            }
+          </button>
+        </form>
+      </div>
+    </aside>
+
+    <!-- MAIN: CARDS + TABLE -->
+    <main class="main-panel">
+
+      <!-- URGENT CARDS: POR_VALIDAR + PENDIENTE -->
+      @if (tieneMetasDestacadas()) {
+        <h2 class="section-header">
+          <i class="bx bx-bolt-circle" aria-hidden="true"></i>
+          Atención Urgente y Activas
+        </h2>
+
+        @for (meta of metasPorValidar(); track meta.id) {
+          <article class="goal-item goal-item--urgent" [attr.aria-label]="'Meta: ' + meta.descripcion">
+            <div class="goal-header">
+              <div class="date-chip">
+                <i class="bx bx-calendar" aria-hidden="true"></i>
+                Evaluación: {{ formatearFecha(meta.fechaObjetivo) }}
+              </div>
+              <span class="badge" [class]="claseEstado(meta.estado)">
+                {{ etiquetaEstado(meta.estado) }}
+              </span>
+            </div>
+            <p class="goal-desc">{{ meta.descripcion }}</p>
+            @if (meta.observaciones) {
+              <div class="note-box" role="note">
+                <strong>Comentario del paciente</strong>
+                <q>{{ meta.observaciones }}</q>
+              </div>
+            }
+            <div class="eval-panel">
+              <label [for]="'obs-' + meta.id">Nota de validación (opcional)</label>
+              <textarea
+                [id]="'obs-' + meta.id"
+                rows="2"
+                placeholder="Escribe tu nota final para el paciente..."
+                [value]="getObservacion(meta.id)"
+                (input)="setObservacion(meta.id, $event)">
+              </textarea>
+              <div class="eval-actions">
+                <button
+                  type="button"
+                  class="btn-approve"
+                  [disabled]="processingId() === meta.id"
+                  (click)="actualizarEstado(meta, 'CUMPLIDA')"
+                  [attr.aria-label]="'Aprobar meta: ' + meta.descripcion">
+                  <i class="bx bx-check" aria-hidden="true"></i> Aprobar Meta
+                </button>
+                <button
+                  type="button"
+                  class="btn-reject"
+                  [disabled]="processingId() === meta.id"
+                  (click)="actualizarEstado(meta, 'RECHAZADA')"
+                  [attr.aria-label]="'Rechazar meta: ' + meta.descripcion">
+                  <i class="bx bx-x" aria-hidden="true"></i> Rechazar
+                </button>
+                <button
+                  type="button"
+                  class="btn-no-lograda"
+                  [disabled]="processingId() === meta.id"
+                  (click)="actualizarEstado(meta, 'NO_CUMPLIDA')"
+                  [attr.aria-label]="'Meta no lograda: ' + meta.descripcion">
+                  <i class="bx bx-block" aria-hidden="true"></i> Meta no lograda
+                </button>
+              </div>
+            </div>
+            <div class="card-footer-actions">
+              <button type="button" class="btn-text-edit" (click)="abrirEdicion(meta)">
+                Editar datos
+              </button>
+              <button
+                type="button"
+                class="btn-text-delete"
+                [disabled]="processingId() === meta.id"
+                (click)="eliminarMeta(meta)">
+                Eliminar
+              </button>
+            </div>
+          </article>
+        }
+
+        @for (meta of metasActivas(); track meta.id) {
+          <article class="goal-item" [attr.aria-label]="'Meta: ' + meta.descripcion">
+            <div class="goal-header">
+              <div class="date-chip">
+                <i class="bx bx-calendar" aria-hidden="true"></i>
+                Evaluación: {{ formatearFecha(meta.fechaObjetivo) }}
+              </div>
+              <span class="badge" [class]="claseEstado(meta.estado)">
+                {{ etiquetaEstado(meta.estado) }}
+              </span>
+            </div>
+            <p class="goal-desc">{{ meta.descripcion }}</p>
+            <div class="card-footer-actions">
+              <button type="button" class="btn-text-edit" (click)="abrirEdicion(meta)">
+                Editar datos
+              </button>
+              <button
+                type="button"
+                class="btn-text-delete"
+                [disabled]="processingId() === meta.id"
+                (click)="eliminarMeta(meta)">
+                Eliminar
+              </button>
+            </div>
+          </article>
+        }
+      }
+
+      <!-- TABLE: ALL GOALS -->
+      <h2 class="section-header" [class.section-header--mt]="tieneMetasDestacadas()">
+        <i class="bx bx-table" aria-hidden="true"></i>
+        Registro General de Metas
+      </h2>
+
+      @if (metasResource.isLoading()) {
+        <div class="loading-message"><p>Cargando metas...</p></div>
+      } @else {
+        <div class="table-container">
+          <div class="table-wrapper">
+            <table aria-label="Lista de metas del paciente">
+              <thead>
+                <tr>
+                  <th scope="col">Descripción del Objetivo</th>
+                  <th scope="col">Fecha Límite</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (meta of metasResource.value()?.content ?? []; track meta.id) {
+                  <tr>
+                    <td class="td-desc">{{ meta.descripcion }}</td>
+                    <td class="td-nowrap">{{ formatearFecha(meta.fechaObjetivo) }}</td>
+                    <td class="td-center">
+                      <span class="badge" [class]="claseEstado(meta.estado)">
+                        {{ etiquetaEstado(meta.estado) }}
+                      </span>
+                    </td>
+                    <td class="td-nowrap">
+                      <div class="actions-cell">
+                        <button
+                          type="button"
+                          class="btn-icon btn-edit"
+                          [attr.aria-label]="'Editar meta: ' + meta.descripcion"
+                          (click)="abrirEdicion(meta)">
+                          <i class="bx bx-edit" aria-hidden="true"></i>
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-icon btn-delete"
+                          [attr.aria-label]="'Eliminar meta: ' + meta.descripcion"
+                          [disabled]="processingId() === meta.id"
+                          (click)="eliminarMeta(meta)">
+                          @if (processingId() === meta.id) {
+                            <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i>
+                          } @else {
+                            <i class="bx bx-trash" aria-hidden="true"></i>
+                          }
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" class="empty-message">No hay metas registradas para este paciente.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        @if ((metasResource.value()?.totalPages ?? 0) > 0) {
+          <app-pagination
+            [currentPage]="currentPage()"
+            [totalPages]="metasResource.value()?.totalPages ?? 0"
+            [totalElements]="metasResource.value()?.totalElements ?? 0"
+            [pageSize]="pageSize()"
+            (pageChange)="onPageChange($event)" />
+        }
+      }
+
+    </main>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+@if (editingMeta()) {
+  <div
+    class="modal-overlay"
+    role="presentation"
+    (click)="cerrarEdicion()"
+    (keydown)="onModalKeydown($event)">
+    <div
+      #editModal
+      class="modal-content"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-modal-title"
+      (click)="$event.stopPropagation()">
+      <h2 id="edit-modal-title" class="card-title">
+        <i class="bx bx-edit-alt" aria-hidden="true"></i>
+        Editar Objetivo
+      </h2>
+      <form [formGroup]="editMetaForm" (ngSubmit)="guardarEdicion()" novalidate>
+        <div class="form-group">
+          <label for="edit-descripcion">Descripción</label>
+          <textarea
+            id="edit-descripcion"
+            formControlName="descripcion"
+            rows="4"
+            [class.input-error]="validator.isFieldInvalid(editMetaForm.get('descripcion'))">
+          </textarea>
+          @if (validator.isFieldInvalid(editMetaForm.get('descripcion'))) {
+            <span class="error-msg" role="alert">
+              {{ validator.getErrorMessage(editMetaForm.get('descripcion'), 'descripción') }}
+            </span>
+          }
+        </div>
+        <div class="form-group">
+          <label for="edit-fecha">Fecha Límite</label>
+          <input
+            id="edit-fecha"
+            type="date"
+            formControlName="fechaObjetivo"
+            [class.input-error]="validator.isFieldInvalid(editMetaForm.get('fechaObjetivo'))">
+          @if (validator.isFieldInvalid(editMetaForm.get('fechaObjetivo'))) {
+            <span class="error-msg" role="alert">
+              {{ validator.getErrorMessage(editMetaForm.get('fechaObjetivo'), 'fecha objetivo') }}
+            </span>
+          }
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn-submit">
+            <i class="bx bx-save" aria-hidden="true"></i> Guardar Cambios
+          </button>
+          <button type="button" class="btn-cancel" (click)="cerrarEdicion()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

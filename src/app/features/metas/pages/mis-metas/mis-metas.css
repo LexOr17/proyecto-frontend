@@ -1,0 +1,418 @@
+.mis-metas-page {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Progress Hero ──────────────────────────────────────────── */
+.progress-hero {
+  background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+  color: white;
+  padding: 32px;
+  border-radius: 20px;
+  box-shadow: 0 10px 24px rgba(27, 94, 32, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.hero-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.hero-text h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0 0 4px;
+}
+
+.hero-text p {
+  font-size: 14px;
+  opacity: 0.85;
+  margin: 0;
+}
+
+.hero-percentage {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #34d399;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50 0%, #34d399 100%);
+  border-radius: 100px;
+  transition: width 1s ease;
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.4);
+}
+
+/* ── Widgets Grid ───────────────────────────────────────────── */
+.widgets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.widget-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid #E0E0E0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s;
+}
+
+.widget-card:hover {
+  transform: translateY(-4px);
+}
+
+.widget-icon-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+}
+
+.w-pendientes .widget-icon-box { background: #FFF3E0; color: #E65100; }
+.w-logradas .widget-icon-box   { background: #E8F5E9; color: #2E7D32; }
+.w-revision .widget-icon-box   { background: #E3F2FD; color: #1565C0; }
+.w-ajuste .widget-icon-box     { background: #FFEBEE; color: #C62828; }
+
+.widget-val {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #1B5E20;
+  line-height: 1;
+}
+
+.widget-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #888;
+}
+
+/* ── Section Headers ────────────────────────────────────────── */
+.section-header {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #1B5E20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.section-header::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: #C8E6C9;
+  border-radius: 2px;
+}
+
+/* ── Goals Group ────────────────────────────────────────────── */
+.goals-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Goal Item ──────────────────────────────────────────────── */
+.goal-item {
+  background: #fff;
+  border-radius: 18px;
+  padding: 22px;
+  border: 1px solid #E0E0E0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.goal-item:hover {
+  border-color: #A5D6A7;
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.08);
+}
+
+.goal-item--revision {
+  border-color: #B3E5FC;
+}
+
+.goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.date-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #F5F5F5;
+  padding: 6px 16px;
+  border-radius: 100px;
+  border: 1px solid #E0E0E0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+}
+
+.goal-desc {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Badges ─────────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge-pendiente   { background: #EEEEEE; color: #616161; }
+.badge-por-validar { background: #E3F2FD; color: #0D47A1; border: 1px solid #BBDEFB; }
+.badge-cumplida    { background: #E8F5E9; color: #1B5E20; }
+.badge-rechazada   { background: #FFF3E0; color: #E65100; border: 1px solid #FFE0B2; }
+.badge-no-cumplida { background: #FFEBEE; color: #C62828; border: 1px dashed #FFCDD2; }
+
+/* ── Feedback Boxes ─────────────────────────────────────────── */
+.feedback-box {
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.feedback-box strong {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.feedback-box q {
+  font-style: italic;
+}
+
+.feedback-box--nutriologo {
+  background: #F1F8E9;
+  border-left: 4px solid #7CB342;
+  color: #33691E;
+}
+
+.feedback-box--nutriologo strong {
+  color: #558B2F;
+}
+
+.feedback-box--paciente {
+  background: #FFF8E1;
+  border-left: 4px solid #FFB300;
+  color: #5D4037;
+}
+
+.feedback-box--paciente strong {
+  color: #E65100;
+}
+
+/* ── Revision Notice ────────────────────────────────────────── */
+.revision-notice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1565C0;
+  background: #E3F2FD;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin: 0;
+}
+
+/* ── Action Area ────────────────────────────────────────────── */
+.action-area {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-group {
+  display: flex;
+  gap: 12px;
+}
+
+.btn {
+  padding: 11px 18px;
+  border-radius: 12px;
+  border: none;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  flex: 1;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-success {
+  background: #4CAF50;
+  color: white;
+  box-shadow: 0 3px 8px rgba(76, 175, 80, 0.3);
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #388E3C;
+}
+
+.btn-outline-warning {
+  background: white;
+  color: #E65100;
+  border: 1.5px solid #FFCC80;
+}
+
+.btn-outline-warning:hover:not(:disabled) {
+  background: #FFF3E0;
+}
+
+.btn-warning {
+  background: #F57C00;
+  color: white;
+  width: 100%;
+  box-shadow: 0 3px 8px rgba(245, 124, 0, 0.3);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: #E65100;
+}
+
+/* ── Reason Panel ───────────────────────────────────────────── */
+.reason-panel {
+  background: #FFF8E1;
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid #FFE0B2;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.reason-panel label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #E65100;
+}
+
+.reason-panel textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #FFCC80;
+  font-family: inherit;
+  font-size: 13px;
+  resize: none;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.reason-panel textarea:focus {
+  border-color: #F57C00;
+}
+
+/* ── Empty State ────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: #888;
+}
+
+.empty-state i {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 12px;
+  color: #C8E6C9;
+}
+
+.empty-state p {
+  font-size: 14px;
+}
+
+/* ── Loading / Misc ─────────────────────────────────────────── */
+.loading-message {
+  text-align: center;
+  padding: 2rem;
+  color: #888;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .hero-body {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hero-percentage {
+    font-size: 2rem;
+  }
+
+  .btn-group {
+    flex-direction: column;
+  }
+
+  .widgets-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

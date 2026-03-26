@@ -87,6 +87,12 @@
                     <span>Mi Bienestar</span>
                 </a>
             </li>
+            <li>
+                <a routerLink="/main/mis-metas" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
+                    <span class='bx bx-target-lock' aria-hidden="true"></span>
+                    <span>Mis Metas</span>
+                </a>
+            </li>
             }
             @if (currentUserRole() === 'ADMINISTRADOR' || currentUserRole() === 'NUTRIOLOGO') {
             <li>
@@ -131,6 +137,12 @@
                 <a routerLink="/main/bienestar" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
                     <span class='bx bx-heart-circle' aria-hidden="true"></span>
                     <span>Bienestar Pacientes</span>
+                </a>
+            </li>
+            <li>
+                <a routerLink="/main/pacientes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" aria-label="Ir a pacientes para gestionar metas">
+                    <span class='bx bx-target-lock' aria-hidden="true"></span>
+                    <span>Metas de Pacientes</span>
                 </a>
             </li>
             }
