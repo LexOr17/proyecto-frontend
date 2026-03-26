@@ -1,6 +1,7 @@
 import {
   AfterViewChecked,
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   computed,
   DestroyRef,
@@ -13,7 +14,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { map, switchMap } from 'rxjs';
+import { interval, map, of, switchMap } from 'rxjs';
 import { ChatService } from '../../service/chat-service';
 import { PacienteService } from '../../../pacientes/service/paciente-service';
 import { CitaService } from '../../../citas/service/cita-service';
@@ -38,6 +39,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   private readonly usuarioService = inject(UsuarioService);
   private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   protected readonly currentUserId = this.authService.userId;
   protected readonly currentUserRole = this.authService.currentUserRole;
@@ -66,12 +68,32 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
       if (!myId) return;
 
       const isRelevant =
-        (msg.senderId === selected?.id && msg.recipientId === myId) ||
-        (msg.senderId === myId && msg.recipientId === selected?.id);
+        (Number(msg.senderId) === Number(selected?.id) && Number(msg.recipientId) === Number(myId)) ||
+        (Number(msg.senderId) === Number(myId) && Number(msg.recipientId) === Number(selected?.id));
 
       if (isRelevant) {
         this.messages.update((prev) => [...prev, msg]);
         this.shouldScrollToBottom = true;
+        this.cdr.markForCheck();
+      }
+    });
+
+    // Polling de respaldo: recarga el historial cada 5 s por si el WebSocket
+    // pierde algún mensaje o no dispara el change detection correctamente.
+    interval(3000).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      switchMap(() => {
+        const contact = this.selectedContact();
+        const myId = this.currentUserId();
+        if (!contact || !myId) return of([] as ChatMessageDTO[]);
+        return this.chatService.getChatHistory(myId, contact.id);
+      }),
+    ).subscribe(msgs => {
+      if (!msgs.length) return;
+      if (msgs.length > this.messages().length) {
+        this.messages.set(msgs);
+        this.shouldScrollToBottom = true;
+        this.cdr.markForCheck();
       }
     });
 

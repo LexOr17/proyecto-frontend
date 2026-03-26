@@ -36,7 +36,7 @@
     </div>
   } @else {
     @let diario = diarioActual();
-    @if (diario && !isEditing()) {
+    @if (diarioExiste() && diario && !isEditing()) {
       <div class="registered-card" role="status" aria-live="polite">
         <div class="registered-icon" aria-hidden="true">✅</div>
         <h2 class="registered-title">¡Registro completado!</h2>

@@ -40,6 +40,12 @@
               <span class="info-value">{{ cita.observaciones }}</span>
             </div>
           }
+          @if (cita.detalleAdicional) {
+            <div class="info-item full-width">
+              <span class="info-label">Motivo escrito por el paciente</span>
+              <span class="info-value">{{ cita.detalleAdicional }}</span>
+            </div>
+          }
           @if (cita.estado === 'REPROGRAMACION_SOLICITADA' && cita.fechaHoraReprogramacionSolicitada) {
             <div class="info-item full-width reprog-alert">
               <i class="bx bx-time-five" aria-hidden="true"></i>
