@@ -1,0 +1,336 @@
+<div class="page-wrapper">
+
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Nueva <span class="title-accent">Sugerencia</span></h1>
+      <p class="page-subtitle">Propón una combinación de alimentos a tu nutriólogo</p>
+    </div>
+    <a routerLink="/main/mis-sugerencias" class="btn-back">
+      <i class="bx bx-arrow-back" aria-hidden="true"></i> Mis Sugerencias
+    </a>
+  </header>
+
+  <!-- ================================================
+       SELECTOR DE PLANTILLA DEL PLAN
+       ================================================ -->
+  @if ((planPlantillasResource.value()?.length ?? 0) > 0) {
+  <div class="plan-selector-bar">
+    <div class="plan-selector-info">
+      <i class="bx bx-food-menu" aria-hidden="true"></i>
+      @if (plantillaSeleccionada()) {
+        <span>Basado en: <strong>{{ plantillaSeleccionada()!.nombre }}</strong></span>
+        <button type="button" class="btn-clear-base" (click)="limpiarPlantillaBase()" aria-label="Quitar plantilla base">
+          <i class="bx bx-x" aria-hidden="true"></i> Quitar base
+        </button>
+      } @else {
+        <span>¿Quieres modificar una plantilla de tu plan?</span>
+      }
+    </div>
+    @if (!plantillaSeleccionada()) {
+      <button type="button" class="btn-toggle-picker" (click)="mostrarPickerPlan.set(!mostrarPickerPlan())">
+        @if (mostrarPickerPlan()) {
+          <i class="bx bx-chevron-up" aria-hidden="true"></i> Ocultar
+        } @else {
+          <i class="bx bx-chevron-down" aria-hidden="true"></i> Seleccionar plantilla
+        }
+      </button>
+    }
+  </div>
+
+  @if (mostrarPickerPlan()) {
+  <div class="plan-picker-grid" role="list" aria-label="Plantillas de tu plan actual">
+    @for (p of planPlantillasResource.value(); track p.id) {
+    <div class="plan-picker-card" role="listitem">
+      <div class="picker-card-header">
+        <span class="picker-tipo">{{ p.tipoComida }}</span>
+        <span class="picker-cals">🔥 {{ p.totalCalorias }} kcal</span>
+      </div>
+      <p class="picker-nombre">{{ p.nombre }}</p>
+      <div class="picker-macros">
+        <span>🥩 {{ p.totalProteinas }}g</span>
+        <span>🌾 {{ p.totalCarbohidratos }}g</span>
+        <span>🥑 {{ p.totalGrasas }}g</span>
+      </div>
+      <button type="button" class="btn-usar-base" (click)="usarPlantillaComoBase(p)">
+        Usar como base
+      </button>
+    </div>
+    }
+  </div>
+  }
+  }
+
+  <!-- ================================================
+       COMPARACIÓN: Original vs Sugerencia
+       ================================================ -->
+  @if (plantillaSeleccionada()) {
+  <div class="comparison-section" aria-label="Comparación de plantillas">
+    <div class="comparison-col comparison-original">
+      <h2 class="comparison-heading">
+        <i class="bx bx-archive-in" aria-hidden="true"></i> Plan actual
+      </h2>
+      <div class="cmp-macros">
+        <div class="cmp-macro"><span class="cmp-val">{{ plantillaSeleccionada()!.totalCalorias }}</span><span class="cmp-lbl">kcal</span></div>
+        <div class="cmp-macro"><span class="cmp-val">{{ plantillaSeleccionada()!.totalProteinas }}g</span><span class="cmp-lbl">Prot</span></div>
+        <div class="cmp-macro"><span class="cmp-val">{{ plantillaSeleccionada()!.totalCarbohidratos }}g</span><span class="cmp-lbl">Carbs</span></div>
+        <div class="cmp-macro"><span class="cmp-val">{{ plantillaSeleccionada()!.totalGrasas }}g</span><span class="cmp-lbl">Grasas</span></div>
+      </div>
+      <ul class="cmp-food-list" role="list">
+        @for (d of plantillaSeleccionada()!.detalles; track d.alimentoId) {
+        <li class="cmp-food-item" role="listitem">
+          <span class="cmp-food-name">{{ d.nombreAlimento }}</span>
+          <span class="cmp-food-qty">× {{ d.cantidad }} {{ d.unidadPorcion }}</span>
+        </li>
+        }
+      </ul>
+    </div>
+
+    <div class="comparison-divider" aria-hidden="true">
+      <i class="bx bx-right-arrow-alt"></i>
+    </div>
+
+    <div class="comparison-col comparison-nueva">
+      <h2 class="comparison-heading">
+        <i class="bx bx-bulb" aria-hidden="true"></i> Tu sugerencia
+      </h2>
+      @if (items().length > 0) {
+      <div class="cmp-macros">
+        <div class="cmp-macro"><span class="cmp-val">{{ totales().calorias }}</span><span class="cmp-lbl">kcal</span></div>
+        <div class="cmp-macro"><span class="cmp-val">{{ totales().proteina }}g</span><span class="cmp-lbl">Prot</span></div>
+        <div class="cmp-macro"><span class="cmp-val">{{ totales().carbohidratos }}g</span><span class="cmp-lbl">Carbs</span></div>
+        <div class="cmp-macro"><span class="cmp-val">{{ totales().grasas }}g</span><span class="cmp-lbl">Grasas</span></div>
+      </div>
+      <ul class="cmp-food-list" role="list">
+        @for (item of items(); track item.alimento.id) {
+        <li class="cmp-food-item" role="listitem">
+          <span class="cmp-food-name">{{ item.alimento.nombre }}</span>
+          <span class="cmp-food-qty">× {{ item.cantidad }} {{ item.alimento.unidadPorcion }}</span>
+        </li>
+        }
+      </ul>
+      } @else {
+      <p class="cmp-empty">Agrega alimentos en el constructor →</p>
+      }
+    </div>
+  </div>
+  }
+
+  <div class="builder-grid">
+
+    <!-- ================================================
+         COLUMNA IZQUIERDA: Catálogo de alimentos
+         ================================================ -->
+    <section class="panel panel-pantry" aria-labelledby="pantry-heading">
+      <h2 id="pantry-heading" class="panel-title">
+        <i class="bx bx-bowl-hot" aria-hidden="true"></i> Catálogo de Alimentos
+      </h2>
+
+      <div class="filter-group">
+        <div class="select-wrapper">
+          <label for="category-filter" class="sr-only">Filtrar por categoría</label>
+          <select id="category-filter" class="input-pill" (change)="onCategoryChange($event)">
+            <option value="">Todas las categorías</option>
+            @for (cat of categorias; track cat.value) {
+              <option [value]="cat.value">{{ cat.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="search-wrapper">
+          <label for="search-alimentos" class="sr-only">Buscar alimento</label>
+          <i class="bx bx-search search-icon" aria-hidden="true"></i>
+          <input
+            type="search"
+            id="search-alimentos"
+            class="input-pill input-search"
+            placeholder="Buscar alimento..."
+            [value]="searchTerm()"
+            (input)="onSearchChange($event)">
+        </div>
+      </div>
+
+      @if (alimentosResource.isLoading()) {
+        <div class="panel-loading" aria-live="polite">Cargando alimentos...</div>
+      } @else {
+        <ul class="food-list" role="list" aria-label="Alimentos disponibles">
+          @for (alimento of alimentosFiltrados(); track alimento.id) {
+            <li class="food-item" role="listitem">
+              <div class="food-info">
+                <p class="food-cat">{{ alimento.categoria }}</p>
+                <h3 class="food-name">
+                  {{ alimento.nombre }}
+                  <span class="food-portion">({{ alimento.porcionBase }}{{ alimento.unidadPorcion }})</span>
+                </h3>
+                <div class="macros-row" [attr.aria-label]="'Información nutricional de ' + alimento.nombre">
+                  <span class="badge b-cal">🔥 {{ alimento.calorias }}</span>
+                  <span class="badge b-pro">🥩 {{ alimento.proteina }}g</span>
+                  <span class="badge b-carb">🌾 {{ alimento.carbohidratos }}g</span>
+                  <span class="badge b-fat">🥑 {{ alimento.grasas }}g</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="btn-add"
+                [attr.aria-label]="'Agregar ' + alimento.nombre + ' a la sugerencia'"
+                (click)="agregarAlimento(alimento)">
+                <i class="bx bx-plus" aria-hidden="true"></i>
+              </button>
+            </li>
+          } @empty {
+            <li class="empty-pantry">
+              <p>No se encontraron alimentos</p>
+            </li>
+          }
+        </ul>
+
+        @if ((alimentosResource.value()?.totalPages ?? 0) > 1) {
+          <app-pagination
+            [currentPage]="currentPage()"
+            [totalPages]="alimentosResource.value()?.totalPages ?? 0"
+            [totalElements]="alimentosResource.value()?.totalElements ?? 0"
+            [pageSize]="pageSize()"
+            (pageChange)="onPageChange($event)" />
+        }
+      }
+    </section>
+
+    <!-- ================================================
+         COLUMNA DERECHA: Formulario + selección
+         ================================================ -->
+    <section class="panel panel-builder" aria-labelledby="builder-heading">
+      <h2 id="builder-heading" class="panel-title">
+        <i class="bx bx-bulb" aria-hidden="true"></i> Tu Sugerencia
+      </h2>
+
+      <form [formGroup]="sugerenciaForm" (ngSubmit)="onSubmit()" novalidate>
+
+        <!-- Nombre -->
+        <div class="field-group">
+          <label for="nombre" class="field-label">Nombre de la sugerencia <span aria-hidden="true">*</span></label>
+          <input
+            id="nombre"
+            type="text"
+            class="field-input"
+            [class.input-error]="isFieldInvalid('nombre')"
+            formControlName="nombre"
+            placeholder="Ej: Desayuno alto en proteínas"
+            autocomplete="off">
+          @if (isFieldInvalid('nombre')) {
+            <span class="error-msg" role="alert">El nombre es obligatorio (máx. 100 caracteres).</span>
+          }
+        </div>
+
+        <!-- Tipo de comida -->
+        <div class="field-group">
+          <label for="tipoComida" class="field-label">Tipo de comida <span aria-hidden="true">*</span></label>
+          <select
+            id="tipoComida"
+            class="field-input"
+            [class.input-error]="isFieldInvalid('tipoComida')"
+            formControlName="tipoComida">
+            @for (tipo of tiposComida; track tipo.value) {
+              <option [value]="tipo.value">{{ tipo.icon }} {{ tipo.label }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Motivo (opcional) -->
+        <div class="field-group">
+          <label for="motivoSugerencia" class="field-label">
+            Motivo / justificación
+            <span class="optional-hint">(opcional)</span>
+          </label>
+          <textarea
+            id="motivoSugerencia"
+            class="field-input field-textarea"
+            [class.input-error]="isFieldInvalid('motivoSugerencia')"
+            formControlName="motivoSugerencia"
+            rows="3"
+            placeholder="Explica por qué sugieres esta combinación..."></textarea>
+          @if (isFieldInvalid('motivoSugerencia')) {
+            <span class="error-msg" role="alert">El motivo no puede superar los 500 caracteres.</span>
+          }
+        </div>
+
+        <!-- Alimentos seleccionados -->
+        <div class="selected-section" aria-labelledby="selected-heading">
+          <h3 id="selected-heading" class="selected-title">
+            Alimentos seleccionados
+            <span class="count-badge" aria-label="{{ items().length }} alimentos">{{ items().length }}</span>
+          </h3>
+
+          @if (items().length > 0) {
+          <ul class="selected-list" role="list" aria-label="Alimentos agregados a la sugerencia">
+            @for (item of items(); track item.alimento.id; let i = $index) {
+            <li class="selected-item" role="listitem">
+              <span class="item-name">{{ item.alimento.nombre }}</span>
+              <div class="qty-controls" [attr.aria-label]="'Cantidad de ' + item.alimento.nombre">
+                <button
+                  type="button"
+                  class="qty-btn"
+                  (click)="actualizarCantidad(i, -1)"
+                  [attr.aria-label]="'Reducir cantidad de ' + item.alimento.nombre">−</button>
+                <span class="qty-value">{{ item.cantidad }}</span>
+                <button
+                  type="button"
+                  class="qty-btn"
+                  (click)="actualizarCantidad(i, 1)"
+                  [attr.aria-label]="'Aumentar cantidad de ' + item.alimento.nombre">+</button>
+              </div>
+              <button
+                type="button"
+                class="btn-remove"
+                (click)="quitarAlimento(i)"
+                [attr.aria-label]="'Quitar ' + item.alimento.nombre">
+                <i class="bx bx-trash" aria-hidden="true"></i>
+              </button>
+            </li>
+            }
+          </ul>
+
+          <!-- Totales nutricionales -->
+          <div class="totals-box" aria-label="Resumen nutricional de la sugerencia">
+            <div class="total-row">
+              <div class="total-item t-cal">
+                <span class="t-value">{{ totales().calorias }}</span>
+                <span class="t-unit">kcal</span>
+              </div>
+              <div class="total-item t-pro">
+                <span class="t-value">{{ totales().proteina }}g</span>
+                <span class="t-unit">Proteínas</span>
+              </div>
+              <div class="total-item t-carb">
+                <span class="t-value">{{ totales().carbohidratos }}g</span>
+                <span class="t-unit">Carbs</span>
+              </div>
+              <div class="total-item t-fat">
+                <span class="t-value">{{ totales().grasas }}g</span>
+                <span class="t-unit">Grasas</span>
+              </div>
+            </div>
+            <div class="macro-bar" aria-hidden="true">
+              <div class="bar-pro" [style.width.%]="totales().barProteina"></div>
+              <div class="bar-carb" [style.width.%]="totales().barCarbohidratos"></div>
+              <div class="bar-fat" [style.width.%]="totales().barGrasas"></div>
+            </div>
+          </div>
+          } @else {
+          <p class="empty-selection">Selecciona alimentos del catálogo</p>
+          }
+        </div>
+
+        <button
+          type="submit"
+          class="btn-submit"
+          [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <span aria-hidden="true">⏳</span> Enviando...
+          } @else {
+            <i class="bx bx-send" aria-hidden="true"></i> Enviar Sugerencia
+          }
+        </button>
+
+      </form>
+    </section>
+
+  </div>
+</div>

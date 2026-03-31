@@ -1,0 +1,160 @@
+<div class="main-content">
+  <header>
+    <div class="header-title">
+      <h1><i class="bx bx-bulb" aria-hidden="true"></i> Sugerencias de Pacientes</h1>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <div class="tabs" role="tablist" aria-label="Filtrar sugerencias">
+    <button
+      type="button"
+      class="tab-btn"
+      [class.tab-active]="tabActivo() === 'pendientes'"
+      role="tab"
+      [attr.aria-selected]="tabActivo() === 'pendientes'"
+      id="tab-pendientes"
+      aria-controls="panel-sugerencias"
+      (click)="cambiarTab('pendientes')">
+      <i class="bx bx-time-five" aria-hidden="true"></i> Pendientes
+      @if ((pendientesResource.value()?.totalElements ?? 0) > 0) {
+        <span class="tab-count" aria-label="{{ pendientesResource.value()?.totalElements }} pendientes">
+          {{ pendientesResource.value()?.totalElements }}
+        </span>
+      }
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.tab-active]="tabActivo() === 'todas'"
+      role="tab"
+      [attr.aria-selected]="tabActivo() === 'todas'"
+      id="tab-todas"
+      aria-controls="panel-sugerencias"
+      (click)="cambiarTab('todas')">
+      <i class="bx bx-list-ul" aria-hidden="true"></i> Todas
+    </button>
+  </div>
+
+  <div
+    class="catalog-container"
+    id="panel-sugerencias"
+    role="tabpanel"
+    [attr.aria-labelledby]="tabActivo() === 'pendientes' ? 'tab-pendientes' : 'tab-todas'">
+
+    @if (recursoActivo().isLoading()) {
+    <div class="loading-message" role="status" aria-live="polite">
+      <p>Cargando sugerencias...</p>
+    </div>
+    } @else {
+
+    <div class="cards-grid" role="list" aria-label="Lista de sugerencias">
+      @for (sugerencia of recursoActivo().value()?.content ?? []; track sugerencia.id) {
+      <article class="sugerencia-card" role="listitem">
+
+        <div class="card-header">
+          <div class="tipo-badge">
+            <span aria-hidden="true">{{ obtenerIconTipo(sugerencia.tipoComida) }}</span>
+            {{ obtenerLabelTipo(sugerencia.tipoComida) }}
+          </div>
+          <span
+            class="estado-badge"
+            [style.background-color]="obtenerEstado(sugerencia.estado)?.color + '20'"
+            [style.color]="obtenerEstado(sugerencia.estado)?.color">
+            {{ obtenerEstado(sugerencia.estado)?.label }}
+          </span>
+        </div>
+
+        <h3 class="card-title">{{ sugerencia.nombre }}</h3>
+
+        <p class="card-paciente">
+          <i class="bx bx-user" aria-hidden="true"></i>
+          Paciente ID: {{ sugerencia.pacienteId }}
+        </p>
+
+        @if (sugerencia.motivoSugerencia) {
+        <p class="card-motivo">
+          <i class="bx bx-comment-detail" aria-hidden="true"></i>
+          {{ sugerencia.motivoSugerencia | slice: 0 : 120 }}
+          @if (sugerencia.motivoSugerencia.length > 120) {
+            <span aria-hidden="true">…</span>
+          }
+        </p>
+        }
+
+        <p class="card-alimentos">
+          <strong>Alimentos:</strong>
+          @if (sugerencia.detalles.length > 0) {
+            {{ sugerencia.detalles[0].nombreAlimento }}
+            @if (sugerencia.detalles.length > 1) {
+              , {{ sugerencia.detalles[1].nombreAlimento }}
+            }
+            @if (sugerencia.detalles.length > 2) {
+              <span class="more-label"> +{{ sugerencia.detalles.length - 2 }} más</span>
+            }
+          } @else {
+            <em>Sin alimentos</em>
+          }
+        </p>
+
+        <div class="card-macros">
+          <div class="macro-item macro-cal">
+            <span class="macro-value">{{ sugerencia.totalCalorias | number: '1.0-0' }}</span>
+            <span class="macro-label">kcal</span>
+          </div>
+          <div class="macro-item macro-p">
+            <span class="macro-value">{{ sugerencia.totalProteinas | number: '1.1-1' }}g</span>
+            <span class="macro-label">Prot</span>
+          </div>
+          <div class="macro-item macro-c">
+            <span class="macro-value">{{ sugerencia.totalCarbohidratos | number: '1.1-1' }}g</span>
+            <span class="macro-label">Carbs</span>
+          </div>
+          <div class="macro-item macro-g">
+            <span class="macro-value">{{ sugerencia.totalGrasas | number: '1.1-1' }}g</span>
+            <span class="macro-label">Grasas</span>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <time class="card-date" [attr.datetime]="sugerencia.fechaEnvio">
+            {{ sugerencia.fechaEnvio | slice: 0 : 10 }}
+          </time>
+          @if (sugerencia.estado === 'PENDIENTE') {
+          <a
+            [routerLink]="['revisar', sugerencia.id]"
+            class="btn-revisar"
+            [attr.aria-label]="'Revisar sugerencia ' + sugerencia.nombre">
+            <i class="bx bx-check-circle" aria-hidden="true"></i> Revisar
+          </a>
+          }
+        </div>
+
+      </article>
+      } @empty {
+      <div class="empty-message">
+        <i class="bx bx-bulb" aria-hidden="true"></i>
+        <p>
+          @if (tabActivo() === 'pendientes') {
+            No hay sugerencias pendientes.
+          } @else {
+            No hay sugerencias registradas.
+          }
+        </p>
+      </div>
+      }
+    </div>
+
+    @if ((recursoActivo().value()?.totalPages ?? 0) > 0) {
+    <app-pagination
+      [currentPage]="currentPage()"
+      [totalPages]="recursoActivo().value()?.totalPages ?? 0"
+      [totalElements]="recursoActivo().value()?.totalElements ?? 0"
+      [pageSize]="pageSize()"
+      (pageChange)="onPageChange($event)" />
+    }
+
+    }
+
+  </div>
+</div>

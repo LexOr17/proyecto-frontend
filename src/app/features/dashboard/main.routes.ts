@@ -88,6 +88,18 @@ const mainRoutes: Routes = [
         data: { roles: [UserRole.ADMINISTRADOR] }
       },
       {
+        path: 'sugerencias',
+        loadChildren: () => import('../sugerencias/sugerencias.routes').then(m => m.default),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.NUTRIOLOGO] }
+      },
+      {
+        path: 'mis-sugerencias',
+        loadChildren: () => import('../sugerencias/mis-sugerencias.routes').then(m => m.default),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.PACIENTE] }
+      },
+      {
         path: 'chat',
         loadChildren: () => import('../chat/chat.routes').then(m => m.default),
         canMatch: [authGuard],

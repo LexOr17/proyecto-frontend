@@ -377,20 +377,21 @@
 .btn-approve,
 .btn-reject,
 .btn-no-lograda {
-  flex: 1 1 0;
-  min-width: 0;
   padding: 10px;
   border-radius: 10px;
   font-weight: 700;
   font-size: 13px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   transition: background 0.2s;
+  min-width: 0;
 }
 
 .btn-approve {
+  flex: 2;
   border: none;
   background: #4CAF50;
   color: white;
@@ -399,6 +400,7 @@
   background: #388E3C;
 }
 .btn-reject {
+  flex: 1;
   border: 1.5px solid #FFCDD2;
   background: #fff;
   color: #C62828;
@@ -407,10 +409,10 @@
   background: #FFEBEE;
 }
 .btn-no-lograda {
+  flex: 1;
   border: 1.5px solid #FFE082;
   background: #FFFDE7;
   color: #FF6F00;
-  cursor: pointer;
 }
 .btn-no-lograda:hover:not(:disabled) {
   background: #FFF8E1;
@@ -418,54 +420,6 @@
 .btn-approve:disabled,
 .btn-reject:disabled,
 .btn-no-lograda:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-approve {
-  flex: 2;
-  padding: 10px;
-  border-radius: 10px;
-  border: none;
-  background: #4CAF50;
-  color: white;
-  font-weight: 700;
-  font-size: 13px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: background 0.2s;
-}
-
-.btn-approve:hover:not(:disabled) {
-  background: #388E3C;
-}
-
-.btn-reject {
-  flex: 1;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1.5px solid #FFCDD2;
-  background: #fff;
-  color: #C62828;
-  font-weight: 700;
-  font-size: 13px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: background 0.2s;
-}
-
-.btn-reject:hover:not(:disabled) {
-  background: #FFEBEE;
-}
-
-.btn-approve:disabled,
-.btn-reject:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

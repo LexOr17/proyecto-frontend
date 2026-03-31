@@ -12,7 +12,7 @@
 
         <div class="table-actions-bar">
             <div class="search-box">
-                <i class='bx bx-search'></i>
+                <i class='bx bx-search' aria-hidden="true"></i>
                 <label for="search-usuarios" class="sr-only">Buscar usuarios</label>
                 <input type="text" id="search-usuarios" placeholder="Buscar por nombre o correo..." [value]="searchTerm()"
                     (input)="onSearchChange($event)">

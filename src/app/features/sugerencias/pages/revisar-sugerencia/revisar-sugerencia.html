@@ -1,0 +1,258 @@
+<div class="page-wrapper">
+
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Revisar <span class="title-accent">Sugerencia</span></h1>
+      <p class="page-subtitle">Aprueba o rechaza la propuesta del paciente</p>
+    </div>
+    <a routerLink="/main/sugerencias" class="btn-back">
+      <i class="bx bx-arrow-back" aria-hidden="true"></i> Sugerencias
+    </a>
+  </header>
+
+  @if (sugerenciaResource.isLoading()) {
+  <div class="loading-state" role="status" aria-live="polite">
+    <p>Cargando sugerencia...</p>
+  </div>
+  } @else if (sugerencia()) {
+
+  <!-- ================================================
+       COMPARACIÓN: Plantilla original vs Sugerencia
+       (visible sólo cuando la sugerencia tiene plantillaOriginalId)
+       ================================================ -->
+  @if (sugerencia()!.plantillaOriginalId && plantillaOriginal()) {
+  <div class="comparison-panel" aria-label="Comparación antes / después">
+    <div class="comparison-col comparison-original">
+      <h2 class="comparison-heading">
+        <i class="bx bx-archive-in" aria-hidden="true"></i> Plantilla original
+      </h2>
+      <div class="cmp-macros">
+        <div class="cmp-macro"><span class="cmp-val">{{ plantillaOriginal()!.totalCalorias | number: '1.0-0' }}</span><span class="cmp-lbl">kcal</span></div>
+        <div class="cmp-macro"><span class="cmp-val">{{ plantillaOriginal()!.totalProteinas | number: '1.1-1' }}g</span><span class="cmp-lbl">Prot</span></div>
+        <div class="cmp-macro"><span class="cmp-val">{{ plantillaOriginal()!.totalCarbohidratos | number: '1.1-1' }}g</span><span class="cmp-lbl">Carbs</span></div>
+        <div class="cmp-macro"><span class="cmp-val">{{ plantillaOriginal()!.totalGrasas | number: '1.1-1' }}g</span><span class="cmp-lbl">Grasas</span></div>
+      </div>
+      <ul class="cmp-food-list" role="list">
+        @for (d of plantillaOriginal()!.detalles; track d.alimentoId) {
+        <li class="cmp-food-item" role="listitem">
+          <span class="cmp-food-name">{{ d.nombreAlimento }}</span>
+          <span class="cmp-food-qty">× {{ d.cantidad }} {{ d.unidadPorcion }}</span>
+        </li>
+        }
+      </ul>
+    </div>
+
+    <div class="comparison-divider" aria-hidden="true">
+      <i class="bx bx-right-arrow-alt"></i>
+    </div>
+
+    <div class="comparison-col comparison-nueva">
+      <h2 class="comparison-heading">
+        <i class="bx bx-bulb" aria-hidden="true"></i> Sugerencia del paciente
+      </h2>
+      <div class="cmp-macros">
+        <div class="cmp-macro"><span class="cmp-val">{{ sugerencia()!.totalCalorias | number: '1.0-0' }}</span><span class="cmp-lbl">kcal</span></div>
+        <div class="cmp-macro"><span class="cmp-val">{{ sugerencia()!.totalProteinas | number: '1.1-1' }}g</span><span class="cmp-lbl">Prot</span></div>
+        <div class="cmp-macro"><span class="cmp-val">{{ sugerencia()!.totalCarbohidratos | number: '1.1-1' }}g</span><span class="cmp-lbl">Carbs</span></div>
+        <div class="cmp-macro"><span class="cmp-val">{{ sugerencia()!.totalGrasas | number: '1.1-1' }}g</span><span class="cmp-lbl">Grasas</span></div>
+      </div>
+      <ul class="cmp-food-list" role="list">
+        @for (d of sugerencia()!.detalles; track d.alimentoId) {
+        <li class="cmp-food-item" role="listitem">
+          <span class="cmp-food-name">{{ d.nombreAlimento }}</span>
+          <span class="cmp-food-qty">× {{ d.cantidad }} {{ d.unidadPorcion }}</span>
+        </li>
+        }
+      </ul>
+    </div>
+  </div>
+  }
+
+  <div class="review-grid">
+
+    <!-- ── Detalle de la sugerencia ── -->
+    <section class="panel" aria-labelledby="detail-heading">
+      <h2 id="detail-heading" class="panel-title">
+        <i class="bx bx-info-circle" aria-hidden="true"></i> Detalle
+      </h2>
+
+      <div class="detail-header">
+        <div class="tipo-badge">
+          <span aria-hidden="true">{{ obtenerIconTipo(sugerencia()!.tipoComida) }}</span>
+          {{ obtenerLabelTipo(sugerencia()!.tipoComida) }}
+        </div>
+        <span
+          class="estado-badge"
+          [style.background-color]="obtenerEstado(sugerencia()!.estado)?.color + '20'"
+          [style.color]="obtenerEstado(sugerencia()!.estado)?.color">
+          {{ obtenerEstado(sugerencia()!.estado)?.label }}
+        </span>
+      </div>
+
+      <h3 class="sugerencia-nombre">{{ sugerencia()!.nombre }}</h3>
+
+      <p class="info-row">
+        <i class="bx bx-user" aria-hidden="true"></i>
+        <strong>Paciente ID:</strong> {{ sugerencia()!.pacienteId }}
+      </p>
+
+      <p class="info-row">
+        <i class="bx bx-calendar" aria-hidden="true"></i>
+        <strong>Enviada:</strong>
+        <time [attr.datetime]="sugerencia()!.fechaEnvio">{{ sugerencia()!.fechaEnvio | slice: 0 : 10 }}</time>
+      </p>
+
+      @if (sugerencia()!.motivoSugerencia) {
+      <div class="motivo-box">
+        <p class="motivo-label"><i class="bx bx-comment-detail" aria-hidden="true"></i> Motivo del paciente</p>
+        <p class="motivo-text">{{ sugerencia()!.motivoSugerencia }}</p>
+      </div>
+      }
+
+      <!-- Macros -->
+      <div class="macros-summary" aria-label="Resumen nutricional">
+        <div class="macro-item macro-cal">
+          <span class="macro-value">{{ sugerencia()!.totalCalorias | number: '1.0-0' }}</span>
+          <span class="macro-label">kcal</span>
+        </div>
+        <div class="macro-item macro-p">
+          <span class="macro-value">{{ sugerencia()!.totalProteinas | number: '1.1-1' }}g</span>
+          <span class="macro-label">Prot</span>
+        </div>
+        <div class="macro-item macro-c">
+          <span class="macro-value">{{ sugerencia()!.totalCarbohidratos | number: '1.1-1' }}g</span>
+          <span class="macro-label">Carbs</span>
+        </div>
+        <div class="macro-item macro-g">
+          <span class="macro-value">{{ sugerencia()!.totalGrasas | number: '1.1-1' }}g</span>
+          <span class="macro-label">Grasas</span>
+        </div>
+      </div>
+
+      <!-- Alimentos -->
+      <h3 class="alimentos-title">Alimentos propuestos</h3>
+      <ul class="alimentos-list" role="list" aria-label="Alimentos de la sugerencia">
+        @for (detalle of sugerencia()!.detalles; track detalle.alimentoId) {
+        <li class="alimento-item" role="listitem">
+          <span class="alimento-nombre">{{ detalle.nombreAlimento }}</span>
+          <span class="alimento-cantidad">
+            × {{ detalle.cantidad }} {{ detalle.unidadPorcion }}
+          </span>
+        </li>
+        }
+      </ul>
+    </section>
+
+    <!-- ── Formulario de revisión ── -->
+    @if (sugerencia()!.estado === 'PENDIENTE') {
+    <section class="panel" aria-labelledby="form-heading">
+      <h2 id="form-heading" class="panel-title">
+        <i class="bx bx-check-shield" aria-hidden="true"></i> Tu Revisión
+      </h2>
+
+      <form [formGroup]="revisionForm" (ngSubmit)="onSubmit()" novalidate>
+
+        <!-- Estado -->
+        <fieldset class="estado-fieldset">
+          <legend class="field-label">Decisión <span aria-hidden="true">*</span></legend>
+          <div class="estado-options">
+            <label
+              class="estado-option"
+              [class.estado-aprobar]="revisionForm.get('estado')?.value === 'APROBADA'"
+              [class.option-selected]="revisionForm.get('estado')?.value === 'APROBADA'">
+              <input
+                type="radio"
+                formControlName="estado"
+                value="APROBADA"
+                class="sr-only">
+              <i class="bx bx-check-circle" aria-hidden="true"></i>
+              Aprobar
+            </label>
+            <label
+              class="estado-option"
+              [class.estado-rechazar]="revisionForm.get('estado')?.value === 'RECHAZADA'"
+              [class.option-selected]="revisionForm.get('estado')?.value === 'RECHAZADA'">
+              <input
+                type="radio"
+                formControlName="estado"
+                value="RECHAZADA"
+                class="sr-only">
+              <i class="bx bx-x-circle" aria-hidden="true"></i>
+              Rechazar
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Comentario -->
+        <div class="field-group">
+          <label for="comentario" class="field-label">
+            Comentario
+            <span class="optional-hint">(opcional)</span>
+          </label>
+          <textarea
+            id="comentario"
+            class="field-input"
+            formControlName="comentarioNutriologo"
+            rows="4"
+            placeholder="Explica tu decisión al paciente..."></textarea>
+          @if (revisionForm.get('comentarioNutriologo')?.touched && revisionForm.get('comentarioNutriologo')?.errors) {
+            <span class="error-msg" role="alert">El comentario no puede superar los 500 caracteres.</span>
+          }
+        </div>
+
+        <button
+          type="submit"
+          class="btn-submit"
+          [class.btn-aprobar]="revisionForm.get('estado')?.value === 'APROBADA'"
+          [class.btn-rechazar]="revisionForm.get('estado')?.value === 'RECHAZADA'"
+          [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <span aria-hidden="true">⏳</span> Procesando...
+          } @else if (revisionForm.get('estado')?.value === 'APROBADA') {
+            <i class="bx bx-check" aria-hidden="true"></i> Confirmar aprobación
+          } @else {
+            <i class="bx bx-x" aria-hidden="true"></i> Confirmar rechazo
+          }
+        </button>
+
+      </form>
+    </section>
+    } @else {
+    <section class="panel panel-revisada" aria-labelledby="revisada-heading">
+      <h2 id="revisada-heading" class="panel-title">
+        <i class="bx bx-check-shield" aria-hidden="true"></i> Revisión completada
+      </h2>
+      <p class="revisada-msg">Esta sugerencia ya fue revisada con estado:</p>
+      <span
+        class="estado-badge estado-lg"
+        [style.background-color]="obtenerEstado(sugerencia()!.estado)?.color + '20'"
+        [style.color]="obtenerEstado(sugerencia()!.estado)?.color">
+        {{ obtenerEstado(sugerencia()!.estado)?.label }}
+      </span>
+      @if (sugerencia()!.fechaRevision) {
+        <p class="revisada-fecha">
+          <time [attr.datetime]="sugerencia()!.fechaRevision!">
+            Revisada el {{ sugerencia()!.fechaRevision! | slice: 0 : 10 }}
+          </time>
+        </p>
+      }
+      @if (sugerencia()!.comentarioNutriologo) {
+        <div class="comentario-box">
+          <p class="comentario-label">Tu comentario:</p>
+          <p class="comentario-text">{{ sugerencia()!.comentarioNutriologo }}</p>
+        </div>
+      }
+    </section>
+    }
+
+  </div>
+
+  } @else {
+  <div class="error-state" role="alert">
+    <i class="bx bx-error-circle" aria-hidden="true"></i>
+    <p>No se encontró la sugerencia solicitada.</p>
+    <a routerLink="/main/sugerencias" class="btn-back-inline">Volver a sugerencias</a>
+  </div>
+  }
+
+</div>

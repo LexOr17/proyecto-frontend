@@ -126,6 +126,10 @@ select.error {
   cursor: not-allowed;
 }
 
+.opacity-50 {
+  opacity: 0.5;
+}
+
 .btn-cancel {
   background: transparent;
   border: 1px solid #ccc;
