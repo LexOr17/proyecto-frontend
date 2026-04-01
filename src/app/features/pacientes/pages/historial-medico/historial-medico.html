@@ -1,0 +1,516 @@
+<div class="pw">
+
+  <!-- ── Page Header ── -->
+  <header class="pg-hd">
+    <a [routerLink]="['/main/pacientes', pacienteId()]" class="pg-hd__back"
+      aria-label="Volver al seguimiento del paciente">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m15 18-6-6 6-6" />
+      </svg>
+      Volver al seguimiento
+    </a>
+    <div class="pg-hd__row">
+      <div class="pg-hd__ico" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 12h6" /><path d="M12 9v6" />
+          <path d="M3 9a2 2 0 0 1 2-2h1V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v2h1a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        </svg>
+      </div>
+      <div class="pg-hd__txt">
+        <h1 class="pg-hd__h1">Historial Médico</h1>
+        @if (pacienteResource.value(); as p) {
+          <p class="pg-hd__name">{{ nombreCompleto() }}</p>
+        }
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════
+       FORMULARIO
+  ═══════════════════════════════════════ -->
+  <section class="f-card" id="historial-form" aria-label="Formulario de historial médico">
+
+    <div class="f-card__top">
+      <h2 class="f-card__ttl">
+        {{ modoEdicion() ? 'Editar Historial Médico' : 'Nuevo Historial Médico' }}
+      </h2>
+      <p class="f-card__sub">
+        {{ modoEdicion()
+          ? 'Modifica los campos y guarda los cambios.'
+          : 'Completa los campos con la información médica actual del paciente.' }}
+      </p>
+    </div>
+
+    @if (modoEdicion()) {
+      <div class="edit-banner" role="status" aria-live="polite">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor"
+          viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+        <span>Editando el registro del <strong>{{ formatDate(editingFecha()) }}</strong></span>
+        <button type="button" class="edit-banner__x" (click)="cancelarEdicion()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Cancelar
+        </button>
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="f-body">
+
+      <!-- ── Paso 1 · Enfermedades ── -->
+      <fieldset class="paso">
+        <legend class="paso__hd">
+          <span class="paso__n paso__n--r" aria-hidden="true">01</span>
+          <div class="paso__meta">
+            <span class="paso__ttl">Enfermedades Conocidas</span>
+            <span class="paso__sub">Seleccione todas las que apliquen</span>
+          </div>
+        </legend>
+        <div class="paso__bd">
+          <div class="cgrid" role="group" aria-label="Enfermedades conocidas">
+            @for (opt of enfermedadesOptions; track opt.value) {
+              <button
+                type="button"
+                class="cg-item cg-item--r"
+                [class.cg-item--on]="isEnfermedadSelected(opt.value)"
+                [attr.aria-pressed]="isEnfermedadSelected(opt.value)"
+                (click)="toggleEnfermedad(opt.value)">
+                <span class="cg-item__sq" aria-hidden="true"></span>
+                {{ opt.label }}
+              </button>
+            }
+          </div>
+          @if (showOtraEnfermedad()) {
+            <div class="paso__xtra">
+              <label class="paso__lbl" for="otraEnfermedad">
+                Especifique la enfermedad <span class="req" aria-hidden="true">*</span>
+              </label>
+              <input id="otraEnfermedad" type="text" formControlName="otraEnfermedad" class="inp"
+                placeholder="Descripción de la enfermedad" />
+            </div>
+          }
+        </div>
+      </fieldset>
+
+      <div class="paso-sep" aria-hidden="true"></div>
+
+      <!-- ── Paso 2 · Alergias ── -->
+      <fieldset class="paso">
+        <legend class="paso__hd">
+          <span class="paso__n paso__n--a" aria-hidden="true">02</span>
+          <div class="paso__meta">
+            <span class="paso__ttl">Alergias</span>
+            <span class="paso__sub">Opcional — alergias a alimentos, medicamentos, etc.</span>
+          </div>
+        </legend>
+        <div class="paso__bd">
+          <textarea id="alergias" formControlName="alergias" class="inp inp--ta" rows="3"
+            placeholder="Ej: penicilina, mariscos, látex, ácaros..."></textarea>
+        </div>
+      </fieldset>
+
+      <div class="paso-sep" aria-hidden="true"></div>
+
+      <!-- ── Paso 3 · Síntomas ── -->
+      <fieldset class="paso">
+        <legend class="paso__hd">
+          <span class="paso__n paso__n--o" aria-hidden="true">03</span>
+          <div class="paso__meta">
+            <span class="paso__ttl">Síntomas Actuales</span>
+            <span class="paso__sub">Seleccione los síntomas presentes en el paciente</span>
+          </div>
+        </legend>
+        <div class="paso__bd">
+          <div class="cgrid" role="group" aria-label="Síntomas actuales">
+            @for (opt of sintomasOptions; track opt.value) {
+              <button
+                type="button"
+                class="cg-item cg-item--o"
+                [class.cg-item--on]="isSintomaSelected(opt.value)"
+                [attr.aria-pressed]="isSintomaSelected(opt.value)"
+                (click)="toggleSintoma(opt.value)">
+                <span class="cg-item__sq" aria-hidden="true"></span>
+                {{ opt.label }}
+              </button>
+            }
+          </div>
+          @if (showOtroSintoma()) {
+            <div class="paso__xtra">
+              <label class="paso__lbl" for="otroSintoma">
+                Especifique el síntoma <span class="req" aria-hidden="true">*</span>
+              </label>
+              <input id="otroSintoma" type="text" formControlName="otroSintoma" class="inp"
+                placeholder="Descripción del síntoma" />
+            </div>
+          }
+        </div>
+      </fieldset>
+
+      <div class="paso-sep" aria-hidden="true"></div>
+
+      <!-- ── Paso 4 · Medicamentos ── -->
+      <fieldset class="paso">
+        <legend class="paso__hd">
+          <span class="paso__n paso__n--b" aria-hidden="true">04</span>
+          <div class="paso__meta">
+            <span class="paso__ttl">Medicamentos / Suplementos</span>
+            <span class="paso__sub">Estado del paciente respecto al consumo</span>
+          </div>
+        </legend>
+        <div class="paso__bd">
+          <div class="mopts" role="radiogroup"
+            aria-label="Estado del consumo de medicamentos o suplementos">
+            @for (opt of estadoMedicamentoOptions; track opt.value) {
+              <label
+                class="mopt"
+                [class.mopt--on]="estadoMedicamento() === opt.value"
+                [for]="'med-' + opt.value">
+                <input
+                  type="radio"
+                  class="sr-only"
+                  [id]="'med-' + opt.value"
+                  name="estadoMedicamento"
+                  [value]="opt.value"
+                  [checked]="estadoMedicamento() === opt.value"
+                  (change)="onEstadoChange(opt.value)" />
+                <span class="mopt__dot" aria-hidden="true"></span>
+                <span class="mopt__lbl">{{ opt.label }}</span>
+              </label>
+            }
+          </div>
+          @if (showDescripcionMedicamento()) {
+            <div class="paso__xtra">
+              <label class="paso__lbl" for="descripcionMedicamento">
+                Nombre, dosis y frecuencia <span class="req" aria-hidden="true">*</span>
+              </label>
+              <textarea id="descripcionMedicamento" formControlName="descripcionMedicamento"
+                class="inp inp--ta" rows="3"
+                placeholder="Ej: Metformina 850 mg, 1 tableta cada 12 horas"></textarea>
+            </div>
+          }
+        </div>
+      </fieldset>
+
+      <div class="paso-sep" aria-hidden="true"></div>
+
+      <!-- ── Paso 5 · Medidas Antropométricas (solo lectura) ── -->
+      <div class="paso paso--info">
+        <div class="paso__hd">
+          <span class="paso__n paso__n--g" aria-hidden="true">05</span>
+          <div class="paso__meta">
+            <span class="paso__ttl">Medidas Antropométricas Vinculadas</span>
+            <span class="paso__sub">Las medidas más recientes registradas para este paciente</span>
+          </div>
+        </div>
+        <div class="paso__bd">
+          @if (ultimaMedidaResource.isLoading()) {
+            <p class="minf__loading">Cargando medidas...</p>
+          } @else if (ultimaMedidaResource.value(); as m) {
+            <div class="minf">
+              <div class="minf__chips">
+                <span class="minf__chip minf__chip--main">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 6h18M3 12h18M3 18h18" />
+                  </svg>
+                  Peso&nbsp;<b>{{ m.peso }} kg</b>
+                </span>
+                <span class="minf__chip minf__chip--main">Talla&nbsp;<b>{{ m.altura }} cm</b></span>
+                @if (m.cintura) {
+                  <span class="minf__chip">Cintura&nbsp;<b>{{ m.cintura }} cm</b></span>
+                }
+                @if (m.cadera) {
+                  <span class="minf__chip">Cadera&nbsp;<b>{{ m.cadera }} cm</b></span>
+                }
+                @if (m.cuello) {
+                  <span class="minf__chip">Cuello&nbsp;<b>{{ m.cuello }} cm</b></span>
+                }
+              </div>
+              <p class="minf__date">
+                <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Medición del {{ formatDate(m.fechaMedicion) }} — se vinculará automáticamente a este registro
+              </p>
+            </div>
+          } @else {
+            <p class="minf__empty">
+              No hay medidas antropométricas registradas para este paciente.
+            </p>
+          }
+        </div>
+      </div>
+
+      <!-- ── Acciones ── -->
+      <div class="f-foot">
+        @if (modoEdicion()) {
+          <button type="button" class="btn btn--ghost" (click)="cancelarEdicion()">
+            Cancelar edición
+          </button>
+        }
+        <button type="submit" class="btn btn--save" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <svg class="btn__spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.25"></circle>
+              <path fill="currentColor" opacity="0.75" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            Guardando...
+          } @else {
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+            {{ modoEdicion() ? 'Actualizar Historial' : 'Registrar Historial' }}
+          }
+        </button>
+      </div>
+
+    </form>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       HISTORIAL DE REGISTROS
+  ═══════════════════════════════════════ -->
+  <section class="hs" aria-label="Historial de registros médicos">
+
+    <div class="hs__hd">
+      <h2 class="hs__ttl">Historial de Registros</h2>
+      <p class="hs__sub">Registros médicos del paciente, del más reciente al más antiguo.</p>
+    </div>
+
+    @if (historialResource.isLoading()) {
+      <div class="st st--load" role="status" aria-live="polite">
+        <svg class="st__spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+          aria-hidden="true">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.2"></circle>
+          <path fill="currentColor" opacity="0.75" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+        <span>Cargando registros...</span>
+      </div>
+
+    } @else if (historialResource.error()) {
+      <div class="st st--err" role="alert">
+        <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          aria-hidden="true">
+          <circle cx="12" cy="12" r="10" stroke-width="2" />
+          <path stroke-linecap="round" stroke-width="2" d="M12 8v4m0 4h.01" />
+        </svg>
+        <p>No se pudieron cargar los registros. Intente de nuevo.</p>
+      </div>
+
+    } @else if (historialResource.value(); as pagina) {
+
+      @if (pagina.empty) {
+        <div class="st st--empty">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"
+            aria-hidden="true">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+            <rect width="6" height="4" x="9" y="3" rx="1" />
+          </svg>
+          <p class="st__ttl">Sin registros</p>
+          <p class="st__sub">Aún no hay historiales médicos para este paciente. ¡Crea el primero!</p>
+        </div>
+
+      } @else {
+
+        <ul class="rec-list" role="list">
+          @for (h of pagina.content; track h.id) {
+            <li class="rec" [class]="'rec--' + h.estadoMedicamento.toLowerCase()">
+
+              <!-- ── Barra superior: fecha + badge + acciones ── -->
+              <div class="rec__top">
+                <div class="rec__date-grp">
+                  <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <time class="rec__date" [dateTime]="h.fechaRegistro">
+                    {{ formatDate(h.fechaRegistro) }}
+                  </time>
+                </div>
+                <span class="rbadge" [class]="getEstadoBadgeClass(h.estadoMedicamento)">
+                  {{ getEstadoLabel(h.estadoMedicamento) }}
+                </span>
+                <div class="rec__acts">
+                  <button
+                    type="button"
+                    class="ric ric--ed"
+                    (click)="editarHistorial(h)"
+                    [attr.aria-label]="'Editar historial del ' + formatDate(h.fechaRegistro)">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                      aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    class="ric ric--dl"
+                    (click)="eliminarHistorial(h.id)"
+                    [attr.aria-label]="'Eliminar historial del ' + formatDate(h.fechaRegistro)">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                      aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+
+              <!-- ── Cuerpo: 2 columnas ── -->
+              <div class="rec__body">
+
+                <!-- Columna izquierda: Enfermedades + Síntomas -->
+                <div class="rcol">
+                  <p class="rcol__lbl rcol__lbl--r">
+                    <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                      aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    Enfermedades
+                  </p>
+                  <div class="rcol__val">
+                    @if (h.enfermedades.length > 0) {
+                      <div class="rtags">
+                        @for (e of h.enfermedades.slice(0, 6); track e) {
+                          <span class="rtag rtag--r">{{ getEnfermedadLabel(e) }}</span>
+                        }
+                        @if (h.enfermedades.length > 6) {
+                          <span class="rtag rtag--n">+{{ h.enfermedades.length - 6 }} más</span>
+                        }
+                      </div>
+                      @if (h.otraEnfermedad) {
+                        <p class="rnote">{{ h.otraEnfermedad }}</p>
+                      }
+                    } @else {
+                      <p class="rempty">Sin enfermedades registradas</p>
+                    }
+                  </div>
+
+                  <p class="rcol__lbl rcol__lbl--o">
+                    <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                      aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Síntomas
+                  </p>
+                  <div class="rcol__val">
+                    @if (h.sintomas.length > 0) {
+                      <div class="rtags">
+                        @for (s of h.sintomas.slice(0, 6); track s) {
+                          <span class="rtag rtag--o">{{ getSintomaLabel(s) }}</span>
+                        }
+                        @if (h.sintomas.length > 6) {
+                          <span class="rtag rtag--n">+{{ h.sintomas.length - 6 }} más</span>
+                        }
+                      </div>
+                      @if (h.otroSintoma) {
+                        <p class="rnote">{{ h.otroSintoma }}</p>
+                      }
+                    } @else {
+                      <p class="rempty">Sin síntomas registrados</p>
+                    }
+                  </div>
+                </div>
+
+                <!-- Columna derecha: Alergias + Medicamento -->
+                <div class="rcol rcol--border">
+                  <p class="rcol__lbl rcol__lbl--a">
+                    <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                      aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                    </svg>
+                    Alergias
+                  </p>
+                  <div class="rcol__val">
+                    @if (h.alergias) {
+                      <p class="rtext">{{ h.alergias }}</p>
+                    } @else {
+                      <p class="rempty">Sin alergias registradas</p>
+                    }
+                  </div>
+
+                  <p class="rcol__lbl rcol__lbl--b">
+                    <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                      aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+                    </svg>
+                    Medicamento / Suplemento
+                  </p>
+                  <div class="rcol__val">
+                    @if (h.descripcionMedicamento) {
+                      <p class="rtext">{{ h.descripcionMedicamento }}</p>
+                    } @else {
+                      <p class="rempty">No aplica</p>
+                    }
+                  </div>
+                </div>
+
+              </div><!-- /.rec__body -->
+
+              <!-- ── Fila medidas antropométricas ── -->
+              <div class="rec__meds">
+                <span class="rmed__lbl">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 6h18M3 12h18M3 18h18" />
+                  </svg>
+                  Medidas vinculadas
+                </span>
+                @if (h.medidaAntropometrica; as m) {
+                  <div class="rmed__chips">
+                    <span class="rmed__chip">Peso <b>{{ m.peso }}</b> kg</span>
+                    <span class="rmed__chip">Talla <b>{{ m.altura }}</b> cm</span>
+                    @if (m.cintura) {
+                      <span class="rmed__chip">Cintura <b>{{ m.cintura }}</b> cm</span>
+                    }
+                    @if (m.cadera) {
+                      <span class="rmed__chip">Cadera <b>{{ m.cadera }}</b> cm</span>
+                    }
+                    @if (m.cuello) {
+                      <span class="rmed__chip">Cuello <b>{{ m.cuello }}</b> cm</span>
+                    }
+                  </div>
+                  <span class="rmed__date">{{ formatDate(m.fechaMedicion) }}</span>
+                } @else {
+                  <p class="rempty">Sin medidas antropométricas vinculadas</p>
+                }
+              </div>
+
+            </li>
+          }
+        </ul>
+
+        <app-pagination
+          [currentPage]="currentPage()"
+          [totalPages]="pagina.totalPages"
+          [pageSize]="currentSize()"
+          [totalElements]="pagina.totalElements"
+          (pageChange)="onPageChange($event)" />
+
+      }
+    }
+
+  </section>
+
+  <app-confirm-dialog />
+
+</div>

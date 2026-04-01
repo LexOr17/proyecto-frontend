@@ -18,7 +18,6 @@ import { interval, map, of, switchMap } from 'rxjs';
 import { ChatService } from '../../service/chat-service';
 import { PacienteService } from '../../../pacientes/service/paciente-service';
 import { CitaService } from '../../../citas/service/cita-service';
-import { UsuarioService } from '../../../usuarios/service/usuario-service';
 import { AuthService } from '../../../../core/services/auth-service';
 import { ChatMessageDTO, ChatContact } from '../../interfaces/chat.interface';
 import { UserRole } from '../../../../core/interfaces/auth-response';
@@ -36,7 +35,6 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   private readonly chatService = inject(ChatService);
   private readonly pacienteService = inject(PacienteService);
   private readonly citaService = inject(CitaService);
-  private readonly usuarioService = inject(UsuarioService);
   private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -115,20 +113,20 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
         .pipe(
           takeUntilDestroyed(this.destroyRef),
           map((citas) => {
-            const nutriologoId = citas[0]?.nutriologoId;
-            if (!nutriologoId) throw new Error('Sin nutriólogo asignado');
-            return nutriologoId;
+            const cita = citas[0];
+            if (!cita?.nutriologoId) throw new Error('Sin nutriólogo asignado');
+            return cita;
           }),
-          switchMap((nutriologoId) => this.usuarioService.obtenerUsuarioPorId(nutriologoId)),
         )
         .subscribe({
-          next: (nutriologo) => {
-            if (!nutriologo) return;
+          next: (cita) => {
+            const [nombre = '', apellidoPaterno = '', apellidoMaterno] =
+              cita.nombreNutriologo.split(' ');
             const contact: ChatContact = {
-              id: nutriologo.id!,
-              nombre: nutriologo.nombre,
-              apellidoPaterno: nutriologo.apellidoPaterno,
-              apellidoMaterno: nutriologo.apellidoMaterno,
+              id: cita.nutriologoId,
+              nombre,
+              apellidoPaterno,
+              apellidoMaterno,
             };
             this.contacts.set([contact]);
             this.selectContact(contact);
