@@ -67,8 +67,9 @@
 
                 <div class="form-group">
                     <label for="telefono">Teléfono</label>
-                    <input type="tel" id="telefono" #telefonoInput formControlName="telefono" placeholder="(xxx) xxx-xxxx"
-                        autocomplete="tel" [class.error]="isInvalid('telefono')" (input)="onTelefonoInput($event)">
+                    <input type="tel" id="telefono" #telefonoInput formControlName="telefono"
+                        placeholder="(xxx) xxx-xxxx" autocomplete="tel" [class.error]="isInvalid('telefono')"
+                        (input)="onTelefonoInput($event)">
                     @if (isInvalid('telefono')) {
                     <small class="error-msg">Debe tener 10 dígitos numéricos</small>
                     }

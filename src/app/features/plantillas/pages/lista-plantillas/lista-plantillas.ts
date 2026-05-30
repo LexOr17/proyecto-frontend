@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   inject,
   signal,
@@ -29,19 +30,43 @@ export class ListaPlantillas {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly tiposComida = TIPOS_COMIDA;
+  protected searchTerm = signal('');
   protected isDeleting = signal<number | null>(null);
   protected currentPage = signal(0);
   protected pageSize = signal(6);
 
   protected plantillasResource = rxResource({
-    params: () => ({ page: this.currentPage(), size: this.pageSize() }),
-    stream: ({ params }) =>
-      this.plantillaService.obtenerPlantillas(params.page, params.size),
+    params: () => ({
+      keyword: this.searchTerm(),
+      page: this.currentPage(),
+      size: this.pageSize(),
+    }),
+    stream: ({ params }) => {
+      if (params.keyword.trim()) {
+        return this.plantillaService.buscarPlantillas(
+          params.keyword,
+          '',
+          params.page,
+          params.size
+        );
+      }
+      return this.plantillaService.obtenerPlantillas(params.page, params.size);
+    },
+  });
+
+  protected plantillasFiltradas = computed(() => {
+    return this.plantillasResource.value()?.content ?? [];
   });
 
   protected onPageChange(event: PageEvent): void {
     this.currentPage.set(event.page);
     this.pageSize.set(event.size);
+  }
+
+  protected onSearchChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.searchTerm.set(input.value);
+    this.currentPage.set(0);
   }
 
   protected obtenerIconTipo(tipo: string): string {

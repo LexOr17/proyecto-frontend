@@ -40,21 +40,26 @@ export class ListaAlimentos {
 
   // rxResource: carga reactiva de alimentos
   protected alimentosResource = rxResource({
-    params: () => ({ page: this.currentPage(), size: this.pageSize() }),
-    stream: ({ params }) =>
-      this.alimentoService.obtenerAlimentos(params.page, params.size),
+    params: () => ({
+      keyword: this.searchTerm(),
+      page: this.currentPage(),
+      size: this.pageSize(),
+    }),
+    stream: ({ params }) => {
+      if (params.keyword.trim()) {
+        return this.alimentoService.buscarAlimentos(
+          params.keyword,
+          params.page,
+          params.size
+        );
+      }
+      return this.alimentoService.obtenerAlimentos(params.page, params.size);
+    },
   });
 
-  // Filtro local sobre datos cargados
+  // Computed: devuelve los datos cargados desde el backend
   protected alimentosFiltrados = computed(() => {
-    const alimentos = this.alimentosResource.value()?.content ?? [];
-    const term = this.searchTerm().toLowerCase();
-    if (!term) return alimentos;
-    return alimentos.filter(
-      (a) =>
-        a.nombre.toLowerCase().includes(term) ||
-        a.categoria.toLowerCase().includes(term)
-    );
+    return this.alimentosResource.value()?.content ?? [];
   });
 
   protected onPageChange(event: PageEvent): void {
@@ -65,6 +70,7 @@ export class ListaAlimentos {
   protected onSearchChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
+    this.currentPage.set(0);
   }
 
   protected obtenerLabelCategoria(valor: string): string {

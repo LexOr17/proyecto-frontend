@@ -59,7 +59,7 @@ interface IceInfo {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MedidasAntropometricas {
-    
+
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly medidaService = inject(MedidaAntropometricaService);

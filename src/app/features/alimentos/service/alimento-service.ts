@@ -25,6 +25,17 @@ export class AlimentoService {
       .pipe(map((response) => response.datos));
   }
 
+  buscarAlimentos(keyword: string, page = 0, size = 10): Observable<Page<Alimento> | null> {
+    const params = new HttpParams()
+      .set('keyword', keyword)
+      .set('page', page)
+      .set('size', size);
+
+    return this.http
+      .get<ApiResponse<Page<Alimento>>>(`${this.baseUrl}/buscar`, { params })
+      .pipe(map((response) => response.datos));
+  }
+
   obtenerAlimentoPorId(id: number): Observable<Alimento | null> {
     return this.http
       .get<ApiResponse<Alimento>>(`${this.baseUrl}/${id}`)

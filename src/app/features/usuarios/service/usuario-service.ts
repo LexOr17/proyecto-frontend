@@ -30,6 +30,18 @@ export class UsuarioService {
       );
   }
 
+  buscarUsuarios(keyword: string, page = 0, size = 5): Observable<Page<Usuario> | null> {
+    const params = new HttpParams()
+      .set('keyword', keyword)
+      .set('page', page)
+      .set('size', size);
+
+    return this.http.get<ApiResponse<Page<Usuario>>>(`${this.baseUrl}/usuarios/buscar`, { params })
+      .pipe(
+        map(response => response.datos)
+      );
+  }
+
   eliminarUsuario(id: number): Observable<ApiResponse<null>> {
     return this.http.delete<ApiResponse<null>>(`${this.baseUrl}/usuarios/${id}`);
   }

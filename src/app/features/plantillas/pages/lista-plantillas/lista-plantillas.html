@@ -10,6 +10,15 @@
 
   <div class="catalog-container">
 
+    <div class="catalog-actions-bar">
+      <div class="search-box">
+        <i class='bx bx-search' aria-hidden="true"></i>
+        <label for="search-plantillas" class="sr-only">Buscar plantillas</label>
+        <input type="text" id="search-plantillas" placeholder="Buscar plantilla por nombre..."
+          [value]="searchTerm()" (input)="onSearchChange($event)">
+      </div>
+    </div>
+
     @if (plantillasResource.isLoading()) {
     <div class="loading-message">
       <p>Cargando plantillas...</p>
@@ -17,7 +26,7 @@
     } @else {
 
     <div class="cards-grid" role="list" aria-label="Plantillas guardadas">
-      @for (plantilla of plantillasResource.value()?.content ?? []; track plantilla.id) {
+      @for (plantilla of plantillasFiltradas(); track plantilla.id) {
       <article class="plantilla-card" role="listitem">
 
         <div class="card-header">
@@ -91,8 +100,12 @@
       } @empty {
       <div class="empty-message">
         <i class="bx bx-notepad" aria-hidden="true"></i>
-        <p>No hay plantillas creadas aún.</p>
-        <a routerLink="nueva" class="btn-primary-sm">Crear primera plantilla</a>
+        @if (searchTerm()) {
+          <p>No se encontraron plantillas que coincidan con "{{ searchTerm() }}"</p>
+        } @else {
+          <p>No hay plantillas creadas aún.</p>
+          <a routerLink="nueva" class="btn-primary-sm">Crear primera plantilla</a>
+        }
       </div>
       }
     </div>

@@ -32,21 +32,18 @@ export class ListaUsuarios {
 
   // rxResource: carga reactiva de usuarios
   protected usuariosResource = rxResource({
-    params: () => ({ page: this.currentPage(), size: this.pageSize() }),
-    stream: ({ params }) => this.usuarioService.obtenerUsuarios(params.page, params.size),
+    params: () => ({ keyword: this.searchTerm(), page: this.currentPage(), size: this.pageSize() }),
+    stream: ({ params }) => {
+      if (params.keyword) {
+        return this.usuarioService.buscarUsuarios(params.keyword, params.page, params.size);
+      }
+      return this.usuarioService.obtenerUsuarios(params.page, params.size);
+    }
   });
 
-  // Computed: filtro local sobre los datos ya cargados
+  // Computed: devuelve los datos cargados desde el backend
   protected usuariosFiltrados = computed(() => {
-    const usuarios = this.usuariosResource.value()?.content ?? [];
-    const term = this.searchTerm().toLowerCase();
-    if (!term) return usuarios;
-    return usuarios.filter(usuario =>
-      usuario.nombre.toLowerCase().includes(term) ||
-      usuario.apellidoPaterno.toLowerCase().includes(term) ||
-      usuario.apellidoMaterno?.toLowerCase().includes(term) ||
-      usuario.correo.toLowerCase().includes(term)
-    );
+    return this.usuariosResource.value()?.content ?? [];
   });
 
   protected onPageChange(event: PageEvent): void {
@@ -58,6 +55,7 @@ export class ListaUsuarios {
   protected onSearchChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
+    this.currentPage.set(0);
   }
 
   protected obtenerIniciales(usuario: Usuario): string {
@@ -103,7 +101,7 @@ export class ListaUsuarios {
 
     if (confirmed) {
       this.isDeleting.set(usuario.id);
-      
+
       this.usuarioService.eliminarUsuario(usuario.id)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({

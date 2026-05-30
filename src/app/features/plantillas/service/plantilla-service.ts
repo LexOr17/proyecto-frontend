@@ -34,6 +34,17 @@ export class PlantillaService {
       .pipe(map((r) => r.datos));
   }
 
+  buscarPlantillas(keyword: string, categoria = '', page = 0, size = 6): Observable<Page<Plantilla> | null> {
+    const params = new HttpParams()
+      .set('keyword', keyword)
+      .set('categoria', categoria)
+      .set('page', page)
+      .set('size', size);
+    return this.http
+      .get<ApiResponse<Page<Plantilla>>>(`${this.baseUrl}/buscar`, { params })
+      .pipe(map((r) => r.datos));
+  }
+
   eliminarPlantilla(id: number): Observable<ApiResponse<null>> {
     return this.http.delete<ApiResponse<null>>(`${this.baseUrl}/${id}`);
   }

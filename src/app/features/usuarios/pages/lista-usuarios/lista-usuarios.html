@@ -14,8 +14,8 @@
             <div class="search-box">
                 <i class='bx bx-search' aria-hidden="true"></i>
                 <label for="search-usuarios" class="sr-only">Buscar usuarios</label>
-                <input type="text" id="search-usuarios" placeholder="Buscar por nombre o correo..." [value]="searchTerm()"
-                    (input)="onSearchChange($event)">
+                <input type="text" id="search-usuarios" placeholder="Buscar por nombre o correo..."
+                    [value]="searchTerm()" (input)="onSearchChange($event)">
             </div>
         </div>
 
@@ -94,8 +94,9 @@
         </table>
 
         @if ((usuariosResource.value()?.totalPages ?? 0) > 0) {
-        <app-pagination [currentPage]="currentPage()" [totalPages]="usuariosResource.value()?.totalPages ?? 0" [totalElements]="usuariosResource.value()?.totalElements ?? 0"
-            [pageSize]="pageSize()" (pageChange)="onPageChange($event)" />
+        <app-pagination [currentPage]="currentPage()" [totalPages]="usuariosResource.value()?.totalPages ?? 0"
+            [totalElements]="usuariosResource.value()?.totalElements ?? 0" [pageSize]="pageSize()"
+            (pageChange)="onPageChange($event)" />
         }
         }
 
