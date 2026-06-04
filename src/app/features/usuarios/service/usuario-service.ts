@@ -64,4 +64,9 @@ export class UsuarioService {
       );
   }
 
+  cambiarEstado(id: number, activo: boolean): Observable<ApiResponse<null>> {
+    const params = new HttpParams().set('activo', activo.toString());
+    return this.http.patch<ApiResponse<null>>(`${this.baseUrl}/usuarios/${id}/estado`, null, { params });
+  }
+
 }

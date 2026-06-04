@@ -46,6 +46,12 @@ const mainRoutes: Routes = [
         data: { roles: [UserRole.ADMINISTRADOR, UserRole.NUTRIOLOGO] }
       },
       {
+        path: 'reportes',
+        loadChildren: () => import('../reportes/reportes.routes').then(m => m.reportesRoutes),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.ADMINISTRADOR, UserRole.NUTRIOLOGO] }
+      },
+      {
         path: 'planes',
         loadChildren: () => import('../planes/planes.routes').then(m => m.default),
         canMatch: [authGuard],
@@ -78,6 +84,12 @@ const mainRoutes: Routes = [
       {
         path: 'mis-metas',
         loadChildren: () => import('../metas/metas.routes').then(m => m.metasPacienteRoutes),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.PACIENTE] }
+      },
+      {
+        path: 'mi-progreso',
+        loadChildren: () => import('../reportes/reportes.routes').then(m => m.miProgresoRoutes),
         canMatch: [authGuard],
         data: { roles: [UserRole.PACIENTE] }
       },

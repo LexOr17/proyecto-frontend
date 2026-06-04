@@ -10,6 +10,7 @@ export interface Usuario {
     fechaNacimiento: string;
     rol: string;
     telefono: string;
+    activo?: boolean;
     nutriologoId?: number;
     cedulaProfesional?: string;
 }
@@ -23,6 +24,7 @@ export interface UsuarioRequest {
     fechaNacimiento: string;
     rol: string;
     telefono: string;
+    activo?: boolean;
     nutriologo_id?: number;
     cedulaProfesional?: string;
 }

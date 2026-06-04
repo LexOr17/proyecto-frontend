@@ -1,0 +1,1041 @@
+.main-content {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.btn-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #d32f2f, #ef5350);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 50px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-pdf:hover {
+  background: linear-gradient(135deg, #b71c1c, #d32f2f);
+  box-shadow: 0 6px 16px rgba(211, 47, 47, 0.35);
+  transform: translateY(-1px);
+}
+
+.header-title h1 {
+  font-size: 1.6rem;
+  color: #4a3fbf;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 4px 0;
+}
+
+.header-subtitle {
+  color: #64748b;
+  font-size: 0.92rem;
+  margin: 0;
+}
+
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* =========================================
+   METRICS GRID
+   ========================================= */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.metric-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f1f5f9;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.metric-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+
+.metric-icon.val-pacientes {
+  background: #ede9fe;
+  color: #6c5ce7;
+}
+
+.metric-icon.val-nutriologos {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.metric-icon.val-edad {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.metric-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metric-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.metric-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* =========================================
+   DEMOGRAPHICS SECTION
+   ========================================= */
+.demographics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.demo-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.demo-card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 12px;
+}
+
+.demo-card-title i {
+  color: #6c5ce7;
+  font-size: 1.2rem;
+}
+
+/* Donut SVG Chart */
+.donut-chart-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.donut-svg {
+  width: 140px;
+  height: 140px;
+  transform: rotate(-90deg);
+}
+
+.donut-segment {
+  transition: stroke-width 0.25s, filter 0.25s;
+}
+
+.donut-segment:hover {
+  stroke-width: 10.5;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.15));
+  cursor: pointer;
+}
+
+.donut-center-num {
+  font-size: 14px;
+  font-weight: 800;
+  fill: #1e293b;
+  transform: rotate(90deg);
+  transform-origin: 50px 50px;
+}
+
+.donut-center-label {
+  font-size: 7px;
+  font-weight: 600;
+  fill: #94a3b8;
+  transform: rotate(90deg);
+  transform-origin: 50px 50px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Legend items */
+.chart-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 140px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-text {
+  color: #475569;
+  font-weight: 500;
+  flex: 1;
+}
+
+.legend-value {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* Horizontal Progress Bars */
+.bars-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bar-label-group {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+}
+
+.bar-name {
+  color: #475569;
+  font-weight: 600;
+}
+
+.bar-value {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.bar-track {
+  width: 100%;
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.no-data-msg {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* =========================================
+   PATIENT TRACKING SECTION
+   ========================================= */
+.patient-tracking-section {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.tracking-header-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  border-bottom: 2px solid #f8fafc;
+  padding-bottom: 20px;
+}
+
+.tracking-title-info h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tracking-title-info h2 i {
+  color: #6c5ce7;
+}
+
+.tracking-title-info p {
+  color: #64748b;
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+/* Custom Select box design */
+.select-patient-box {
+  min-width: 250px;
+}
+
+.select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 0 14px;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.select-wrapper:focus-within {
+  border-color: #6c5ce7;
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.15);
+}
+
+.select-wrapper select {
+  width: 100%;
+  padding: 12px 24px 12px 30px;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: #1e293b;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.select-wrapper i {
+  position: absolute;
+  color: #64748b;
+  font-size: 1.1rem;
+}
+
+.select-wrapper .select-arrow {
+  right: 14px;
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+/* Empty State */
+.empty-patient-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #94a3b8;
+  gap: 12px;
+}
+
+.empty-patient-state i {
+  font-size: 3.5rem;
+  color: #cbd5e1;
+}
+
+.empty-patient-state p {
+  font-size: 1.05rem;
+  font-weight: 500;
+  max-width: 420px;
+  margin: 0;
+}
+
+.empty-patient-state .sub-msg {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  max-width: 320px;
+}
+
+/* Patient Summary Banner */
+.patient-summary-banner {
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  border: 1px solid #f1f5f9;
+}
+
+.patient-profile-summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.avatar-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.patient-profile-summary h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 2px 0;
+}
+
+.patient-profile-summary p {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.milestones-grid {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.milestone-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.milestone-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.milestone-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.milestone-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.milestone-change.loss {
+  color: #00b894; /* Pérdida de peso/grasa es verde (saludable) */
+}
+
+.milestone-change.gain {
+  color: #e17055; /* Aumento de peso es rojo */
+}
+
+/* =========================================
+   SVG LINE GRAPHS
+   ========================================= */
+.charts-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+  gap: 24px;
+}
+
+.progress-chart-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chart-header h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.unit-badge {
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+.svg-container {
+  width: 100%;
+}
+
+.progress-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* Interactive SVG points */
+.chart-point {
+  cursor: pointer;
+  transition: r 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chart-point-group:hover .chart-point {
+  r: 7.5;
+}
+
+/* Tooltip group */
+.chart-tooltip-g {
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+  transform: translateY(3px);
+}
+
+.chart-point-group:hover .chart-tooltip-g {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.chart-line {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: drawLine 2s forwards ease-in-out;
+}
+
+@keyframes drawLine {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.axis-x-text {
+  font-size: 8px;
+  fill: #94a3b8;
+  font-weight: 600;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 40px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.btn-primary-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+  color: white;
+  padding: 10px 24px;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-top: 12px;
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.35);
+  transition: transform 0.2s;
+}
+
+.btn-primary-sm:hover {
+  transform: translateY(-1px);
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  .tracking-header-box {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .select-patient-box {
+    width: 100%;
+  }
+
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .progress-chart-card {
+    padding: 14px;
+  }
+}
+
+.print-only-header,
+.print-only-desc,
+.chart-desc-text,
+.print-glossary-section,
+.print-observations-section,
+.print-validation-section {
+  display: none;
+}
+
+.btn-pdf-sm {
+  padding: 8px 14px !important;
+  font-size: 0.82rem !important;
+  border-radius: 8px !important;
+  justify-content: center;
+}
+
+.chart-canvas-container {
+  position: relative;
+  height: 240px;
+  width: 100%;
+}
+
+/* =========================================
+   ESTILOS EXCLUSIVOS DE EXPORTACIÓN A PDF
+   ========================================= */
+
+/* Eliminar restricciones de desbordamiento en todos los padres temporales */
+body:has(.exporting-pdf) .main-content,
+body:has(.exporting-pdf) .dashboard-container,
+body:has(.exporting-pdf) .progress-container,
+body:has(.exporting-pdf) .patient-tracking-section,
+body:has(.exporting-pdf) main,
+body:has(.exporting-pdf) .content-layout {
+  overflow: visible !important;
+  width: auto !important;
+  max-width: none !important;
+}
+
+.pdf-container.exporting-pdf {
+  position: relative !important;
+  width: 680px !important; /* Más angosto para evitar desbordes */
+  background: #ffffff !important;
+  padding: 16px !important; /* Más compacto */
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  display: block !important;
+}
+
+.pdf-container.exporting-pdf .print-only-header {
+  display: block !important;
+  border-bottom: 2px solid #6c5ce7 !important;
+  padding-bottom: 10px !important;
+  margin-bottom: 12px !important;
+}
+
+.pdf-container.exporting-pdf .print-only-desc {
+  display: block !important;
+  font-size: 0.72rem !important;
+  color: #475569 !important;
+  line-height: 1.35 !important;
+  margin: -6px 0 12px 0 !important;
+  background: #f8fafc !important;
+  padding: 8px 12px !important;
+  border-left: 4px solid #6c5ce7 !important;
+  border-radius: 4px !important;
+}
+
+.pdf-container.exporting-pdf .chart-desc-text {
+  display: block !important;
+  font-size: 0.68rem !important;
+  color: #64748b !important;
+  line-height: 1.3 !important;
+  margin: -3px 0 6px 0 !important;
+}
+
+/* Grillas compactas para censo demográfico */
+.pdf-container.exporting-pdf .metrics-grid {
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 10px !important;
+  margin-bottom: 15px !important;
+}
+
+.pdf-container.exporting-pdf .metric-card {
+  padding: 8px 12px !important;
+  gap: 8px !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.pdf-container.exporting-pdf .metric-value {
+  font-size: 1.15rem !important;
+}
+
+.pdf-container.exporting-pdf .metric-label {
+  font-size: 0.65rem !important;
+}
+
+/* Acomodar 3 tarjetas demográficas para que quepan en una sola hoja (2 arriba, 1 completa abajo) */
+.pdf-container.exporting-pdf .demographics-row {
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+  margin-bottom: 15px !important;
+}
+
+.pdf-container.exporting-pdf .demographics-row article:nth-child(3) {
+  grid-column: span 2 !important;
+}
+
+.pdf-container.exporting-pdf .demo-card {
+  padding: 8px 12px !important;
+  gap: 6px !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+.pdf-container.exporting-pdf .chart-canvas-container {
+  height: 105px !important; /* Más compacto */
+}
+
+/* Grillas compactas de evolución clínica (Peso y Grasa en columna de ancho completo) */
+.pdf-container.exporting-pdf .charts-row {
+  grid-template-columns: 1fr !important; /* En columna */
+  gap: 12px !important;
+  margin-bottom: 15px !important;
+}
+
+.pdf-container.exporting-pdf .progress-chart-card {
+  padding: 12px 16px !important;
+  gap: 8px !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+/* Reducir espacio vertical de barra de paciente y métricas en PDF */
+.pdf-container.exporting-pdf .patient-summary-banner {
+  padding: 8px 12px !important;
+  gap: 8px !important;
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  margin-bottom: 12px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.pdf-container.exporting-pdf .patient-profile-summary {
+  gap: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.pdf-container.exporting-pdf .patient-profile-summary h3 {
+  font-size: 0.88rem !important;
+  margin: 0 !important;
+}
+
+.pdf-container.exporting-pdf .patient-profile-summary p {
+  font-size: 0.65rem !important;
+  margin: 0 !important;
+}
+
+.pdf-container.exporting-pdf .avatar-circle {
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 0.75rem !important;
+  display: flex !important;
+}
+
+.pdf-container.exporting-pdf .milestones-grid {
+  gap: 12px !important;
+  display: flex !important;
+}
+
+.pdf-container.exporting-pdf .milestone-item {
+  gap: 1px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.pdf-container.exporting-pdf .milestone-label {
+  font-size: 0.6rem !important;
+}
+
+.pdf-container.exporting-pdf .milestone-value {
+  font-size: 0.82rem !important;
+}
+
+.pdf-container.exporting-pdf .milestone-change {
+  font-size: 0.78rem !important;
+}
+
+.pdf-container.exporting-pdf .print-glossary-section {
+  display: block !important;
+  margin-top: 15px !important;
+  padding-top: 10px !important;
+  border-top: 2px dashed #cbd5e1 !important;
+  page-break-inside: avoid !important;
+}
+
+.pdf-container.exporting-pdf .glossary-title {
+  font-size: 0.82rem !important;
+  margin: 0 0 8px 0 !important;
+}
+
+.pdf-container.exporting-pdf .glossary-grid {
+  gap: 12px !important;
+}
+
+.pdf-container.exporting-pdf .glossary-item {
+  padding: 8px 12px !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+.pdf-container.exporting-pdf .glossary-item strong {
+  font-size: 0.74rem !important;
+}
+
+.pdf-container.exporting-pdf .glossary-item p {
+  font-size: 0.7rem !important;
+}
+
+.pdf-container.exporting-pdf .print-observations-section {
+  display: block !important;
+  margin-top: 15px !important;
+  page-break-inside: avoid !important;
+}
+
+.pdf-container.exporting-pdf .observations-title {
+  font-size: 0.82rem !important;
+  margin: 0 0 8px 0 !important;
+}
+
+.pdf-container.exporting-pdf .observations-placeholder-lines {
+  gap: 8px !important;
+}
+
+.pdf-container.exporting-pdf .obs-line {
+  border-bottom: 1px dashed #cbd5e1 !important;
+  height: 8px !important;
+}
+
+.pdf-container.exporting-pdf .print-validation-section {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-end !important;
+  margin-top: 25px !important;
+  padding-top: 15px !important;
+  border-top: 1px solid #cbd5e1 !important;
+  page-break-inside: avoid !important;
+}
+
+.pdf-container.exporting-pdf .signature-block {
+  width: 40% !important;
+}
+
+.pdf-container.exporting-pdf .signature-line {
+  border-bottom: 1.5px solid #94a3b8 !important;
+  margin-bottom: 6px !important;
+}
+
+.pdf-container.exporting-pdf .signature-title {
+  font-size: 0.74rem !important;
+}
+
+.pdf-container.exporting-pdf .signature-subtitle {
+  font-size: 0.65rem !important;
+}
+
+.pdf-container.exporting-pdf .stamp-box {
+  width: 100px !important;
+  margin-bottom: 6px !important;
+  padding: 4px !important;
+  font-size: 0.65rem !important;
+}
+
+@media print {
+  /* Ocultar elementos de interfaz interactivos y cabeceras de pantalla */
+  aside.sidebar,
+  .close-mobile,
+  .btn-pdf,
+  .select-patient-box,
+  .empty-patient-state .btn-primary-sm,
+  header p,
+  .tracking-header-box p {
+    display: none !important;
+  }
+
+  /* Mostrar cabecera de impresión profesional */
+  .print-only-header {
+    display: block !important;
+    border-bottom: 2px solid #cbd5e1 !important;
+    padding-bottom: 12px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .print-header-top {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 10px !important;
+  }
+
+  .print-brand {
+    color: #6c5ce7 !important;
+    font-size: 1.35rem !important;
+    font-weight: 800 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .print-brand i {
+    font-size: 1.5rem !important;
+  }
+
+  .print-title {
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+  }
+
+  .print-header-meta {
+    display: flex !important;
+    justify-content: space-between !important;
+    background: #f8fafc !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    border: 1px solid #cbd5e1 !important;
+    font-size: 0.78rem !important;
+    color: #334155 !important;
+    margin: 0 !important;
+  }
+
+  .print-meta-col {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+
+  .print-meta-col p {
+    margin: 0 !important;
+  }
+
+  .text-right {
+    text-align: right !important;
+  }
+
+  /* SEPARAR REPORTES EN PDF */
+  /* Si imprimimos Reporte Demográfico: ocultar la sección de pacientes */
+  body.print-demografico .patient-tracking-section,
+  body.print-demografico .progreso-header {
+    display: none !important;
+  }
+
+  /* Si imprimimos Reporte de Progreso: ocultar analíticas demográficas generales y la cabecera original */
+  body.print-progreso header,
+  body.print-progreso .metrics-grid,
+  body.print-progreso .demographics-row,
+  body.print-progreso .demografico-header {
+    display: none !important;
+  }
+
+  /* Estructura y márgenes de impresión general */
+  body, .main-content, .dashboard-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  .catalog-container, .demo-card, .patient-tracking-section, .progress-chart-card {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 10px 0 !important;
+    page-break-inside: avoid !important;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 15px !important;
+  }
+
+  .demographics-row, .charts-row {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 20px !important;
+  }
+
+  .patient-summary-banner {
+    border: 1px solid #cbd5e1 !important;
+    background: #f8fafc !important;
+    padding: 14px !important;
+    page-break-inside: avoid !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

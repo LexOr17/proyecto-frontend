@@ -55,6 +55,10 @@
                         <span class="badge" [class]="obtenerClaseBadge(usuario.rol)">
                             {{ usuario.rol }}
                         </span>
+                        @let isActivo = usuario.activo ?? true;
+                        <span class="badge" [style.background-color]="isActivo ? '#E8F5E9' : '#FCE4EC'" [style.color]="isActivo ? '#2E7D32' : '#C2185B'" style="margin-left: 5px;">
+                            {{ isActivo ? 'Activo' : 'Inactivo' }}
+                        </span>
                     </td>
                     <td data-label="Cédula / Info">
                         @if (usuario.cedulaProfesional) {
@@ -65,9 +69,21 @@
                     <td data-label="Acciones">
                         <div class="actions-cell">
                             <button class="btn-icon btn-edit" [attr.aria-label]="'Editar usuario ' + usuario.nombre"
-                                (click)="editarUsuario(usuario)">
+                                (click)="editarUsuario(usuario)" title="Editar">
                                 <i class='bx bx-edit' aria-hidden="true"></i>
                             </button>
+                            @if (isAdmin()) {
+                                <button class="btn-icon" 
+                                    [attr.aria-label]="(usuario.activo ?? true) ? 'Desactivar usuario ' + usuario.nombre : 'Activar usuario ' + usuario.nombre"
+                                    [title]="(usuario.activo ?? true) ? 'Desactivar' : 'Activar'"
+                                    [disabled]="isToggling() === usuario.id" (click)="cambiarEstadoUsuario(usuario)">
+                                    @if (isToggling() === usuario.id) {
+                                        ⏳
+                                    } @else {
+                                        <i class='bx' [class.bx-toggle-right]="usuario.activo ?? true" [class.bx-toggle-left]="!(usuario.activo ?? true)" aria-hidden="true"></i>
+                                    }
+                                </button>
+                            }
                             <button class="btn-icon btn-delete" [attr.aria-label]="'Eliminar usuario ' + usuario.nombre"
                                 [disabled]="isDeleting() === usuario.id" (click)="eliminarUsuario(usuario)">
                                 @if (isDeleting() === usuario.id) {

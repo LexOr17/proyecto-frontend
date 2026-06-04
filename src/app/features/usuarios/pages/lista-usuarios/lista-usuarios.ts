@@ -7,6 +7,8 @@ import { ConfirmDialogService } from '../../../../shared/service/confirm-dialog-
 import { NotificationService } from '../../../../shared/service/notification-service';
 import { Pagination } from '../../../../shared/components/pagination/pagination';
 import { PageEvent } from '../../../../shared/interfaces/page.interface';
+import { AuthService } from '../../../../core/services/auth-service';
+import { UserRole } from '../../../../core/interfaces/auth-response';
 
 @Component({
   selector: 'app-lista-usuarios',
@@ -22,9 +24,13 @@ export class ListaUsuarios {
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly notificationService = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly authService = inject(AuthService);
 
   protected searchTerm = signal('');
   protected isDeleting = signal<number | null>(null);
+  protected isToggling = signal<number | null>(null);
+
+  protected isAdmin = computed(() => this.authService.hasRole([UserRole.ADMINISTRADOR]));
 
   // Paginación
   protected currentPage = signal(0);
@@ -115,6 +121,30 @@ export class ListaUsuarios {
           }
         });
     }
+  }
+
+  protected cambiarEstadoUsuario(usuario: Usuario): void {
+    if (!usuario.id) return;
+    
+    // Si activo es undefined o null, asumimos true por defecto (los existentes suelen estar activos)
+    const estadoActual = usuario.activo ?? true;
+    const nuevoEstado = !estadoActual;
+    
+    this.isToggling.set(usuario.id);
+
+    this.usuarioService.cambiarEstado(usuario.id, nuevoEstado)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.notificationService.success(`Usuario ${nuevoEstado ? 'activado' : 'desactivado'} correctamente`);
+          this.usuariosResource.reload();
+          this.isToggling.set(null);
+        },
+        error: () => {
+          this.notificationService.error('Error al cambiar el estado del usuario');
+          this.isToggling.set(null);
+        }
+      });
   }
 
   protected formatearTelefono(telefono: string | undefined): string {

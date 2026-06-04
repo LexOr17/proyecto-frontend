@@ -1,0 +1,347 @@
+<div class="main-content">
+  <header>
+    <div class="header-title">
+      <h1><i class="bx bx-bar-chart-alt-2" aria-hidden="true"></i> Panel de Analíticas</h1>
+      <p class="header-subtitle">Analiza datos demográficos de pacientes e historiales de progreso clínico</p>
+    </div>
+    <button type="button" class="btn-pdf" (click)="descargarPDFDemografico()">
+      <i class="bx bxs-file-pdf" aria-hidden="true"></i> Exportar Demográfico
+    </button>
+  </header>
+
+  <div class="dashboard-container">
+    <!-- Carga general de estadísticas demográficas -->
+    @if (demograficoResource.isLoading()) {
+      <div class="loading-state">
+        <p>Cargando datos demográficos...</p>
+      </div>
+    } @else {
+      <!-- ─── REPORTE DEMOGRÁFICO CONTENEDOR DE PDF ────────────────────────── -->
+      <div id="reporte-demografico-pdf" class="pdf-container">
+        <!-- Cabecera de Impresión Profesional (Solo visible en PDF) -->
+        <div class="print-only-header demografico-header" aria-hidden="true">
+          <div class="print-header-top">
+            <h2 class="print-brand"><i class="bx bxl-apple"></i> BIENESTAR</h2>
+            <span class="print-title">REPORTE DEMOGRÁFICO DE PACIENTES</span>
+          </div>
+          <div class="print-header-meta">
+            <p><strong>Censo Total:</strong> {{ demograficoResource.value()?.totalPacientes || 0 }} pacientes</p>
+            <p><strong>Fecha de Emisión:</strong> {{ fechaActual | date: 'dd/MM/yyyy' }}</p>
+          </div>
+        </div>
+
+        <!-- Introducción de Reporte Clínico (Solo visible en PDF) -->
+        <div class="print-only-desc" aria-hidden="true">
+          <p>
+            Este informe consolida los datos demográficos y la distribución del censo de pacientes de la institución
+            médica <strong>Bienestar</strong> a la fecha de emisión. La información recopilada en este censo permite
+            analizar la pirámide poblacional atendida, optimizar la asignación de recursos clínicos y mantener un control de calidad en
+            las derivaciones a nuestros especialistas de nutrición clínica y dietética.
+          </p>
+        </div>
+
+        <!-- ─── CARDS DE MÉTRICAS GENERALES ─────────────────────────────────── -->
+        <section class="metrics-grid" aria-label="Métricas demográficas globales">
+          <div class="metric-card">
+            <div class="metric-icon val-pacientes">
+              <i class="bx bx-group" aria-hidden="true"></i>
+            </div>
+            <div class="metric-info">
+              <span class="metric-value">{{ demograficoResource.value()?.totalPacientes || 0 }}</span>
+              <span class="metric-label">Pacientes Totales</span>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon val-nutriologos">
+              <i class="bx bx-badge-check" aria-hidden="true"></i>
+            </div>
+            <div class="metric-info">
+              <span class="metric-value">{{ totalGeneros() }}</span>
+              <span class="metric-label">Géneros Registrados</span>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon val-edad">
+              <i class="bx bx-calendar-star" aria-hidden="true"></i>
+            </div>
+            <div class="metric-info">
+              <span class="metric-value">{{ totalRangosEdad() }}</span>
+              <span class="metric-label">Grupos de Edad</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─── SECCIÓN DEMOGRÁFICA PRINCIPAL ──────────────────────────────── -->
+        <section class="demographics-row" aria-label="Distribución demográfica de pacientes">
+          <!-- Tarjeta de Distribución de Género (Chart.js) -->
+          <article class="demo-card">
+            <h3 class="demo-card-title"><i class="bx bx-pie-chart-alt-2"></i> Distribución de Género</h3>
+            <p class="chart-desc-text" aria-hidden="true">Representa la distribución biológica de la población clínica activa, sirviendo de base para la personalización de planes basados en las guías de requerimientos energéticos por género.</p>
+            <div class="chart-canvas-container">
+              <canvas id="canvas-genero"></canvas>
+            </div>
+          </article>
+
+          <!-- Tarjeta de Distribución de Edad (Chart.js) -->
+          <article class="demo-card">
+            <h3 class="demo-card-title"><i class="bx bx-bar-chart-alt"></i> Grupos de Edad</h3>
+            <p class="chart-desc-text" aria-hidden="true">Muestra la segmentación etaria de los pacientes. Permite identificar las prioridades clínicas en pediatría, adultos y adultos mayores atendidos en la institución.</p>
+            <div class="chart-canvas-container">
+              <canvas id="canvas-edad"></canvas>
+            </div>
+          </article>
+
+          <!-- Tarjeta de Distribución por Nutriólogo (Chart.js) -->
+          <article class="demo-card">
+            <h3 class="demo-card-title"><i class="bx bx-user-voice"></i> Por Nutriólogo</h3>
+            <p class="chart-desc-text" aria-hidden="true">Distribución absoluta de la carga de pacientes activos y derivaciones médicas asignadas a cada especialista del equipo de salud de la clínica.</p>
+            <div class="chart-canvas-container">
+              <canvas id="canvas-nutriologo"></canvas>
+            </div>
+          </article>
+        </section>
+
+        <!-- Bloque de Firmas y Validación (Solo visible en PDF) -->
+        <div class="print-validation-section" aria-hidden="true">
+          <div class="signature-block">
+            <div class="signature-line"></div>
+            <p class="signature-title">Firma de Coordinación Médica</p>
+            <p class="signature-subtitle">Auditoría Clínica Bienestar</p>
+          </div>
+          <div class="signature-block">
+            <div class="stamp-box">
+              <i class="bx bx-badge-check" style="font-size: 2.2rem; color: #6c5ce7;"></i>
+              <span>VALIDADO</span>
+            </div>
+            <p class="signature-title">Sello Institucional</p>
+            <p class="signature-subtitle">Registro Oficial No. 849-B</p>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ─── SECCIÓN DE SEGUIMIENTO CLÍNICO INDIVIDUAL DE PACIENTES ─────────── -->
+    <section class="patient-tracking-section" aria-label="Seguimiento de progreso clínico del paciente">
+      <div class="tracking-header-box">
+        <div class="tracking-title-info">
+          <h2><i class="bx bx-line-chart" aria-hidden="true"></i> Progreso de Peso y Composición Corporal</h2>
+          <p>Selecciona un paciente para ver la evolución de sus medidas antropométricas registradas</p>
+        </div>
+
+        <!-- Selector de Paciente -->
+        <div class="select-patient-box">
+          <label for="select-patient" class="sr-only">Seleccionar Paciente</label>
+          <div class="select-wrapper">
+            <i class="bx bx-user" aria-hidden="true"></i>
+            <select id="select-patient" (change)="seleccionarPaciente($event)">
+              <option value="">-- Seleccionar Paciente --</option>
+              @for (p of pacientesList(); track p.id) {
+                <option [value]="p.id">{{ p.nombre }} {{ p.apellidoPaterno }}</option>
+              }
+            </select>
+            <i class="bx bx-chevron-down select-arrow" aria-hidden="true"></i>
+          </div>
+          @if (pacienteIdSeleccionado() && pacienteStats()) {
+            <button type="button" class="btn-pdf btn-pdf-sm" (click)="descargarPDFProgreso()" style="margin-top: 10px; width: 100%;">
+              <i class="bx bxs-file-pdf" aria-hidden="true"></i> Exportar Progreso
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Contenedor del Progreso del Paciente Seleccionado -->
+      @if (!pacienteIdSeleccionado()) {
+        <div class="empty-patient-state">
+          <i class="bx bx-trending-up" aria-hidden="true"></i>
+          <p>Selecciona un paciente del menú superior para graficar su progreso antropométrico</p>
+        </div>
+      } @else if (progresoResource.isLoading()) {
+        <div class="loading-state">
+          <p>Cargando mediciones del paciente...</p>
+        </div>
+      } @else {
+        
+        @if (pacienteStats(); as stats) {
+          <!-- REPORTE DE PROGRESO CONTENEDOR DE PDF -->
+          <div id="reporte-progreso-pdf" class="pdf-container">
+            <!-- Cabecera de Impresión Profesional de Progreso (Solo visible en PDF) -->
+            <div class="print-only-header progreso-header" aria-hidden="true">
+              <div class="print-header-top">
+                <h2 class="print-brand"><i class="bx bxl-apple"></i> BIENESTAR</h2>
+                <span class="print-title">REPORTE CLÍNICO DE EVOLUCIÓN ANTROPOMÉTRICA</span>
+              </div>
+              <div class="print-header-meta">
+                <div class="print-meta-col">
+                  <p><strong>Paciente:</strong> {{ pacienteSeleccionado()?.nombre }} {{ pacienteSeleccionado()?.apellidoPaterno }}</p>
+                  <p><strong>Género:</strong> {{ pacienteSeleccionado()?.genero === 'MASCULINO' ? 'Masculino' : 'Femenino' }}</p>
+                </div>
+                <div class="print-meta-col">
+                  <p><strong>Correo:</strong> {{ pacienteSeleccionado()?.correo }}</p>
+                  <p><strong>Teléfono:</strong> {{ pacienteSeleccionado()?.telefono }}</p>
+                </div>
+                <div class="print-meta-col text-right">
+                  <p><strong>Fecha de Emisión:</strong> {{ fechaActual | date: 'dd/MM/yyyy' }}</p>
+                  <p><strong>Total Mediciones:</strong> {{ stats.totalRegistros }} registros</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Introducción de Evolución de Progreso (Solo visible en PDF) -->
+            <div class="print-only-desc" aria-hidden="true">
+              <p>
+                Este documento clínico detalla la evolución antropométrica y el progreso corporal del paciente
+                <strong>{{ pacienteSeleccionado()?.nombre }} {{ pacienteSeleccionado()?.apellidoPaterno }}</strong>.
+                Los datos históricos presentados corresponden a las mediciones oficiales registradas en el consultorio,
+                trazando la tendencia de peso corporal y grasa para guiar la prescripción dietética actual.
+              </p>
+            </div>
+
+            <!-- Métrica de Progreso Rápido -->
+            <div class="patient-summary-banner">
+              <div class="patient-profile-summary">
+                <span class="avatar-circle" aria-hidden="true">
+                  {{ pacienteSeleccionado()?.nombre?.charAt(0) }}{{ pacienteSeleccionado()?.apellidoPaterno?.charAt(0) }}
+                </span>
+                <div>
+                  <h3>{{ pacienteSeleccionado()?.nombre }} {{ pacienteSeleccionado()?.apellidoPaterno }}</h3>
+                  <p>Historial Clínico: {{ stats.totalRegistros }} mediciones registradas</p>
+                </div>
+              </div>
+
+              <!-- Grid de Hitos -->
+              <div class="milestones-grid">
+                <div class="milestone-item">
+                  <span class="milestone-label">Peso Inicial</span>
+                  <span class="milestone-value">{{ stats.pesoInicial | number: '1.1-1' }} kg</span>
+                </div>
+                <div class="milestone-item">
+                  <span class="milestone-label">Peso Actual</span>
+                  <span class="milestone-value">{{ stats.pesoActual | number: '1.1-1' }} kg</span>
+                </div>
+                <div class="milestone-item">
+                  <span class="milestone-label">Evolución Peso</span>
+                  <span
+                    class="milestone-change"
+                    [class.loss]="stats.pesoDiferencia < 0"
+                    [class.gain]="stats.pesoDiferencia > 0"
+                  >
+                    <i
+                      class="bx"
+                      [class.bx-trending-down]="stats.pesoDiferencia < 0"
+                      [class.bx-trending-up]="stats.pesoDiferencia > 0"
+                      aria-hidden="true"
+                    ></i>
+                    {{ stats.pesoDiferencia > 0 ? '+' : '' }}{{ stats.pesoDiferencia | number: '1.1-1' }} kg
+                  </span>
+                </div>
+                
+                <div class="milestone-item">
+                  <span class="milestone-label">Grasa Corporal</span>
+                  <span class="milestone-value">{{ stats.grasaActual | number: '1.1-1' }}%</span>
+                </div>
+                <div class="milestone-item">
+                  <span class="milestone-label">Evolución Grasa</span>
+                  <span
+                    class="milestone-change"
+                    [class.loss]="stats.grasaDiferencia < 0"
+                    [class.gain]="stats.grasaDiferencia > 0"
+                  >
+                    <i
+                      class="bx"
+                      [class.bx-trending-down]="stats.grasaDiferencia < 0"
+                      [class.bx-trending-up]="stats.grasaDiferencia > 0"
+                      aria-hidden="true"
+                    ></i>
+                    {{ stats.grasaDiferencia > 0 ? '+' : '' }}{{ stats.grasaDiferencia | number: '1.1-1' }}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ─── GRÁFICOS DE PROGRESO ────────────────────────────────────── -->
+            <div class="charts-row">
+              <!-- Gráfico de Peso (Chart.js) -->
+              <article class="progress-chart-card">
+                <div class="chart-header">
+                  <h4>Evolución del Peso Corporal</h4>
+                  <span class="unit-badge">kg</span>
+                </div>
+                <p class="chart-desc-text" aria-hidden="true">Muestra la curva cronológica de masa corporal total. El objetivo es supervisar la velocidad de pérdida o ganancia de peso adaptada a las metas de salud del paciente.</p>
+                <div class="chart-canvas-container">
+                  <canvas id="canvas-peso"></canvas>
+                </div>
+              </article>
+
+              <!-- Gráfico de Porcentaje de Grasa (Chart.js) -->
+              <article class="progress-chart-card">
+                <div class="chart-header">
+                  <h4>Evolución del Porcentaje de Grasa</h4>
+                  <span class="unit-badge">% Grasa</span>
+                </div>
+                <p class="chart-desc-text" aria-hidden="true">Monitoreo clínico de la masa adiposa. Permite validar que el peso perdido o ganado provenga de compartimentos grasos y no de masa muscular activa.</p>
+                <div class="chart-canvas-container">
+                  <canvas id="canvas-grasa"></canvas>
+                </div>
+              </article>
+            </div>
+
+            <!-- Sección de Glosario e Interpretación Clínico (Solo visible en PDF) -->
+            <div class="print-glossary-section" aria-hidden="true">
+              <h4 class="glossary-title"><i class="bx bx-help-circle"></i> Guía de Interpretación de Indicadores de Salud</h4>
+              <div class="glossary-grid">
+                <div class="glossary-item">
+                  <strong>Índice Cintura/Talla (ICT):</strong>
+                  <p>Mide la distribución de grasa abdominal. Valores menores o iguales a 0.50 indican peso saludable y bajo riesgo cardiovascular. Valores de 0.51 a 0.55 indican riesgo moderado, y superiores a 0.55 indican riesgo alto.</p>
+                </div>
+                <div class="glossary-item">
+                  <strong>Índice Cintura/Cadera (ICC):</strong>
+                  <p>Evalúa el patrón de acumulación de grasa (tipo ginoide o androide). Valores normales son menores a 0.80 en mujeres y 0.90 en hombres, sirviendo como indicador predictivo de riesgo de síndrome metabólico.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Área de Anotaciones Clínicas (Solo visible en PDF) -->
+            <div class="print-observations-section" aria-hidden="true">
+              <h4 class="observations-title"><i class="bx bx-edit"></i> Observaciones Clínicas y Recomendaciones Nutricionales</h4>
+              <div class="observations-placeholder-lines">
+                <div class="obs-line"></div>
+                <div class="obs-line"></div>
+                <div class="obs-line"></div>
+              </div>
+            </div>
+
+            <!-- Bloque de Firmas y Validación (Solo visible en PDF) -->
+            <div class="print-validation-section" aria-hidden="true">
+              <div class="signature-block">
+                <div class="signature-line"></div>
+                <p class="signature-title">Firma del Especialista</p>
+                <p class="signature-subtitle">Nutriólogo Clínico Responsable</p>
+              </div>
+              <div class="signature-block">
+                <div class="stamp-box">
+                  <i class="bx bx-badge-check" style="font-size: 2.2rem; color: #6c5ce7;"></i>
+                  <span>REGISTRADO</span>
+                </div>
+                <p class="signature-title">Cédula Profesional</p>
+                <p class="signature-subtitle">Autorizado por el Depto. de Salud</p>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <div class="empty-patient-state">
+            <i class="bx bx-info-circle" aria-hidden="true"></i>
+            <p>Este paciente no tiene suficientes medidas antropométricas registradas para generar gráficas de progreso.</p>
+            <p class="sub-msg">Se requieren al menos 2 registros en distintas fechas para trazar la línea de tendencia.</p>
+            <a [routerLink]="['/main/pacientes', pacienteIdSeleccionado(), 'medidas']" class="btn-primary-sm">
+              <i class="bx bx-plus"></i> Registrar Medidas
+            </a>
+          </div>
+        }
+
+      }
+    </section>
+
+  </div>
+</div>
