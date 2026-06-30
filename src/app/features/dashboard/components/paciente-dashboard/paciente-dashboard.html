@@ -1,0 +1,312 @@
+<section class="paciente-dash">
+
+  <!-- ── Banner Motivacional ──────────────────────────────── -->
+  <div class="welcome-banner">
+    <div class="welcome-banner__content">
+      <div class="welcome-banner__text">
+        <h1 class="welcome-title">¡Hola, {{ authService.userName() }}! 👋</h1>
+        <p class="welcome-frase">{{ fraseHoy() }}</p>
+      </div>
+      @if (diasEnPrograma() > 0) {
+        <div class="welcome-streak">
+          <span class="streak-icon">🔥</span>
+          <div class="streak-text">
+            <span class="streak-num">{{ diasEnPrograma() }}</span>
+            <span class="streak-label">días en tu programa</span>
+          </div>
+        </div>
+      }
+    </div>
+    <div class="banner-decoration"></div>
+  </div>
+
+  <!-- ── Stat Cards ─────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="stats-grid">
+      @for (_ of [1,2,3,4]; track $index) { <div class="skeleton-card"></div> }
+    </div>
+  } @else {
+    <div class="stats-grid">
+      <!-- Peso Actual -->
+      <div class="stat-card stat-card--peso">
+        <div class="stat-card__icon"><span class="bx bx-body"></span></div>
+        <div class="stat-card__body">
+          <span class="stat-card__label">Peso Actual</span>
+          @if (pesoActual() !== null) {
+            <span class="stat-card__value">{{ pesoActual() }} <small>kg</small></span>
+          } @else {
+            <span class="stat-card__value no-data">—</span>
+          }
+        </div>
+        @if (pesoDelta() !== null) {
+          <div class="stat-card__footer" [class.delta-baja]="pesoDelta()! < 0" [class.delta-sube]="pesoDelta()! > 0">
+            <span class="bx" [class.bx-trending-down]="pesoDelta()! < 0" [class.bx-trending-up]="pesoDelta()! > 0"></span>
+            <span>{{ pesoDelta()! > 0 ? '+' : '' }}{{ pesoDelta() }} kg vs anterior</span>
+          </div>
+        } @else {
+          <div class="stat-card__footer"><span>Sin medidas previas</span></div>
+        }
+      </div>
+
+      <!-- Próxima Cita -->
+      <div class="stat-card stat-card--cita">
+        <div class="stat-card__icon"><span class="bx bx-calendar-event"></span></div>
+        <div class="stat-card__body">
+          <span class="stat-card__label">Próxima Cita</span>
+          @if (proximaCita()) {
+            <span class="stat-card__value cita-date">
+              {{ proximaCita()!.fechaHoraInicio | date:'d MMM' : '' : 'es' }}
+            </span>
+          } @else {
+            <span class="stat-card__value no-data">Sin citas</span>
+          }
+        </div>
+        @if (proximaCita()) {
+          <div class="stat-card__footer">
+            <span class="bx bx-time"></span>
+            <span>{{ proximaCita()!.fechaHoraInicio | date:'HH:mm' }}</span>
+          </div>
+        }
+      </div>
+
+      <!-- Metas -->
+      <div class="stat-card stat-card--metas">
+        <div class="stat-card__icon"><span class="bx bx-target-lock"></span></div>
+        <div class="stat-card__body">
+          <span class="stat-card__label">Metas Cumplidas</span>
+          <span class="stat-card__value">{{ metasCumplidas() }}<small>/{{ metaResumen()?.total ?? 0 }}</small></span>
+        </div>
+        <div class="stat-card__footer">
+          <span class="bx bx-check-circle"></span>
+          <span>{{ metaResumen()?.porcentajeExito?.toFixed(0) ?? 0 }}% de éxito</span>
+        </div>
+      </div>
+
+      <!-- Días en programa -->
+      <div class="stat-card stat-card--dias">
+        <div class="stat-card__icon"><span class="bx bx-trophy"></span></div>
+        <div class="stat-card__body">
+          <span class="stat-card__label">En el Programa</span>
+          <span class="stat-card__value">{{ diasEnPrograma() }}<small>días</small></span>
+        </div>
+        <div class="stat-card__footer">
+          <span class="bx bx-medal"></span>
+          <span>Sigue así</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Peso + Metas ──────────────────────────────────────── -->
+  <div class="main-grid">
+
+    <!-- Progreso de Peso -->
+    <div class="content-card">
+      <div class="content-card__header">
+        <h2 class="card-title"><span class="bx bx-trending-up"></span> Mi Progreso de Peso</h2>
+        <a routerLink="/main/mi-progreso" class="link-more">Ver detalle <span class="bx bx-chevron-right"></span></a>
+      </div>
+      <div class="content-card__body">
+        @if (historialMedidas().length === 0) {
+          <div class="empty-state">
+            <span class="bx bx-line-chart"></span>
+            <p>Aún no hay medidas registradas</p>
+          </div>
+        } @else {
+          <!-- Mini chart de barras de peso -->
+          @let medidas = historialMedidas().slice(-8);
+          @let maxPeso = medidas.reduce((max, m) => m.peso && m.peso > max ? m.peso : max, 0);
+          <div class="peso-chart">
+            @for (m of medidas; track m.id) {
+              <div class="peso-col">
+                <span class="peso-val">{{ m.peso }}</span>
+                <div class="peso-track">
+                  <div class="peso-fill" [style.height.%]="maxPeso > 0 ? ((m.peso ?? 0) / maxPeso) * 100 : 0"></div>
+                </div>
+                <span class="peso-fecha">{{ m.fechaMedicion | date:'dd/MM' }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Resumen -->
+          @let first = historialMedidas()[0];
+          @let last = historialMedidas()[historialMedidas().length - 1];
+          @if (first && last && first.peso && last.peso) {
+            <div class="peso-summary">
+              <div class="peso-summary__item">
+                <span class="label">Inicial</span>
+                <span class="value">{{ first.peso }} kg</span>
+              </div>
+              <div class="peso-summary__arrow">
+                <span class="bx bx-arrow-right"></span>
+              </div>
+              <div class="peso-summary__item">
+                <span class="label">Actual</span>
+                <span class="value highlight">{{ last.peso }} kg</span>
+              </div>
+              @if (last.peso < first.peso) {
+                <div class="peso-summary__badge badge-baja">
+                  ▼ {{ (first.peso - last.peso).toFixed(1) }} kg bajados
+                </div>
+              } @else if (last.peso > first.peso) {
+                <div class="peso-summary__badge badge-sube">
+                  ▲ {{ (last.peso - first.peso).toFixed(1) }} kg subidos
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- Mis Metas -->
+    <div class="content-card">
+      <div class="content-card__header">
+        <h2 class="card-title"><span class="bx bx-target-lock"></span> Mis Metas Activas</h2>
+        <a routerLink="/main/mis-metas" class="link-more">Ver todas <span class="bx bx-chevron-right"></span></a>
+      </div>
+      <div class="content-card__body">
+        @if (metasActivas().length === 0) {
+          <div class="empty-state">
+            <span class="bx bx-flag"></span>
+            <p>No tienes metas activas</p>
+          </div>
+        } @else {
+          <div class="metas-list">
+            @for (meta of metasActivas(); track meta.id) {
+              @let pct = getPorcentajeMeta(meta);
+              <div class="meta-item">
+                <div class="meta-ring-wrap">
+                  <svg class="meta-ring" viewBox="0 0 64 64">
+                    <circle cx="32" cy="32" r="28" class="ring-bg"/>
+                    <circle cx="32" cy="32" r="28" class="ring-fill"
+                      [attr.stroke-dasharray]="getCircumference()"
+                      [attr.stroke-dashoffset]="getDashOffset(pct)"/>
+                    <text x="32" y="37" class="ring-pct">{{ pct }}%</text>
+                  </svg>
+                </div>
+                <div class="meta-info">
+                  <span class="meta-desc">{{ meta.descripcion }}</span>
+                  <span class="meta-fecha">
+                    <span class="bx bx-calendar"></span>
+                    {{ meta.fechaObjetivo | date:'d MMM yyyy' : '' : 'es' }}
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Plan + Acciones + Citas ──────────────────────────── -->
+  <div class="bottom-grid">
+
+    <!-- Mi Plan Alimenticio -->
+    <div class="content-card plan-card">
+      <div class="content-card__header">
+        <h2 class="card-title"><span class="bx bx-food-menu"></span> Mi Plan Alimenticio</h2>
+        <a routerLink="/main/mis-planes" class="link-more">Ver plan <span class="bx bx-chevron-right"></span></a>
+      </div>
+      <div class="content-card__body">
+        @if (!planActivo()) {
+          <div class="empty-state">
+            <span class="bx bx-bowl-hot"></span>
+            <p>No tienes un plan activo</p>
+          </div>
+        } @else {
+          <div class="plan-info">
+            <div class="plan-nombre">{{ planActivo()!.nombre }}</div>
+            <div class="plan-detail">
+              <span class="bx bx-calendar"></span>
+              Inicio: {{ planActivo()!.fechaInicio | date:'d MMM yyyy' : '' : 'es' }}
+            </div>
+            <div class="plan-detail">
+              <span class="bx bx-time-five"></span>
+              Duración: {{ planActivo()!.duracionDias }} días
+            </div>
+            <div class="plan-progress-bar">
+              <div class="plan-progress-fill"
+                [style.width.%]="Math.min(100, (diasEnPrograma() / planActivo()!.duracionDias) * 100)">
+              </div>
+            </div>
+            <span class="plan-progress-label">
+              Día {{ diasEnPrograma() }} de {{ planActivo()!.duracionDias }}
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="content-card">
+      <div class="content-card__header">
+        <h2 class="card-title"><span class="bx bx-zap"></span> Acciones Rápidas</h2>
+      </div>
+      <div class="content-card__body">
+        <div class="quick-actions">
+          <a routerLink="/main/mi-diario" class="qa-btn">
+            <span class="bx bx-book-heart qa-icon"></span>
+            <div class="qa-text"><span class="qa-title">Registrar Comida</span><span class="qa-desc">Añadir al diario de hoy</span></div>
+            <span class="bx bx-chevron-right qa-arrow"></span>
+          </a>
+          <a routerLink="/main/mis-citas/solicitar" class="qa-btn">
+            <span class="bx bx-calendar-plus qa-icon"></span>
+            <div class="qa-text"><span class="qa-title">Solicitar Cita</span><span class="qa-desc">Agendar con tu nutriólogo</span></div>
+            <span class="bx bx-chevron-right qa-arrow"></span>
+          </a>
+          <a routerLink="/main/mi-bienestar" class="qa-btn">
+            <span class="bx bx-heart qa-icon"></span>
+            <div class="qa-text"><span class="qa-title">Registrar Bienestar</span><span class="qa-desc">Cómo te sientes hoy</span></div>
+            <span class="bx bx-chevron-right qa-arrow"></span>
+          </a>
+          <a routerLink="/main/chat" class="qa-btn">
+            <span class="bx bx-chat qa-icon"></span>
+            <div class="qa-text"><span class="qa-title">Chat con Nutriólogo</span><span class="qa-desc">Enviar mensaje</span></div>
+            <span class="bx bx-chevron-right qa-arrow"></span>
+          </a>
+          <a routerLink="/main/mis-sugerencias" class="qa-btn">
+            <span class="bx bx-bulb qa-icon"></span>
+            <div class="qa-text"><span class="qa-title">Mis Sugerencias</span><span class="qa-desc">Plantillas sugeridas</span></div>
+            <span class="bx bx-chevron-right qa-arrow"></span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Últimas Citas -->
+    <div class="content-card">
+      <div class="content-card__header">
+        <h2 class="card-title"><span class="bx bx-calendar"></span> Mis Últimas Citas</h2>
+        <a routerLink="/main/mis-citas" class="link-more">Ver todas <span class="bx bx-chevron-right"></span></a>
+      </div>
+      <div class="content-card__body">
+        @if (ultimasCitas().length === 0) {
+          <div class="empty-state">
+            <span class="bx bx-calendar-x"></span>
+            <p>No hay citas registradas</p>
+          </div>
+        } @else {
+          <ul class="citas-list">
+            @for (cita of ultimasCitas(); track cita.id) {
+              <li class="cita-item">
+                <div class="cita-date-block">
+                  <span class="cita-dia">{{ cita.fechaHoraInicio | date:'d' }}</span>
+                  <span class="cita-mes">{{ cita.fechaHoraInicio | date:'MMM' : '' : 'es' }}</span>
+                </div>
+                <div class="cita-info">
+                  <span class="cita-nutri">Dr. {{ cita.nombreNutriologo }}</span>
+                  <span class="cita-hora"><span class="bx bx-time"></span>{{ cita.fechaHoraInicio | date:'HH:mm' }}</span>
+                </div>
+                <span class="estado-badge" [ngClass]="getEstadoClass(cita.estado)">{{ getEstadoLabel(cita.estado) }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+
+  </div>
+</section>

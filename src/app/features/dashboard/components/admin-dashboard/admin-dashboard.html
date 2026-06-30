@@ -1,0 +1,316 @@
+<section class="admin-dash">
+
+  <!-- ── Header ────────────────────────────────────────────── -->
+  <div class="dash-header">
+    <div class="dash-header__text">
+      <h1 class="dash-title">Panel de Administración</h1>
+      <p class="dash-subtitle">Resumen general del sistema · {{ today | date:'EEEE, d MMMM yyyy' : '' : 'es' }}</p>
+    </div>
+    <div class="dash-header__actions">
+      <a routerLink="/main/usuarios/nuevo" class="btn-primary">
+        <span class="bx bx-user-plus"></span> Nuevo Usuario
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Stat Cards ─────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="stats-grid skeleton-grid">
+      @for (_ of [1,2,3,4,5]; track $index) {
+        <div class="skeleton-card"></div>
+      }
+    </div>
+  } @else if (stats()) {
+    <div class="stats-grid">
+      <div class="stat-card stat-card--users">
+        <div class="stat-card__icon"><span class="bx bx-group"></span></div>
+        <div class="stat-card__body">
+          <span class="stat-card__label">Total Usuarios</span>
+          <span class="stat-card__value">{{ stats()!.totalUsuarios }}</span>
+        </div>
+        <div class="stat-card__footer">
+          <span class="bx bx-trending-up"></span>
+          <span>{{ stats()!.usuariosActivos }} activos</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card--nutri">
+        <div class="stat-card__icon"><span class="bx bx-heart-circle"></span></div>
+        <div class="stat-card__body">
+          <span class="stat-card__label">Nutriólogos</span>
+          <span class="stat-card__value">{{ stats()!.totalNutriologos }}</span>
+        </div>
+        <div class="stat-card__footer">
+          <span class="bx bx-check-circle"></span>
+          <span>Registrados</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card--pacientes">
+        <div class="stat-card__icon"><span class="bx bx-body"></span></div>
+        <div class="stat-card__body">
+          <span class="stat-card__label">Pacientes</span>
+          <span class="stat-card__value">{{ stats()!.totalPacientes }}</span>
+        </div>
+        <div class="stat-card__footer">
+          <span class="bx bx-user"></span>
+          <span>En el sistema</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card--citas">
+        <div class="stat-card__icon"><span class="bx bx-calendar-check"></span></div>
+        <div class="stat-card__body">
+          <span class="stat-card__label">Citas Hoy</span>
+          <span class="stat-card__value">{{ stats()!.citasHoy }}</span>
+        </div>
+        <div class="stat-card__footer">
+          <span class="bx bx-time"></span>
+          <span>Programadas</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card--activos">
+        <div class="stat-card__icon"><span class="bx bx-pulse"></span></div>
+        <div class="stat-card__body">
+          <span class="stat-card__label">Usuarios Activos</span>
+          <span class="stat-card__value">{{ stats()!.usuariosActivos }}</span>
+        </div>
+        <div class="stat-card__footer">
+          <span class="bx bx-shield-check"></span>
+          <span>Con acceso</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Charts Row ──────────────────────────────────────────── -->
+  <div class="charts-row">
+
+    <!-- Pacientes por Nutriólogo -->
+    <div class="chart-card">
+      <div class="chart-card__header">
+        <h2 class="chart-card__title">
+          <span class="bx bx-pie-chart-alt-2"></span>
+          Pacientes por Nutriólogo
+        </h2>
+      </div>
+      <div class="chart-card__body">
+        @if (chartNutriologo().length === 0) {
+          <div class="empty-state">
+            <span class="bx bx-data"></span>
+            <p>Sin datos disponibles</p>
+          </div>
+        } @else {
+          <div class="donut-chart">
+            <svg viewBox="0 0 120 120" class="donut-svg">
+              @let total = chartNutriologo().reduce((a, b) => a + b.value, 0);
+              @let items = chartNutriologo();
+              @for (item of items; track item.label; let i = $index) {
+                <circle
+                  class="donut-segment"
+                  cx="60" cy="60" r="45"
+                  [attr.stroke]="getColorNutriologo(i)"
+                  [attr.stroke-dasharray]="(item.value / total) * 282.6 + ' ' + (282.6 - (item.value / total) * 282.6)"
+                  [attr.stroke-dashoffset]="282.6 - items.slice(0, i).reduce((acc, x) => acc + (x.value / total) * 282.6, 0)"
+                />
+              }
+              <text x="60" y="55" class="donut-center-num">{{ total }}</text>
+              <text x="60" y="70" class="donut-center-label">pacientes</text>
+            </svg>
+          </div>
+          <ul class="chart-legend">
+            @for (item of chartNutriologo(); track item.label; let i = $index) {
+              <li class="legend-item">
+                <span class="legend-dot" [style.background]="getColorNutriologo(i)"></span>
+                <span class="legend-label">{{ item.label }}</span>
+                <span class="legend-value">{{ item.value }} ({{ item.pct }}%)</span>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+
+    <!-- Distribución por Género -->
+    <div class="chart-card">
+      <div class="chart-card__header">
+        <h2 class="chart-card__title">
+          <span class="bx bx-bar-chart"></span>
+          Distribución por Género
+        </h2>
+      </div>
+      <div class="chart-card__body">
+        @if (chartGenero().length === 0) {
+          <div class="empty-state">
+            <span class="bx bx-data"></span>
+            <p>Sin datos disponibles</p>
+          </div>
+        } @else {
+          <div class="bar-chart-h">
+            @for (item of chartGenero(); track item.label) {
+              <div class="bar-h-row">
+                <span class="bar-h-label">{{ item.label }}</span>
+                <div class="bar-h-track">
+                  <div
+                    class="bar-h-fill"
+                    [style.width.%]="item.pct"
+                    [style.background]="item.color">
+                  </div>
+                </div>
+                <span class="bar-h-val">{{ item.value }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Edad + Acciones ────────────────────────────────────── -->
+  <div class="charts-row">
+
+    <!-- Distribución por Edad -->
+    <div class="chart-card">
+      <div class="chart-card__header">
+        <h2 class="chart-card__title">
+          <span class="bx bx-bar-chart-alt-2"></span>
+          Distribución por Rango de Edad
+        </h2>
+      </div>
+      <div class="chart-card__body">
+        @if (chartEdad().length === 0) {
+          <div class="empty-state">
+            <span class="bx bx-data"></span>
+            <p>Sin datos disponibles</p>
+          </div>
+        } @else {
+          <div class="bar-chart-v">
+            @for (item of chartEdad(); track item.label) {
+              <div class="bar-v-col">
+                <span class="bar-v-val">{{ item.value }}</span>
+                <div class="bar-v-track">
+                  <div
+                    class="bar-v-fill"
+                    [style.height.%]="(item.value / getMaxEdad()) * 100">
+                  </div>
+                </div>
+                <span class="bar-v-label">{{ item.label }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="chart-card">
+      <div class="chart-card__header">
+        <h2 class="chart-card__title">
+          <span class="bx bx-zap"></span>
+          Acciones Rápidas
+        </h2>
+      </div>
+      <div class="chart-card__body">
+        <div class="quick-actions">
+          <a routerLink="/main/usuarios/nuevo" class="qa-btn">
+            <span class="bx bx-user-plus qa-icon"></span>
+            <div class="qa-text">
+              <span class="qa-title">Nuevo Usuario</span>
+              <span class="qa-desc">Registrar nutriólogo o admin</span>
+            </div>
+            <span class="bx bx-chevron-right qa-arrow"></span>
+          </a>
+          <a routerLink="/main/usuarios" class="qa-btn">
+            <span class="bx bx-group qa-icon"></span>
+            <div class="qa-text">
+              <span class="qa-title">Lista de Usuarios</span>
+              <span class="qa-desc">Ver todos los usuarios</span>
+            </div>
+            <span class="bx bx-chevron-right qa-arrow"></span>
+          </a>
+          <a routerLink="/main/reportes" class="qa-btn">
+            <span class="bx bx-bar-chart-alt-2 qa-icon"></span>
+            <div class="qa-text">
+              <span class="qa-title">Ver Reportes</span>
+              <span class="qa-desc">Estadísticas y análisis</span>
+            </div>
+            <span class="bx bx-chevron-right qa-arrow"></span>
+          </a>
+          <a routerLink="/main/restauracion" class="qa-btn">
+            <span class="bx bx-history qa-icon"></span>
+            <div class="qa-text">
+              <span class="qa-title">Restauración del Sistema</span>
+              <span class="qa-desc">Backup y restauración</span>
+            </div>
+            <span class="bx bx-chevron-right qa-arrow"></span>
+          </a>
+          <a routerLink="/main/alimentos" class="qa-btn">
+            <span class="bx bx-food-menu qa-icon"></span>
+            <div class="qa-text">
+              <span class="qa-title">Catálogo de Alimentos</span>
+              <span class="qa-desc">Gestionar alimentos</span>
+            </div>
+            <span class="bx bx-chevron-right qa-arrow"></span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Usuarios Recientes ──────────────────────────────────── -->
+  <div class="table-card">
+    <div class="table-card__header">
+      <h2 class="chart-card__title">
+        <span class="bx bx-time-five"></span>
+        Usuarios Registrados Recientemente
+      </h2>
+      <a routerLink="/main/usuarios" class="link-ver-todos">Ver todos <span class="bx bx-arrow-right"></span></a>
+    </div>
+    <div class="table-wrapper">
+      @if (usuariosRecientes().length === 0) {
+        <div class="empty-state">
+          <span class="bx bx-user-x"></span>
+          <p>No hay usuarios registrados</p>
+        </div>
+      } @else {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Rol</th>
+              <th>Correo</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of usuariosRecientes(); track u.id) {
+              <tr class="table-row">
+                <td>
+                  <div class="user-cell">
+                    <div class="user-avatar">{{ u.nombre?.charAt(0) }}{{ u.apellidoPaterno?.charAt(0) }}</div>
+                    <div>
+                      <span class="user-name">{{ u.nombre }} {{ u.apellidoPaterno }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="getRolBadgeClass(u.rol)">{{ getRolLabel(u.rol) }}</span>
+                </td>
+                <td class="user-email">{{ u.correo }}</td>
+                <td>
+                  <span class="status-dot" [class.status-dot--active]="u.activo" [class.status-dot--inactive]="!u.activo">
+                    {{ u.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </div>
+
+</section>

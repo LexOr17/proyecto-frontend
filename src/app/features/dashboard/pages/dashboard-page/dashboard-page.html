@@ -1,4 +1,17 @@
-<section class="dashboard">
-  <h1>Dashboard</h1>
-  <p>Bienvenido al panel.</p>
-</section>
+@switch (authService.currentUserRole()) {
+  @case (UserRole.ADMINISTRADOR) {
+    <app-admin-dashboard />
+  }
+  @case (UserRole.NUTRIOLOGO) {
+    <app-nutriologo-dashboard />
+  }
+  @case (UserRole.PACIENTE) {
+    <app-paciente-dashboard />
+  }
+  @default {
+    <div class="dash-loading">
+      <span class="bx bx-loader-alt bx-spin"></span>
+      <p>Cargando tu panel...</p>
+    </div>
+  }
+}

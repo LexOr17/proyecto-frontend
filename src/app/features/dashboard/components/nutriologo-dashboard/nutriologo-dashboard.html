@@ -1,0 +1,183 @@
+<section class="nutri-dash">
+
+  <!-- ── Header ─────────────────────────────────────────────── -->
+  <div class="dash-header">
+    <div class="dash-header__text">
+      <h1 class="dash-title">Mi Panel — Nutriólogo</h1>
+      <p class="dash-subtitle">Bienvenido de vuelta, <strong>{{ authService.userName() }}</strong> · {{ today | date:'EEEE, d MMMM' : '' : 'es' }}</p>
+    </div>
+    <div class="dash-header__actions">
+      <a routerLink="/main/pacientes/nuevo" class="btn-primary">
+        <span class="bx bx-user-plus"></span> Nuevo Paciente
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Stat Cards ─────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="stats-grid">
+      @for (_ of [1,2,3,4]; track $index) {
+        <div class="skeleton-card"></div>
+      }
+    </div>
+  } @else {
+    <div class="stats-grid">
+      <div class="stat-card stat-card--pacientes">
+        <div class="stat-card__icon"><span class="bx bx-group"></span></div>
+        <div class="stat-card__body">
+          <span class="stat-card__label">Mis Pacientes</span>
+          <span class="stat-card__value">{{ totalPacientes() }}</span>
+        </div>
+        <div class="stat-card__footer">
+          <span class="bx bx-user-check"></span><span>Asignados</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card--pendientes">
+        <div class="stat-card__icon"><span class="bx bx-time-five"></span></div>
+        <div class="stat-card__body">
+          <span class="stat-card__label">Citas Pendientes</span>
+          <span class="stat-card__value">{{ citasPendientes() }}</span>
+        </div>
+        <div class="stat-card__footer">
+          <span class="bx bx-bell"></span><span>Requieren atención</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card--hoy">
+        <div class="stat-card__icon"><span class="bx bx-calendar-check"></span></div>
+        <div class="stat-card__body">
+          <span class="stat-card__label">Citas de Hoy</span>
+          <span class="stat-card__value">{{ citasHoy() }}</span>
+        </div>
+        <div class="stat-card__footer">
+          <span class="bx bx-sun"></span><span>Agendadas hoy</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card--total">
+        <div class="stat-card__icon"><span class="bx bx-calendar"></span></div>
+        <div class="stat-card__body">
+          <span class="stat-card__label">Total Citas</span>
+          <span class="stat-card__value">{{ totalCitas() }}</span>
+        </div>
+        <div class="stat-card__footer">
+          <span class="bx bx-history"></span><span>Historial</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Main Grid ──────────────────────────────────────────── -->
+  <div class="main-grid">
+
+    <!-- Próximas Citas -->
+    <div class="content-card citas-card">
+      <div class="content-card__header">
+        <h2 class="card-title">
+          <span class="bx bx-calendar-event"></span>
+          Próximas Citas
+        </h2>
+        <a routerLink="/main/citas" class="link-more">Ver todas <span class="bx bx-chevron-right"></span></a>
+      </div>
+      <div class="content-card__body">
+        @if (proximasCitas().length === 0) {
+          <div class="empty-state">
+            <span class="bx bx-calendar-x"></span>
+            <p>No hay próximas citas programadas</p>
+            <a routerLink="/main/citas/nueva" class="btn-sm">Agendar cita</a>
+          </div>
+        } @else {
+          <ul class="citas-list">
+            @for (cita of proximasCitas(); track cita.id) {
+              <li class="cita-item">
+                <div class="cita-date-block">
+                  <span class="cita-dia">{{ cita.fechaHoraInicio | date:'d' }}</span>
+                  <span class="cita-mes">{{ cita.fechaHoraInicio | date:'MMM' : '' : 'es' }}</span>
+                </div>
+                <div class="cita-info">
+                  <span class="cita-paciente">{{ cita.nombrePaciente }}</span>
+                  <span class="cita-motivo">{{ getMotivoLabel(cita.motivoCita) }}</span>
+                  <span class="cita-hora">
+                    <span class="bx bx-time"></span>
+                    {{ cita.fechaHoraInicio | date:'HH:mm' }} — {{ cita.fechaHoraFin | date:'HH:mm' }}
+                  </span>
+                </div>
+                <span class="estado-badge" [ngClass]="getEstadoClass(cita.estado)">
+                  {{ getEstadoLabel(cita.estado) }}
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+
+    <!-- Panel derecho: Acciones + Distribución Citas -->
+    <div class="right-col">
+
+      <!-- Acciones Rápidas -->
+      <div class="content-card">
+        <div class="content-card__header">
+          <h2 class="card-title"><span class="bx bx-zap"></span> Acciones Rápidas</h2>
+        </div>
+        <div class="content-card__body">
+          <div class="quick-actions">
+            <a routerLink="/main/pacientes/nuevo" class="qa-btn">
+              <span class="bx bx-user-plus qa-icon"></span>
+              <div class="qa-text"><span class="qa-title">Nuevo Paciente</span><span class="qa-desc">Registrar un nuevo paciente</span></div>
+              <span class="bx bx-chevron-right qa-arrow"></span>
+            </a>
+            <a routerLink="/main/citas/nueva" class="qa-btn">
+              <span class="bx bx-calendar-plus qa-icon"></span>
+              <div class="qa-text"><span class="qa-title">Nueva Cita</span><span class="qa-desc">Agendar cita con paciente</span></div>
+              <span class="bx bx-chevron-right qa-arrow"></span>
+            </a>
+            <a routerLink="/main/pacientes" class="qa-btn">
+              <span class="bx bx-food-menu qa-icon"></span>
+              <div class="qa-text"><span class="qa-title">Planes Alimenticios</span><span class="qa-desc">Gestionar planes</span></div>
+              <span class="bx bx-chevron-right qa-arrow"></span>
+            </a>
+            <a routerLink="/main/sugerencias" class="qa-btn">
+              <span class="bx bx-bulb qa-icon"></span>
+              <div class="qa-text"><span class="qa-title">Sugerencias</span><span class="qa-desc">Crear sugerencias de plantillas</span></div>
+              <span class="bx bx-chevron-right qa-arrow"></span>
+            </a>
+            <a routerLink="/main/chat" class="qa-btn">
+              <span class="bx bx-chat qa-icon"></span>
+              <div class="qa-text"><span class="qa-title">Chat</span><span class="qa-desc">Mensajería con pacientes</span></div>
+              <span class="bx bx-chevron-right qa-arrow"></span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Distribución de estados de citas -->
+      <div class="content-card mini-chart-card">
+        <div class="content-card__header">
+          <h2 class="card-title"><span class="bx bx-pie-chart-alt"></span> Estado de Citas</h2>
+        </div>
+        <div class="content-card__body">
+          @let estados = [
+            { label: 'Programadas', count: citasProgramadas(), cls: 'estado--programada', icon: 'bx-calendar-check' },
+            { label: 'Pendientes', count: citasPendientes(), cls: 'estado--solicitada', icon: 'bx-time-five' },
+            { label: 'Total', count: totalCitas(), cls: 'estado--total', icon: 'bx-list-ul' }
+          ];
+          <div class="estado-summary">
+            @for (e of estados; track e.label) {
+              <div class="estado-item">
+                <span class="bx {{ e.icon }} estado-item__icon" [ngClass]="e.cls + '-icon'"></span>
+                <div class="estado-item__text">
+                  <span class="estado-item__label">{{ e.label }}</span>
+                  <span class="estado-item__count">{{ e.count }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</section>

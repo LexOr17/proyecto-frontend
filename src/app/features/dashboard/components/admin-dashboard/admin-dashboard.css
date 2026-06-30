@@ -1,0 +1,523 @@
+/* ============================================================
+   ADMIN DASHBOARD — Tema Formal / Profesional (Fondo Blanco)
+   ============================================================ */
+
+/* ── Variables ─────────────────────────────────────────────── */
+:host {
+  --c-primary: #4f46e5;
+  --c-primary-light: #818cf8;
+  --c-accent: #6366f1;
+  --c-surface: #ffffff;
+  --c-border: #e2e8f0;
+  --c-text: #1e293b;
+  --c-text-muted: #64748b;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --transition: 0.25s ease;
+}
+
+/* ── Layout base ───────────────────────────────────────────── */
+.admin-dash {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0.5rem 0;
+  animation: fadeInUp 0.4s ease both;
+  color: var(--c-text);
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.dash-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--c-text);
+  margin: 0;
+}
+
+.dash-subtitle {
+  font-size: 0.85rem;
+  color: var(--c-text-muted);
+  margin: 0.25rem 0 0;
+  text-transform: capitalize;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--c-primary);
+  color: #fff;
+  padding: 0.6rem 1.25rem;
+  border-radius: 50px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: var(--transition);
+  box-shadow: 0 4px 6px rgba(79, 70, 229, 0.25);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  background: var(--c-accent);
+  box-shadow: 0 6px 12px rgba(79, 70, 229, 0.35);
+}
+
+/* ── Stat Grid ──────────────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+}
+
+.stat-card {
+  background: var(--c-surface);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  border: 1px solid var(--c-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition);
+  animation: slideIn 0.4s ease both;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--c-primary-light);
+  box-shadow: var(--shadow-hover);
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 4px;
+  border-radius: 4px 0 0 4px;
+}
+
+.stat-card--users::before  { background: #4f46e5; }
+.stat-card--nutri::before  { background: #10b981; }
+.stat-card--pacientes::before { background: #f59e0b; }
+.stat-card--citas::before  { background: #ec4899; }
+.stat-card--activos::before { background: #06b6d4; }
+
+.stat-card__icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.stat-card--users .stat-card__icon  { color: #4f46e5; }
+.stat-card--nutri .stat-card__icon  { color: #10b981; }
+.stat-card--pacientes .stat-card__icon { color: #f59e0b; }
+.stat-card--citas .stat-card__icon  { color: #ec4899; }
+.stat-card--activos .stat-card__icon { color: #06b6d4; }
+
+.stat-card__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-card__value {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--c-text);
+  line-height: 1;
+}
+
+.stat-card__footer {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--c-text-muted);
+}
+
+/* ── Skeleton ──────────────────────────────────────────────── */
+.skeleton-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
+.skeleton-card {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius);
+  height: 140px;
+  border: 1px solid var(--c-border);
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ── Charts Row ──────────────────────────────────────────────── */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.chart-card {
+  background: var(--c-surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--c-border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  overflow: hidden;
+}
+
+.chart-card__header {
+  padding: 1.25rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--c-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+}
+
+.chart-card__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--c-text);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.chart-card__title .bx {
+  color: var(--c-primary);
+  font-size: 1.1rem;
+}
+
+.chart-card__body {
+  padding: 1.25rem 1.5rem;
+}
+
+/* ── Donut Chart ─────────────────────────────────────────────── */
+.donut-chart {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.donut-svg {
+  width: 160px;
+  height: 160px;
+  transform: rotate(-90deg);
+}
+
+.donut-segment {
+  fill: none;
+  stroke-width: 18;
+  stroke-linecap: butt;
+  transition: stroke-dasharray 0.6s ease;
+}
+
+.donut-center-num {
+  fill: var(--c-text);
+  font-size: 18px;
+  font-weight: 800;
+  text-anchor: middle;
+  transform: rotate(90deg);
+  transform-origin: 60px 60px;
+}
+
+.donut-center-label {
+  fill: var(--c-text-muted);
+  font-size: 8px;
+  text-anchor: middle;
+  transform: rotate(90deg);
+  transform-origin: 60px 60px;
+}
+
+.chart-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--c-text);
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-label { flex: 1; color: var(--c-text-muted); }
+.legend-value { font-weight: 600; color: var(--c-text); }
+
+/* ── Bar Chart Horizontal ────────────────────────────────────── */
+.bar-chart-h {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.bar-h-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 36px;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bar-h-label { font-size: 0.85rem; color: var(--c-text-muted); text-align: right; }
+
+.bar-h-track {
+  background: #f1f5f9;
+  border-radius: 99px;
+  height: 12px;
+  overflow: hidden;
+}
+
+.bar-h-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.8s ease;
+}
+
+.bar-h-val { font-size: 0.85rem; font-weight: 700; color: var(--c-text); }
+
+/* ── Bar Chart Vertical ───────────────────────────────────────── */
+.bar-chart-v {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  height: 180px;
+  padding-bottom: 0.5rem;
+}
+
+.bar-v-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  height: 100%;
+}
+
+.bar-v-val { font-size: 0.75rem; font-weight: 700; color: var(--c-text); }
+
+.bar-v-track {
+  flex: 1;
+  width: 100%;
+  background: #f1f5f9;
+  border-radius: 6px 6px 0 0;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.bar-v-fill {
+  width: 100%;
+  background: var(--c-primary);
+  border-radius: 6px 6px 0 0;
+  transition: height 0.8s ease;
+  min-height: 4px;
+}
+
+.bar-v-label { font-size: 0.75rem; color: var(--c-text-muted); text-align: center; }
+
+/* ── Quick Actions ──────────────────────────────────────────── */
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.qa-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  background: #f8fafc;
+  border: 1px solid var(--c-border);
+  text-decoration: none;
+  color: var(--c-text);
+  transition: var(--transition);
+}
+
+.qa-btn:hover {
+  background: #fff;
+  border-color: var(--c-primary-light);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transform: translateX(4px);
+}
+
+.qa-icon {
+  font-size: 1.4rem;
+  color: var(--c-primary);
+  flex-shrink: 0;
+}
+
+.qa-text { flex: 1; display: flex; flex-direction: column; gap: 0.1rem; }
+.qa-title { font-size: 0.875rem; font-weight: 600; color: var(--c-text); }
+.qa-desc { font-size: 0.75rem; color: var(--c-text-muted); }
+.qa-arrow { color: var(--c-text-muted); font-size: 1.2rem; transition: var(--transition); }
+.qa-btn:hover .qa-arrow { color: var(--c-primary); transform: translateX(3px); }
+
+/* ── Table Card ─────────────────────────────────────────────── */
+.table-card {
+  background: var(--c-surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--c-border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  overflow: hidden;
+}
+
+.table-card__header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--c-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+}
+
+.link-ver-todos {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--c-primary);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: var(--transition);
+}
+
+.link-ver-todos:hover { color: var(--c-accent); text-decoration: underline; }
+
+.table-wrapper { overflow-x: auto; }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.data-table th {
+  padding: 0.75rem 1.5rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-text-muted);
+  background: #f8fafc;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.table-row td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--c-border); }
+
+.table-row:hover { background: #f8fafc; }
+
+.user-cell { display: flex; align-items: center; gap: 0.75rem; }
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e0e7ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--c-primary);
+  flex-shrink: 0;
+}
+
+.user-name { font-weight: 600; color: var(--c-text); }
+.user-email { color: var(--c-text-muted); font-size: 0.82rem; }
+
+/* ── Badges ─────────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.7rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-admin    { background: #e0e7ff; color: #4338ca; }
+.badge-nutri    { background: #d1fae5; color: #047857; }
+.badge-paciente { background: #fef3c7; color: #b45309; }
+
+.status-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--c-text);
+}
+
+.status-dot::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-dot--active::before  { background: #10b981; }
+.status-dot--inactive::before { background: #94a3b8; }
+
+/* ── Empty State ─────────────────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem;
+  color: var(--c-text-muted);
+  gap: 0.5rem;
+}
+
+.empty-state .bx { font-size: 2.5rem; color: #cbd5e1; }
+.empty-state p { font-size: 0.95rem; }
+
+/* ── Animation ─────────────────────────────────────────────── */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .stats-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .charts-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .dash-header { flex-direction: column; align-items: flex-start; }
+}
