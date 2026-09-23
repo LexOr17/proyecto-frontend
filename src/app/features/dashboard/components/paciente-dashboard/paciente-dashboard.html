@@ -69,11 +69,11 @@
         }
       </div>
 
-      <!-- Metas -->
+      <!-- Objetivos -->
       <div class="stat-card stat-card--metas">
         <div class="stat-card__icon"><span class="bx bx-target-lock"></span></div>
         <div class="stat-card__body">
-          <span class="stat-card__label">Metas Cumplidas</span>
+          <span class="stat-card__label">Objetivos Cumplidos</span>
           <span class="stat-card__value">{{ metasCumplidas() }}<small>/{{ metaResumen()?.total ?? 0 }}</small></span>
         </div>
         <div class="stat-card__footer">
@@ -97,7 +97,7 @@
     </div>
   }
 
-  <!-- ── Peso + Metas ──────────────────────────────────────── -->
+  <!-- ── Peso + Objetivos ──────────────────────────────────────── -->
   <div class="main-grid">
 
     <!-- Progreso de Peso -->
@@ -159,17 +159,17 @@
       </div>
     </div>
 
-    <!-- Mis Metas -->
+    <!-- Mis Objetivos -->
     <div class="content-card">
       <div class="content-card__header">
-        <h2 class="card-title"><span class="bx bx-target-lock"></span> Mis Metas Activas</h2>
-        <a routerLink="/main/mis-metas" class="link-more">Ver todas <span class="bx bx-chevron-right"></span></a>
+        <h2 class="card-title"><span class="bx bx-target-lock"></span> Mis Objetivos Activos</h2>
+        <a routerLink="/main/mis-metas" class="link-more">Ver todos <span class="bx bx-chevron-right"></span></a>
       </div>
       <div class="content-card__body">
         @if (metasActivas().length === 0) {
           <div class="empty-state">
             <span class="bx bx-flag"></span>
-            <p>No tienes metas activas</p>
+            <p>No tienes objetivos activos</p>
           </div>
         } @else {
           <div class="metas-list">

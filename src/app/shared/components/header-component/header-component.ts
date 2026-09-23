@@ -4,10 +4,11 @@ import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { LayoutService } from '../../service/layout-service';
 import { AuthService } from '../../../core/services/auth-service';
+import { NotificationBell } from '../notification-bell/notification-bell';
 
 @Component({
   selector: 'app-header-component',
-  imports: [],
+  imports: [NotificationBell],
   templateUrl: './header-component.html',
   styleUrl: './header-component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -463,3 +463,36 @@
 .btn-outline:hover {
   background: #f3f4f6;
 }
+
+/* Preset de duraciones */
+.preset-duraciones-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.chip-duracion {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chip-duracion:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.chip-duracion.activo {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+}
+

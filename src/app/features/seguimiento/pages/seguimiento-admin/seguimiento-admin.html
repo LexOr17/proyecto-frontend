@@ -1,0 +1,89 @@
+<div class="main-content">
+  <div class="header-banner">
+    <h2>Auditoría de Seguimientos</h2>
+    <p class="subtitle">Visión global de todas las evaluaciones registradas por los nutriólogos en el sistema.</p>
+  </div>
+
+  @if (todosResource.isLoading()) {
+    <div class="loading-state">
+      <p>Cargando lista de seguimientos...</p>
+    </div>
+  } @else if (todosResource.error()) {
+    <div class="error-state">
+      <p>Ocurrió un error al consultar el registro de seguimientos.</p>
+    </div>
+  } @else if (todosResource.value(); as page) {
+    @if (page.content.length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <h3>No hay seguimientos registrados en el sistema</h3>
+      </div>
+    } @else {
+      <div class="seguimientos-list">
+        @for (item of page.content; track item.id) {
+          <div class="card-seguimiento" [class.expanded]="seleccionado()?.id === item.id">
+            <div class="card-header">
+              <div class="patient-info">
+                <span class="patient-name">👤 Paciente: {{ item.pacienteNombre }}</span>
+                <span class="nutri-name">🩺 Nutriólogo: {{ item.nutriologoNombre }}</span>
+                <span class="dates">📅 {{ item.fechaInicio | date:'dd/MM/yyyy' }} — {{ item.fechaFin | date:'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="actions">
+                <button class="btn-icon" (click)="verDetalle(item)">
+                  {{ seleccionado()?.id === item.id ? 'Ocultar' : 'Ver Detalle' }}
+                </button>
+                <button class="btn-icon delete" (click)="eliminar(item)" title="Eliminar registro">🗑️ Eliminar</button>
+              </div>
+            </div>
+
+            <!-- KPIs -->
+            <div class="kpis-grid">
+              <div class="kpi-box">
+                <span class="kpi-label">Peso</span>
+                <span class="kpi-val">{{ item.pesoInicio ? item.pesoInicio + ' kg' : 'N/D' }} → {{ item.pesoFin ? item.pesoFin + ' kg' : 'N/D' }}</span>
+              </div>
+
+              <div class="kpi-box">
+                <span class="kpi-label">Cumplimiento Alimentos</span>
+                <span class="kpi-val highlight">{{ item.pctCumplimientoAlimentos | number:'1.0-1' }}%</span>
+              </div>
+
+              <div class="kpi-box">
+                <span class="kpi-label">Actividad Física</span>
+                <span class="kpi-val highlight-green">{{ item.pctActividad | number:'1.0-1' }}%</span>
+              </div>
+
+              <div class="kpi-box">
+                <span class="kpi-label">Objetivos & Citas</span>
+                <span class="kpi-val">🎯 {{ item.metasCumplidas }}/{{ item.totalMetas }} | 📅 {{ item.citasCompletadas }}/{{ item.totalCitas }}</span>
+              </div>
+            </div>
+
+            <!-- Detalle Plegable -->
+            @if (seleccionado()?.id === item.id) {
+              <div class="detalle-panel">
+                <hr class="divider" />
+                <div class="text-section">
+                  <h4>📝 Observaciones</h4>
+                  <p>{{ item.observaciones || 'Sin observaciones.' }}</p>
+                </div>
+                @if (item.conclusiones) {
+                  <div class="text-section">
+                    <h4>📋 Conclusiones</h4>
+                    <p>{{ item.conclusiones }}</p>
+                  </div>
+                }
+                @if (item.recomendaciones) {
+                  <div class="text-section">
+                    <h4>💡 Recomendaciones</h4>
+                    <p>{{ item.recomendaciones }}</p>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

@@ -31,6 +31,7 @@ export class ListaPlantillas {
 
   protected readonly tiposComida = TIPOS_COMIDA;
   protected searchTerm = signal('');
+  protected selectedTipo = signal('');
   protected isDeleting = signal<number | null>(null);
   protected currentPage = signal(0);
   protected pageSize = signal(6);
@@ -38,14 +39,15 @@ export class ListaPlantillas {
   protected plantillasResource = rxResource({
     params: () => ({
       keyword: this.searchTerm(),
+      tipo: this.selectedTipo(),
       page: this.currentPage(),
       size: this.pageSize(),
     }),
     stream: ({ params }) => {
-      if (params.keyword.trim()) {
+      if (params.keyword.trim() || params.tipo) {
         return this.plantillaService.buscarPlantillas(
           params.keyword,
-          '',
+          params.tipo,
           params.page,
           params.size
         );
@@ -66,6 +68,16 @@ export class ListaPlantillas {
   protected onSearchChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
+    this.currentPage.set(0);
+  }
+
+  protected limpiarBusqueda(): void {
+    this.searchTerm.set('');
+    this.currentPage.set(0);
+  }
+
+  protected selectTipo(tipo: string): void {
+    this.selectedTipo.set(tipo);
     this.currentPage.set(0);
   }
 

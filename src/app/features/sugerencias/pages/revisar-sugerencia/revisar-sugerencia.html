@@ -36,7 +36,7 @@
         @for (d of plantillaOriginal()!.detalles; track d.alimentoId) {
         <li class="cmp-food-item" role="listitem">
           <span class="cmp-food-name">{{ d.nombreAlimento }}</span>
-          <span class="cmp-food-qty">× {{ d.cantidad }} {{ d.unidadPorcion }}</span>
+          <span class="cmp-food-qty">{{ (d.cantidad * (d.porcionBase ?? 1)) | number:'1.0-2' }} {{ d.unidadPorcion }}</span>
         </li>
         }
       </ul>
@@ -60,7 +60,7 @@
         @for (d of sugerencia()!.detalles; track d.alimentoId) {
         <li class="cmp-food-item" role="listitem">
           <span class="cmp-food-name">{{ d.nombreAlimento }}</span>
-          <span class="cmp-food-qty">× {{ d.cantidad }} {{ d.unidadPorcion }}</span>
+          <span class="cmp-food-qty">{{ (d.cantidad * (d.porcionBase ?? 1)) | number:'1.0-2' }} {{ d.unidadPorcion }}</span>
         </li>
         }
       </ul>
@@ -136,7 +136,7 @@
         <li class="alimento-item" role="listitem">
           <span class="alimento-nombre">{{ detalle.nombreAlimento }}</span>
           <span class="alimento-cantidad">
-            × {{ detalle.cantidad }} {{ detalle.unidadPorcion }}
+            {{ (detalle.cantidad * (detalle.porcionBase ?? 1)) | number:'1.0-2' }} {{ detalle.unidadPorcion }} ({{ detalle.cantidad }} porc.)
           </span>
         </li>
         }

@@ -1,0 +1,74 @@
+<div class="modal-backdrop" (click)="cerrar()">
+  <div class="modal-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    
+    <div class="modal-header">
+      <div class="modal-title-wrapper">
+        <div class="icon-badge">
+          <span class="bx bx-calendar-plus"></span>
+        </div>
+        <div>
+          <h3 class="modal-title">Solicitar Cita</h3>
+          <p class="modal-subtitle">Para el día {{ fecha }}</p>
+        </div>
+      </div>
+      <button type="button" class="btn-close" (click)="cerrar()" aria-label="Cerrar">
+        <span class="bx bx-x"></span>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal-body">
+      
+      <div class="form-row">
+        <!-- Hora Preferida -->
+        <div class="form-group">
+          <label class="form-label" for="horaInput">Hora sugerida</label>
+          <input
+            id="horaInput"
+            type="time"
+            formControlName="hora"
+            class="form-control"
+          />
+        </div>
+
+        <!-- Motivo de la Cita -->
+        <div class="form-group">
+          <label class="form-label" for="motivoSelect">Motivo</label>
+          <select id="motivoSelect" formControlName="motivoCita" class="form-control">
+            @for (m of motivosCita; track m.value) {
+              <option [value]="m.value">{{ m.label }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- Detalle Adicional -->
+      <div class="form-group">
+        <label class="form-label" for="detalleAdicional">Comentarios o dudas (Opcional)</label>
+        <textarea
+          id="detalleAdicional"
+          rows="3"
+          formControlName="detalleAdicional"
+          class="form-control"
+          placeholder="Explica si tienes dudas sobre tu plan, nuevos síntomas o disponibilidad..."
+        ></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrar()" [disabled]="isSubmitting()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <span class="spinner-sm"></span>
+            <span>Enviando...</span>
+          } @else {
+            <span class="bx bx-send"></span>
+            <span>Enviar Solicitud</span>
+          }
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>

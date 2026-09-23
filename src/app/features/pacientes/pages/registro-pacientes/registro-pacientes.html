@@ -36,7 +36,7 @@
                     <input type="text" id="nombre" formControlName="nombre" autocomplete="given-name"
                         [class.error]="isInvalid('nombre')">
                     @if (isInvalid('nombre')) {
-                    <small class="error-msg" role="alert">El nombre es requerido (mín. 2 letras)</small>
+                    <small class="error-msg" role="alert">{{ getErrorMessage('nombre', 'nombre') }}</small>
                     }
                 </div>
 
@@ -45,7 +45,7 @@
                     <input type="text" id="apellidoPaterno" formControlName="apellidoPaterno" autocomplete="family-name"
                         [class.error]="isInvalid('apellidoPaterno')">
                     @if (isInvalid('apellidoPaterno')) {
-                    <small class="error-msg" role="alert">El apellido paterno es requerido</small>
+                    <small class="error-msg" role="alert">{{ getErrorMessage('apellidoPaterno', 'apellido paterno') }}</small>
                     }
                 </div>
 
@@ -53,6 +53,9 @@
                     <label for="apellidoMaterno">Apellido Materno</label>
                     <input type="text" id="apellidoMaterno" formControlName="apellidoMaterno"
                         autocomplete="additional-name" [class.error]="isInvalid('apellidoMaterno')">
+                    @if (isInvalid('apellidoMaterno')) {
+                    <small class="error-msg" role="alert">{{ getErrorMessage('apellidoMaterno', 'apellido materno') }}</small>
+                    }
                 </div>
 
                 <div class="form-group">
@@ -69,7 +72,7 @@
                     <input type="date" id="fechaNacimiento" formControlName="fechaNacimiento"
                         [class.error]="isInvalid('fechaNacimiento')">
                     @if (isInvalid('fechaNacimiento')) {
-                    <small class="error-msg" role="alert">Fecha requerida</small>
+                    <small class="error-msg" role="alert">{{ getErrorMessage('fechaNacimiento', 'fecha de nacimiento') }}</small>
                     }
                 </div>
 

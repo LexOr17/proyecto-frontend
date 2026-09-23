@@ -2,237 +2,240 @@
   <header>
     <div class="header-title">
       <h1><i class="bx bx-trending-up" aria-hidden="true"></i> Mi Progreso Corporal</h1>
-      <p class="header-subtitle">Lleva el control de tu evolución física y visualiza tu historial clínico de mediciones</p>
+      <p class="header-subtitle">Lleva el control de tu evolución física y visualiza tu historial de mediciones
+      </p>
     </div>
-    <button type="button" class="btn-pdf" (click)="descargarPDFProgreso()">
-      <i class="bx bxs-file-pdf" aria-hidden="true"></i> Exportar PDF
-    </button>
   </header>
 
   <div class="progress-container">
     @if (progresoResource.isLoading()) {
-      <div class="loading-state">
-        <p>Cargando tu progreso corporal...</p>
-      </div>
+    <div class="loading-state">
+      <p>Cargando tu progreso corporal...</p>
+    </div>
     } @else {
-      
-      @if (metrics(); as stats) {
-        <div id="reporte-personal-pdf" class="pdf-container">
-          <!-- Cabecera de Impresión Profesional (Solo visible en PDF) -->
-          <div class="print-only-header progreso-header" aria-hidden="true">
-            <div class="print-header-top">
-              <h2 class="print-brand"><i class="bx bxl-apple"></i> BIENESTAR</h2>
-              <span class="print-title">REPORTE CLÍNICO DE EVOLUCIÓN ANTROPOMÉTRICA</span>
-            </div>
-            <div class="print-header-meta">
-              <div class="print-meta-col">
-                <p><strong>Paciente:</strong> {{ authService.userFullName() }}</p>
-                <p><strong>ID Paciente:</strong> {{ pacienteId() }}</p>
-              </div>
-              <div class="print-meta-col text-right">
-                <p><strong>Fecha de Emisión:</strong> {{ fechaActual | date: 'dd/MM/yyyy' }}</p>
-                <p><strong>Total Mediciones:</strong> {{ stats.totalRegistros }} registros</p>
-              </div>
-            </div>
+
+    @if (metrics(); as stats) {
+    <div id="reporte-personal-pdf" class="pdf-container">
+      <!-- Cabecera de Impresión Profesional (Solo visible en PDF) -->
+      <div class="print-only-header progreso-header" aria-hidden="true">
+        <div class="print-header-top">
+          <h2 class="print-brand"><i class="bx bxl-apple"></i> BIENESTAR</h2>
+          <span class="print-title">REPORTE DE EVOLUCIÓN DEL PACIENTE</span>
+        </div>
+        <div class="print-header-meta">
+          <div class="print-meta-col">
+            <p><strong>Paciente:</strong> {{ authService.userFullName() }}</p>
+            <p><strong>ID Paciente:</strong> {{ pacienteId() }}</p>
           </div>
-
-          <!-- Introducción de Evolución de Progreso (Solo visible en PDF) -->
-          <div class="print-only-desc" aria-hidden="true">
-            <p>
-              Este informe clínico oficial detalla la evolución antropométrica personal e historial de medidas físicas de
-              <strong>{{ authService.userFullName() }}</strong> (ID: {{ pacienteId() }}). Las mediciones y tendencias
-              graficadas corresponden a las evaluaciones presenciales de seguimiento metabólico y composición corporal
-              realizadas por el equipo de profesionales en nutrición clínica.
-            </p>
+          <div class="print-meta-col text-right">
+            <p><strong>Fecha de Emisión:</strong> {{ fechaActual | date: 'dd/MM/yyyy' }}</p>
+            <p><strong>Total Mediciones:</strong> {{ stats.totalRegistros }} registros</p>
           </div>
+        </div>
+      </div>
 
-          <!-- ─── CARDS DE HITOS Y ESTADÍSTICAS RÁPIDAS ────────────────────── -->
-          <section class="banner-metrics" aria-label="Resumen de mis hitos corporales">
-            <div class="stat-box">
-              <div class="stat-icon-wrapper peso-ini">
-                <i class="bx bx-left-arrow-alt" aria-hidden="true"></i>
-              </div>
-              <div class="stat-info">
-                <span class="stat-label">Peso Inicial</span>
-                <span class="stat-value">{{ stats.pesoInicial | number: '1.1-1' }} <small>kg</small></span>
-              </div>
+      <!-- Introducción de Evolución de Progreso (Solo visible en PDF) -->
+      <div class="print-only-desc" aria-hidden="true">
+        <p>
+          Este informe oficial detalla la evolución personal e historial de medidas físicas de
+          <strong>{{ authService.userFullName() }}</strong> (ID: {{ pacienteId() }}). Las mediciones y tendencias
+          graficadas corresponden a las evaluaciones presenciales de seguimiento y composición corporal
+          realizadas por el equipo de profesionales en nutrición.
+        </p>
+      </div>
+
+      <!-- ─── CARDS DE HITOS Y ESTADÍSTICAS RÁPIDAS ────────────────────── -->
+      <section class="banner-metrics" aria-label="Resumen de mis hitos corporales">
+        <div class="stat-box">
+          <div class="stat-icon-wrapper peso-ini">
+            <i class="bx bx-left-arrow-alt" aria-hidden="true"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Peso Inicial</span>
+            <span class="stat-value">{{ stats.pesoInicial | number: '1.1-1' }} <small>kg</small></span>
+          </div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-icon-wrapper peso-act">
+            <i class="bx bx-right-arrow-alt" aria-hidden="true"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Peso Actual</span>
+            <span class="stat-value">{{ stats.pesoActual | number: '1.1-1' }} <small>kg</small></span>
+          </div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-icon-wrapper" [class.loss]="stats.pesoDiferencia < 0"
+            [class.gain]="stats.pesoDiferencia >= 0">
+            <i class="bx" [class.bx-chevrons-down]="stats.pesoDiferencia < 0"
+              [class.bx-chevrons-up]="stats.pesoDiferencia >= 0" aria-hidden="true"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Diferencia de Peso</span>
+            <span class="stat-value" [class.loss-txt]="stats.pesoDiferencia < 0"
+              [class.gain-txt]="stats.pesoDiferencia > 0">
+              {{ stats.pesoDiferencia > 0 ? '+' : '' }}{{ stats.pesoDiferencia | number: '1.1-1' }} <small>kg</small>
+            </span>
+          </div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-icon-wrapper grasa-act">
+            <i class="bx bx-body" aria-hidden="true"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Grasa Corporal Actual</span>
+            <span class="stat-value">{{ stats.grasaActual | number: '1.1-1' }} <small>%</small></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── GRÁFICOS DE PROGRESO (CHART.JS) ──────────────────────────────── -->
+      <section class="charts-section" aria-label="Evolución visual de medidas">
+        <div class="charts-grid">
+          <!-- Gráfico de Peso -->
+          <article class="chart-card">
+            <div class="chart-header">
+              <h3>Evolución de Peso</h3>
+              <span class="badge">kg</span>
             </div>
-
-            <div class="stat-box">
-              <div class="stat-icon-wrapper peso-act">
-                <i class="bx bx-right-arrow-alt" aria-hidden="true"></i>
-              </div>
-              <div class="stat-info">
-                <span class="stat-label">Peso Actual</span>
-                <span class="stat-value">{{ stats.pesoActual | number: '1.1-1' }} <small>kg</small></span>
-              </div>
+            <p class="chart-desc-text" aria-hidden="true">Gráfico de control de masa corporal. Muestra la tendencia de
+              peso total para validar que se mantenga en los límites terapéuticos y metas personales fijadas.</p>
+            <div class="chart-canvas-container">
+              <canvas id="canvas-peso"></canvas>
             </div>
+          </article>
 
-            <div class="stat-box">
-              <div class="stat-icon-wrapper" [class.loss]="stats.pesoDiferencia < 0" [class.gain]="stats.pesoDiferencia >= 0">
-                <i class="bx" [class.bx-chevrons-down]="stats.pesoDiferencia < 0" [class.bx-chevrons-up]="stats.pesoDiferencia >= 0" aria-hidden="true"></i>
-              </div>
-              <div class="stat-info">
-                <span class="stat-label">Diferencia de Peso</span>
-                <span class="stat-value" [class.loss-txt]="stats.pesoDiferencia < 0" [class.gain-txt]="stats.pesoDiferencia > 0">
-                  {{ stats.pesoDiferencia > 0 ? '+' : '' }}{{ stats.pesoDiferencia | number: '1.1-1' }} <small>kg</small>
-                </span>
-              </div>
+          <!-- Gráfico de Porcentaje de Grasa -->
+          <article class="chart-card">
+            <div class="chart-header">
+              <h3>Porcentaje de Grasa</h3>
+              <span class="badge">% Grasa</span>
             </div>
-
-            <div class="stat-box">
-              <div class="stat-icon-wrapper grasa-act">
-                <i class="bx bx-body" aria-hidden="true"></i>
-              </div>
-              <div class="stat-info">
-                <span class="stat-label">Grasa Corporal Actual</span>
-                <span class="stat-value">{{ stats.grasaActual | number: '1.1-1' }} <small>%</small></span>
-              </div>
+            <p class="chart-desc-text" aria-hidden="true">Trazabilidad del compartimento graso corporal. Ayuda a
+              confirmar un cambio de composición corporal saludable y la retención de masa muscular magra.</p>
+            <div class="chart-canvas-container">
+              <canvas id="canvas-grasa"></canvas>
             </div>
-          </section>
+          </article>
+        </div>
+      </section>
 
-          <!-- ─── GRÁFICOS DE PROGRESO (CHART.JS) ──────────────────────────────── -->
-          <section class="charts-section" aria-label="Evolución visual de medidas">
-            <div class="charts-grid">
-              <!-- Gráfico de Peso -->
-              <article class="chart-card">
-                <div class="chart-header">
-                  <h3>Evolución de Peso</h3>
-                  <span class="badge">kg</span>
-                </div>
-                <p class="chart-desc-text" aria-hidden="true">Gráfico de control de masa corporal. Muestra la tendencia de peso total para validar que se mantenga en los límites terapéuticos y metas personales fijadas.</p>
-                <div class="chart-canvas-container">
-                  <canvas id="canvas-peso"></canvas>
-                </div>
-              </article>
+      <!-- ─── TABLA DE HISTORIAL DE MEDICIONES ───────────────────────────── -->
+      <section class="history-section" aria-label="Historial completo de mis mediciones">
+        <div class="history-header">
+          <h3><i class="bx bx-history" aria-hidden="true"></i> Historial Completo de Mediciones</h3>
+          <p>Registros cronológicos de todas tus visitas y medidas antropométricas</p>
+        </div>
 
-              <!-- Gráfico de Porcentaje de Grasa -->
-              <article class="chart-card">
-                <div class="chart-header">
-                  <h3>Porcentaje de Grasa</h3>
-                  <span class="badge">% Grasa</span>
-                </div>
-                <p class="chart-desc-text" aria-hidden="true">Trazabilidad del compartimento graso corporal. Ayuda a confirmar un cambio de composición corporal saludable y la retención de masa muscular magra.</p>
-                <div class="chart-canvas-container">
-                  <canvas id="canvas-grasa"></canvas>
-                </div>
-              </article>
-            </div>
-          </section>
-
-          <!-- ─── TABLA DE HISTORIAL DE MEDICIONES ───────────────────────────── -->
-          <section class="history-section" aria-label="Historial completo de mis mediciones">
-            <div class="history-header">
-              <h3><i class="bx bx-history" aria-hidden="true"></i> Historial Completo de Mediciones</h3>
-              <p>Registros cronológicos de todas tus visitas y medidas antropométricas</p>
-            </div>
-
-            <div class="table-wrapper">
-              <table class="clinical-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Fecha Registro</th>
-                    <th scope="col">Peso Corporal</th>
-                    <th scope="col">Grasa Corporal</th>
-                    <th scope="col">Índice Cintura/Talla (ICT)</th>
-                    <th scope="col">Índice Cintura/Cadera (ICC)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (item of historialMedidas(); track item.fecha) {
-                    <tr>
-                      <td><strong>{{ item.fecha | date: 'dd/MM/yyyy' }}</strong></td>
-                      <td class="weight-col">{{ item.peso | number: '1.1-1' }} kg</td>
-                      <td>
-                        @if (item.grasa !== null) {
-                          <span class="grasa-badge">{{ item.grasa | number: '1.1-1' }}%</span>
-                        } @else {
-                          <span class="text-muted">-</span>
-                        }
-                      </td>
-                      <td>
-                        @if (item.ict !== null) {
-                          <span class="ratio-cell">
-                            {{ item.ict | number: '1.2-2' }}
-                            <span
-                              class="indicator-dot"
-                              [class.good]="item.ict <= 0.5"
-                              [class.warning]="item.ict > 0.5 && item.ict <= 0.55"
-                              [class.danger]="item.ict > 0.55"
-                              [title]="item.ict <= 0.5 ? 'Excelente' : 'Riesgo Moderado'"
-                              aria-hidden="true"
-                            ></span>
-                          </span>
-                        } @else {
-                          <span class="text-muted">-</span>
-                        }
-                      </td>
-                      <td>
-                        @if (item.icc !== null) {
-                          <span class="ratio-cell">
-                            {{ item.icc | number: '1.2-2' }}
-                          </span>
-                        } @else {
-                          <span class="text-muted">-</span>
-                        }
-                      </td>
-                    </tr>
+        <div class="table-wrapper">
+          <table class="clinical-table">
+            <thead>
+              <tr>
+                <th scope="col">Fecha Registro</th>
+                <th scope="col">Peso Corporal</th>
+                <th scope="col">Grasa Corporal</th>
+                <th scope="col">Índice Cintura/Talla (ICT)</th>
+                <th scope="col">Índice Cintura/Cadera (ICC)</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of historialMedidas(); track item.fecha) {
+              <tr>
+                <td><strong>{{ item.fecha | date: 'dd/MM/yyyy' }}</strong></td>
+                <td class="weight-col">{{ item.peso | number: '1.1-1' }} kg</td>
+                <td>
+                  @if (item.grasa !== null) {
+                  <span class="grasa-badge">{{ item.grasa | number: '1.1-1' }}%</span>
+                  } @else {
+                  <span class="text-muted">-</span>
                   }
-                </tbody>
-              </table>
-            </div>
-          </section>
+                </td>
+                <td>
+                  @if (item.ict !== null) {
+                  <span class="ratio-cell">
+                    {{ item.ict | number: '1.2-2' }}
+                    <span class="indicator-dot" [class.good]="item.ict <= 0.5"
+                      [class.warning]="item.ict > 0.5 && item.ict <= 0.55" [class.danger]="item.ict > 0.55"
+                      [title]="item.ict <= 0.5 ? 'Excelente' : 'Riesgo Moderado'" aria-hidden="true"></span>
+                  </span>
+                  } @else {
+                  <span class="text-muted">-</span>
+                  }
+                </td>
+                <td>
+                  @if (item.icc !== null) {
+                  <span class="ratio-cell">
+                    {{ item.icc | number: '1.2-2' }}
+                  </span>
+                  } @else {
+                  <span class="text-muted">-</span>
+                  }
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-          <!-- Sección de Glosario e Interpretación Clínico (Solo visible en PDF) -->
-          <div class="print-glossary-section" aria-hidden="true">
-            <h4 class="glossary-title"><i class="bx bx-help-circle"></i> Guía de Interpretación de Indicadores de Salud</h4>
-            <div class="glossary-grid">
-              <div class="glossary-item">
-                <strong>Índice Cintura/Talla (ICT):</strong>
-                <p>Mide la acumulación de tejido adiposo visceral. Mantener un ICT menor o igual a 0.50 representa un riesgo cardiovascular mínimo y un estado saludable. Puntos superiores a 0.55 exigen intervención metabólica prioritaria.</p>
-              </div>
-              <div class="glossary-item">
-                <strong>Índice Cintura/Cadera (ICC):</strong>
-                <p>Indica la distribución morfológica de grasa. Un ICC saludable es menor a 0.80 en mujeres y 0.90 en hombres. Valores superiores aumentan el riesgo relativo de hipertensión y diabetes tipo 2.</p>
-              </div>
-            </div>
+      <!-- Sección de Glosario e Interpretación (Solo visible en PDF) -->
+      <div class="print-glossary-section" aria-hidden="true">
+        <h4 class="glossary-title"><i class="bx bx-help-circle"></i> Guía de Interpretación de Indicadores de Salud</h4>
+        <div class="glossary-grid">
+          <div class="glossary-item">
+            <strong>Índice Cintura/Talla (ICT):</strong>
+            <p>Mide la acumulación de tejido adiposo visceral. Mantener un ICT menor o igual a 0.50 representa un riesgo
+              cardiovascular mínimo y un estado saludable. Puntos superiores a 0.55 exigen intervención metabólica
+              prioritaria.</p>
           </div>
-
-          <!-- Área de Anotaciones Clínicas (Solo visible en PDF) -->
-          <div class="print-observations-section" aria-hidden="true">
-            <h4 class="observations-title"><i class="bx bx-edit"></i> Notas de Seguimiento y Próximos Pasos</h4>
-            <div class="observations-placeholder-lines">
-              <div class="obs-line"></div>
-              <div class="obs-line"></div>
-            </div>
-          </div>
-
-          <!-- Bloque de Firmas y Sello (Solo visible en PDF) -->
-          <div class="print-validation-section" aria-hidden="true">
-            <div class="signature-block">
-              <div class="signature-line"></div>
-              <p class="signature-title">Firma del Especialista</p>
-              <p class="signature-subtitle">Nutriólogo Clínico de Cabecera</p>
-            </div>
-            <div class="signature-block">
-              <div class="stamp-box">
-                <i class="bx bx-badge-check" style="font-size: 2.2rem; color: #6c5ce7;"></i>
-                <span>VALIDADO</span>
-              </div>
-              <p class="signature-title">Sello de Control</p>
-              <p class="signature-subtitle">Bienestar Nutricional Integral</p>
-            </div>
+          <div class="glossary-item">
+            <strong>Índice Cintura/Cadera (ICC):</strong>
+            <p>Indica la distribución morfológica de grasa. Un ICC saludable es menor a 0.80 en mujeres y 0.90 en
+              hombres. Valores superiores aumentan el riesgo relativo de hipertensión y diabetes tipo 2.</p>
           </div>
         </div>
-      } @else {
-        <!-- Empty State de Medidas -->
-        <div class="empty-state-card">
-          <i class="bx bx-notepad" aria-hidden="true"></i>
-          <h2>¡Hola! Aún no tienes mediciones cargadas</h2>
-          <p>Tu nutriólogo registrará tus medidas antropométricas en tus próximas citas para iniciar el seguimiento de tu progreso corporal.</p>
-          <p class="sub-msg">En esta sección podrás visualizar tus gráficos históricos de peso corporal, porcentaje de grasa, y métricas de salud.</p>
+      </div>
+
+      <!-- Área de Anotaciones de Seguimiento (Solo visible en PDF) -->
+      <div class="print-observations-section" aria-hidden="true">
+        <h4 class="observations-title"><i class="bx bx-edit"></i> Notas de Seguimiento y Próximos Pasos</h4>
+        <div class="observations-placeholder-lines">
+          <div class="obs-line"></div>
+          <div class="obs-line"></div>
         </div>
-      }
+      </div>
+
+      <!-- Bloque de Firmas y Sello (Solo visible en PDF) -->
+      <div class="print-validation-section" aria-hidden="true">
+        <div class="signature-block">
+          <div class="signature-line"></div>
+          <p class="signature-title">Firma del Especialista</p>
+          <p class="signature-subtitle">Nutriólogo a Cargo</p>
+        </div>
+        <div class="signature-block">
+          <div class="stamp-box">
+            <i class="bx bx-badge-check" style="font-size: 2.2rem; color: #6c5ce7;"></i>
+            <span>VALIDADO</span>
+          </div>
+          <p class="signature-title">Sello de Control</p>
+          <p class="signature-subtitle">Bienestar Nutricional Integral</p>
+        </div>
+      </div>
+    </div>
+    } @else {
+    <!-- Empty State de Medidas -->
+    <div class="empty-state-card">
+      <i class="bx bx-notepad" aria-hidden="true"></i>
+      <h2>¡Hola! Aún no tienes mediciones cargadas</h2>
+      <p>Tu nutriólogo registrará tus medidas antropométricas en tus próximas citas para iniciar el seguimiento de tu
+        progreso corporal.</p>
+      <p class="sub-msg">En esta sección podrás visualizar tus gráficos históricos de peso corporal, porcentaje de
+        grasa, y métricas de salud.</p>
+    </div>
+    }
 
     }
   </div>

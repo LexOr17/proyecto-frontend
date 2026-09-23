@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
   inject,
   signal,
 } from '@angular/core';
@@ -31,17 +30,27 @@ export class SugerenciasNutriologo {
   protected readonly estadosSugerencia = ESTADOS_SUGERENCIA;
 
   protected tabActivo = signal<TabActivo>('pendientes');
-  protected currentPage = signal(0);
-  protected pageSize = signal(10);
+  protected currentPageTodas = signal(0);
+  protected pageSizeTodas = signal(10);
+  protected currentPagePendientes = signal(0);
+  protected pageSizePendientes = signal(10);
+
+  protected currentPage = computed(() =>
+    this.tabActivo() === 'todas' ? this.currentPageTodas() : this.currentPagePendientes()
+  );
+
+  protected pageSize = computed(() =>
+    this.tabActivo() === 'todas' ? this.pageSizeTodas() : this.pageSizePendientes()
+  );
 
   protected todasResource = rxResource({
-    params: () => ({ page: this.currentPage(), size: this.pageSize() }),
+    params: () => ({ page: this.currentPageTodas(), size: this.pageSizeTodas() }),
     stream: ({ params }) =>
       this.sugerenciaService.obtenerTodasParaNutriologo(params.page, params.size),
   });
 
   protected pendientesResource = rxResource({
-    params: () => ({ page: this.currentPage(), size: this.pageSize() }),
+    params: () => ({ page: this.currentPagePendientes(), size: this.pageSizePendientes() }),
     stream: ({ params }) =>
       this.sugerenciaService.obtenerPendientesParaNutriologo(params.page, params.size),
   });
@@ -52,12 +61,16 @@ export class SugerenciasNutriologo {
 
   protected cambiarTab(tab: TabActivo): void {
     this.tabActivo.set(tab);
-    this.currentPage.set(0);
   }
 
   protected onPageChange(event: PageEvent): void {
-    this.currentPage.set(event.page);
-    this.pageSize.set(event.size);
+    if (this.tabActivo() === 'todas') {
+      this.currentPageTodas.set(event.page);
+      this.pageSizeTodas.set(event.size);
+    } else {
+      this.currentPagePendientes.set(event.page);
+      this.pageSizePendientes.set(event.size);
+    }
   }
 
   protected obtenerIconTipo(tipo: string): string {

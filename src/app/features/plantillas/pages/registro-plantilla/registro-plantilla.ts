@@ -17,6 +17,7 @@ import { Alimento, CATEGORIAS_ALIMENTO } from '../../../alimentos/interfaces/ali
 import { TIPOS_COMIDA, TipoComida } from '../../interfaces/plantilla.interface';
 import { Pagination } from '../../../../shared/components/pagination/pagination';
 import { PageEvent } from '../../../../shared/interfaces/page.interface';
+import { FormValidatorHelper } from '../../../../shared/helpers/form-validator-helper';
 
 interface ItemPlantilla {
   alimento: Alimento;
@@ -50,19 +51,33 @@ export class RegistroPlantilla {
   protected pageSize = signal(8);
 
   protected plantillaForm = this.fb.nonNullable.group({
-    nombre: ['', [Validators.required, Validators.maxLength(100)]],
+    nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
     tipoComida: ['DESAYUNO' as TipoComida, [Validators.required]],
   });
 
   protected alimentosResource = rxResource({
-    params: () => ({ page: this.currentPage(), size: this.pageSize() }),
-    stream: ({ params }) =>
-      this.alimentoService.obtenerAlimentos(params.page, params.size),
+    params: () => ({
+      keyword: this.searchTerm(),
+      categoria: this.selectedCategory(),
+      page: this.currentPage(),
+      size: this.pageSize(),
+    }),
+    stream: ({ params }) => {
+      const searchKey = params.keyword.trim() || params.categoria;
+      if (searchKey) {
+        return this.alimentoService.buscarAlimentos(
+          searchKey,
+          params.page,
+          params.size
+        );
+      }
+      return this.alimentoService.obtenerAlimentos(params.page, params.size);
+    },
   });
 
   protected alimentosFiltrados = computed(() => {
     const alimentos = this.alimentosResource.value()?.content ?? [];
-    const term = this.searchTerm().toLowerCase();
+    const term = this.searchTerm().trim().toLowerCase();
     const cat = this.selectedCategory();
     return alimentos.filter((a) => {
       const matchText = !term || a.nombre.toLowerCase().includes(term);
@@ -111,11 +126,22 @@ export class RegistroPlantilla {
   protected onSearchChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
+    this.currentPage.set(0);
   }
 
   protected onCategoryChange(event: Event): void {
     const select = event.target as HTMLSelectElement;
     this.selectedCategory.set(select.value);
+    this.currentPage.set(0);
+  }
+
+  protected setTipoComida(tipo: TipoComida): void {
+    this.plantillaForm.controls.tipoComida.setValue(tipo);
+  }
+
+  protected limpiarBusqueda(): void {
+    this.searchTerm.set('');
+    this.currentPage.set(0);
   }
 
   protected agregarAlimento(alimento: Alimento): void {
@@ -133,7 +159,7 @@ export class RegistroPlantilla {
   protected actualizarCantidad(index: number, delta: number): void {
     this.items.update((current) => {
       const updated = [...current];
-      const newCantidad = updated[index].cantidad + delta;
+      const newCantidad = Math.round((updated[index].cantidad + delta) * 100) / 100;
       if (newCantidad <= 0) {
         updated.splice(index, 1);
       } else {
@@ -143,13 +169,30 @@ export class RegistroPlantilla {
     });
   }
 
+  protected cambiarCantidadDirecta(index: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const val = parseFloat(input.value);
+    if (isNaN(val) || val <= 0) {
+      this.quitarAlimento(index);
+      return;
+    }
+    this.items.update((current) => {
+      const updated = [...current];
+      updated[index] = { ...updated[index], cantidad: Math.round(val * 100) / 100 };
+      return updated;
+    });
+  }
+
   protected quitarAlimento(index: number): void {
     this.items.update((current) => current.filter((_, i) => i !== index));
   }
 
   protected isFieldInvalid(field: string): boolean {
-    const control = this.plantillaForm.get(field);
-    return !!(control && control.touched && control.errors);
+    return FormValidatorHelper.isFieldInvalidTouchedOrDirty(this.plantillaForm.get(field));
+  }
+
+  protected getFieldErrorMessage(field: string, label: string): string {
+    return FormValidatorHelper.getErrorMessage(this.plantillaForm.get(field), label);
   }
 
   protected onSubmit(): void {

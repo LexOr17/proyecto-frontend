@@ -96,7 +96,7 @@
             <li>
                 <a routerLink="/main/mis-metas" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
                     <span class='bx bx-target-lock' aria-hidden="true"></span>
-                    <span>Mis Metas</span>
+                    <span>Mis Objetivos</span>
                 </a>
             </li>
             <li>
@@ -158,9 +158,9 @@
                 </a>
             </li>
             <li>
-                <a routerLink="/main/pacientes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" aria-label="Ir a pacientes para gestionar metas">
+                <a routerLink="/main/pacientes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" aria-label="Ir a pacientes para gestionar objetivos">
                     <span class='bx bx-target-lock' aria-hidden="true"></span>
-                    <span>Metas de Pacientes</span>
+                    <span>Objetivos de Pacientes</span>
                 </a>
             </li>
             <li>
@@ -177,6 +177,8 @@
                     <span>Restauración del Sistema</span>
                 </a>
             </li>
+            }
+            @if (currentUserRole() === 'ADMINISTRADOR' || currentUserRole() === 'NUTRIOLOGO') {
             <li>
                 <a routerLink="/main/diario-admin" routerLinkActive="active">
                     <span class='bx bx-calendar-check'></span>
@@ -191,6 +193,12 @@
             </li>
             }
             @if (currentUserRole() === 'NUTRIOLOGO' || currentUserRole() === 'PACIENTE') {
+            <li>
+                <a routerLink="/main/calendario" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
+                    <span class='bx bx-calendar-event' aria-hidden="true"></span>
+                    <span>Calendario</span>
+                </a>
+            </li>
             <li>
                 <a routerLink="/main/chat" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                     <span class='bx bx-chat' aria-hidden="true"></span>

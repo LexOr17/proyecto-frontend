@@ -1,1041 +1,2228 @@
-.main-content {
-  width: 100%;
+/* ─── Variables y Paleta Oficial Nutri-Score (5 Colores) ───────────────────── */
+:host {
+  /* Escala Nutri-Score Oficial */
+  --ns-green-dark: #038141;  /* A: Verde Oscuro - Óptimo */
+  --ns-green-lime: #85bb2f;  /* B: Verde Lima - Favorable */
+  --ns-yellow: #fecb02;      /* C: Amarillo Oro - Moderado */
+  --ns-orange: #ee8100;      /* D: Naranja - Atención */
+  --ns-red: #e63e11;         /* E: Rojo Coral - Riesgo */
+
+  /* Fondos Suaves para Tarjetas y Badges */
+  --ns-soft-a: #e8f5e9;
+  --ns-soft-b: #f1f8e9;
+  --ns-soft-c: #fffde7;
+  --ns-soft-d: #fff3e0;
+  --ns-soft-e: #fbe9e7;
+
+  /* Colores de Interfaz Neutros */
+  --rh-primary: #038141;
+  --rh-primary-dark: #026633;
+  --rh-primary-soft: #e8f5e9;
+
+  --rh-bg: #f8fafc;
+  --rh-surface: #ffffff;
+  --rh-border: #e2e8f0;
+  --rh-border-light: #f1f5f9;
+
+  --rh-text-main: #0f172a;
+  --rh-text-secondary: #334155;
+  --rh-text-muted: #64748b;
+
+  --rh-radius: 16px;
+  --rh-radius-sm: 10px;
+  --rh-radius-lg: 20px;
+  --rh-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+  --rh-shadow-md: 0 4px 20px rgba(15, 23, 42, 0.06);
+  --rh-shadow-hover: 0 8px 24px rgba(3, 129, 65, 0.14);
+  --rh-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reportes-hub-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 0 0 3rem;
+  box-sizing: border-box;
 }
 
-header {
+/* ─── Hero Card con Cinta Nutri-Score ─────────────────────────────────────── */
+.hub-hero-card {
+  background: #ffffff;
+  border: 1.5px solid var(--rh-border);
+  border-radius: var(--rh-radius-lg);
+  padding: 1.75rem 2rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  gap: 1.25rem;
+  box-shadow: var(--rh-shadow-md);
+  position: relative;
+  overflow: hidden;
 }
 
-.btn-pdf {
+/* Cinta Nutri-Score de 5 colores */
+.hub-hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #038141 0%, #038141 20%, #85bb2f 20%, #85bb2f 40%, #fecb02 40%, #fecb02 60%, #ee8100 60%, #ee8100 80%, #e63e11 80%, #e63e11 100%);
+}
+
+.hub-hero-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--ns-soft-a);
+  color: var(--ns-green-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(3, 129, 65, 0.15);
+}
+
+.hub-hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.hub-badge-tag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: linear-gradient(135deg, #d32f2f, #ef5350);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 50px;
-  border: none;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.25);
-  transition: all 0.2s ease;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ns-green-dark);
 }
 
-.btn-pdf:hover {
-  background: linear-gradient(135deg, #b71c1c, #d32f2f);
-  box-shadow: 0 6px 16px rgba(211, 47, 47, 0.35);
-  transform: translateY(-1px);
-}
-
-.header-title h1 {
-  font-size: 1.6rem;
-  color: #4a3fbf;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 4px 0;
-}
-
-.header-subtitle {
-  color: #64748b;
-  font-size: 0.92rem;
+.hub-hero-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--rh-text-main);
   margin: 0;
 }
 
-.dashboard-container {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+.hub-hero-subtitle {
+  font-size: 0.9rem;
+  color: var(--rh-text-secondary);
+  margin: 0;
+  line-height: 1.45;
 }
 
-/* =========================================
-   METRICS GRID
-   ========================================= */
-.metrics-grid {
+/* ─── Selector Visual de Reportes (Tabs Nutri-Score) ─────────────────────── */
+.reports-selector-nav {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
 }
 
-.metric-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 20px;
+.report-tab-btn {
+  background: #ffffff;
+  border: 1.5px solid var(--rh-border);
+  border-radius: var(--rh-radius);
+  padding: 1.2rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--rh-shadow-sm);
+  transition: all var(--rh-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.report-tab-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--rh-shadow-md);
+  border-color: #cbd5e1;
+}
+
+.report-tab-btn--active {
+  border-color: var(--ns-green-dark) !important;
+  background: #ffffff;
+  box-shadow: 0 4px 18px rgba(3, 129, 65, 0.15);
+}
+
+.report-tab-btn--active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--ns-green-dark);
+}
+
+.report-tab-btn--upcoming {
+  opacity: 0.92;
+}
+
+.tab-btn-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-  border: 1px solid #f1f5f9;
-  transition: transform 0.2s, box-shadow 0.2s;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+  transition: all var(--rh-transition);
 }
 
-.metric-card:hover {
+.icon-ns-a { background: var(--ns-soft-a); color: var(--ns-green-dark); }
+.icon-ns-b { background: var(--ns-soft-b); color: var(--ns-green-lime); }
+.icon-ns-c { background: var(--ns-soft-c); color: #d97706; }
+.icon-ns-d { background: var(--ns-soft-d); color: var(--ns-orange); }
+.icon-ns-e { background: var(--ns-soft-e); color: var(--ns-red); }
+
+.tab-btn-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.tab-btn-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.tab-btn-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--rh-text-main);
+}
+
+.report-tab-btn--active .tab-btn-title {
+  color: var(--ns-green-dark);
+}
+
+.tab-btn-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 0.15rem 0.55rem;
+  border-radius: 99px;
+  letter-spacing: 0.03em;
+}
+
+.badge-ns-a { background: var(--ns-soft-a); color: var(--ns-green-dark); }
+.badge-ns-b { background: var(--ns-soft-b); color: #557a1e; }
+.badge-ns-c { background: var(--ns-soft-c); color: #b45309; }
+.badge-ns-d { background: var(--ns-soft-d); color: #c2410c; }
+.badge-ns-e { background: var(--ns-soft-e); color: #b91c1c; }
+
+.tab-btn-desc {
+  font-size: 0.78rem;
+  color: var(--rh-text-muted);
+  margin: 0;
+  line-height: 1.35;
+}
+
+/* ─── Sección de Contenido del Reporte ───────────────────────────────────── */
+.report-content-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ─── Selector Visual de Pacientes ───────────────────────────────────────── */
+.patient-picker-box {
+  background: #ffffff;
+  border: 1.5px solid var(--rh-border);
+  border-radius: var(--rh-radius-lg);
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: var(--rh-shadow-sm);
+}
+
+.picker-header-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.picker-box-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--rh-text-main);
+  margin: 0 0 0.2rem;
+}
+
+.picker-box-desc {
+  font-size: 0.85rem;
+  color: var(--rh-text-secondary);
+  margin: 0;
+}
+
+.picker-search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 280px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.85rem;
+  font-size: 1.1rem;
+  color: var(--rh-text-muted);
+}
+
+.search-control-input {
+  width: 100%;
+  padding: 0.65rem 2.4rem 0.65rem 2.4rem;
+  border-radius: var(--rh-radius-sm);
+  border: 1.5px solid var(--rh-border);
+  background: #f8fafc;
+  color: var(--rh-text-main);
+  font-size: 0.88rem;
+  outline: none;
+  transition: all var(--rh-transition);
+}
+
+.search-control-input:focus {
+  background: #ffffff;
+  border-color: var(--ns-green-dark);
+  box-shadow: 0 0 0 3px rgba(3, 129, 65, 0.12);
+}
+
+.btn-clear-term {
+  position: absolute;
+  right: 0.65rem;
+  background: #e2e8f0;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--rh-text-muted);
+  cursor: pointer;
+}
+
+.picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.picker-patient-card {
+  background: #ffffff;
+  border: 1.5px solid var(--rh-border);
+  border-radius: var(--rh-radius);
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  cursor: pointer;
+  box-shadow: var(--rh-shadow-sm);
+  transition: all var(--rh-transition);
+}
+
+.picker-patient-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--rh-shadow-hover);
+  border-color: var(--ns-green-dark);
 }
 
-.metric-icon {
-  width: 48px;
-  height: 48px;
+.picker-patient-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--ns-soft-a), var(--ns-soft-b));
+  color: var(--ns-green-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.picker-patient-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.picker-patient-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--rh-text-main);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.picker-patient-email {
+  font-size: 0.78rem;
+  color: var(--rh-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.picker-patient-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--ns-green-dark);
+  margin-top: 0.2rem;
+}
+
+.btn-select-card {
+  margin-top: auto;
+  padding: 0.5rem;
+  border-radius: var(--rh-radius-sm);
+  background: var(--ns-soft-a);
+  color: var(--ns-green-dark);
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  transition: all var(--rh-transition);
+}
+
+.picker-patient-card:hover .btn-select-card {
+  background: var(--ns-green-dark);
+  color: #ffffff;
+}
+
+/* ─── Barra Paciente Seleccionado ────────────────────────────────────────── */
+.patient-selected-bar {
+  background: #ffffff;
+  border: 1.5px solid var(--rh-border);
+  border-radius: var(--rh-radius);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  box-shadow: var(--rh-shadow-sm);
+}
+
+.patient-selected-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btn-back-square {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: var(--rh-text-secondary);
+  cursor: pointer;
+  transition: all var(--rh-transition);
+}
+
+.btn-back-square:hover {
+  background: #e2e8f0;
+  color: var(--rh-text-main);
+}
+
+.selected-avatar-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--ns-soft-a), var(--ns-soft-b));
+  color: var(--ns-green-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.patient-report-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ns-green-dark);
+}
+
+.selected-patient-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--rh-text-main);
+  margin: 0;
+}
+
+.selected-patient-sub {
+  font-size: 0.8rem;
+  color: var(--rh-text-muted);
+}
+
+.patient-selected-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-change-patient {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border-radius: var(--rh-radius-sm);
+  background: #f8fafc;
+  color: var(--rh-text-secondary);
+  border: 1.5px solid var(--rh-border);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--rh-transition);
+}
+
+.btn-change-patient:hover {
+  background: #ffffff;
+  border-color: var(--ns-green-dark);
+  color: var(--ns-green-dark);
+}
+
+.btn-export-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--rh-radius-sm);
+  background: var(--ns-green-dark);
+  color: #ffffff;
+  border: none;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(3, 129, 65, 0.25);
+  transition: all var(--rh-transition);
+}
+
+.btn-export-pdf:hover:not(:disabled) {
+  background: var(--rh-primary-dark);
+  transform: translateY(-1px);
+}
+
+.btn-export-pdf:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.app-spinner-sm {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+/* ─── Cards de KPIs con Gama Nutri-Score ──────────────────────────────────── */
+.kpis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.kpi-card {
+  background: #ffffff;
+  border: 1.5px solid var(--rh-border);
+  border-radius: var(--rh-radius);
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: var(--rh-shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-icon-box {
+  width: 46px;
+  height: 46px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.4rem;
+  flex-shrink: 0;
 }
 
-.metric-icon.val-pacientes {
-  background: #ede9fe;
-  color: #6c5ce7;
-}
+/* Semáforo Nutri-Score en Iconos */
+.ns-a { background: var(--ns-soft-a); color: var(--ns-green-dark); }
+.ns-b { background: var(--ns-soft-b); color: #557a1e; }
+.ns-c { background: var(--ns-soft-c); color: #d97706; }
+.ns-d { background: var(--ns-soft-d); color: var(--ns-orange); }
+.ns-e { background: var(--ns-soft-e); color: var(--ns-red); }
 
-.metric-icon.val-nutriologos {
-  background: #e0f2fe;
-  color: #0284c7;
-}
-
-.metric-icon.val-edad {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.metric-info {
+.kpi-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
 }
 
-.metric-value {
-  font-size: 1.5rem;
+.kpi-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--rh-text-muted);
+}
+
+.kpi-val {
+  font-size: 1.35rem;
   font-weight: 800;
-  color: #1e293b;
-  line-height: 1.2;
+  color: var(--rh-text-main);
 }
 
-.metric-label {
-  font-size: 0.8rem;
-  color: #64748b;
-  font-weight: 500;
-}
-
-/* =========================================
-   DEMOGRAPHICS SECTION
-   ========================================= */
-.demographics-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
-}
-
-.demo-card {
-  background: #fff;
-  border-radius: 20px;
-  padding: 24px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.demo-card-title {
-  font-size: 1.05rem;
+.kpi-val small {
+  font-size: 0.85rem;
   font-weight: 700;
-  color: #1e293b;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid #f1f5f9;
-  padding-bottom: 12px;
+  color: var(--rh-text-muted);
 }
 
-.demo-card-title i {
-  color: #6c5ce7;
-  font-size: 1.2rem;
-}
-
-/* Donut SVG Chart */
-.donut-chart-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.donut-svg {
-  width: 140px;
-  height: 140px;
-  transform: rotate(-90deg);
-}
-
-.donut-segment {
-  transition: stroke-width 0.25s, filter 0.25s;
-}
-
-.donut-segment:hover {
-  stroke-width: 10.5;
-  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.15));
-  cursor: pointer;
-}
-
-.donut-center-num {
-  font-size: 14px;
-  font-weight: 800;
-  fill: #1e293b;
-  transform: rotate(90deg);
-  transform-origin: 50px 50px;
-}
-
-.donut-center-label {
-  font-size: 7px;
-  font-weight: 600;
-  fill: #94a3b8;
-  transform: rotate(90deg);
-  transform-origin: 50px 50px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Legend items */
-.chart-legend {
+/* ─── Guía de Interpretación Clínica & Pautas (Información Extra) ────────── */
+.clinical-guide-section {
+  background: #ffffff;
+  border: 1.5px solid var(--rh-border);
+  border-radius: var(--rh-radius-lg);
+  padding: 1.5rem 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-width: 140px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.8rem;
-}
-
-.legend-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.legend-text {
-  color: #475569;
-  font-weight: 500;
-  flex: 1;
-}
-
-.legend-value {
-  font-weight: 700;
-  color: #1e293b;
-}
-
-/* Horizontal Progress Bars */
-.bars-container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.bar-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.bar-label-group {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.82rem;
-}
-
-.bar-name {
-  color: #475569;
-  font-weight: 600;
-}
-
-.bar-value {
-  color: #1e293b;
-  font-weight: 700;
-}
-
-.bar-track {
-  width: 100%;
-  height: 8px;
-  background: #f1f5f9;
-  border-radius: 10px;
+  gap: 1.25rem;
+  box-shadow: var(--rh-shadow-sm);
+  position: relative;
   overflow: hidden;
 }
 
-.bar-fill {
-  height: 100%;
-  border-radius: 10px;
-  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+.clinical-guide-section::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--ns-green-dark), var(--ns-yellow), var(--ns-orange));
 }
 
-.no-data-msg {
-  color: #94a3b8;
-  font-size: 0.85rem;
-  text-align: center;
-  padding: 20px 0;
-}
-
-/* =========================================
-   PATIENT TRACKING SECTION
-   ========================================= */
-.patient-tracking-section {
-  background: #fff;
-  border-radius: 20px;
-  padding: 28px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.tracking-header-box {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 20px;
-  border-bottom: 2px solid #f8fafc;
-  padding-bottom: 20px;
-}
-
-.tracking-title-info h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 4px 0;
+.guide-header-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.85rem;
 }
 
-.tracking-title-info h2 i {
-  color: #6c5ce7;
+.guide-header-icon {
+  font-size: 1.75rem;
+  color: var(--ns-green-dark);
 }
 
-.tracking-title-info p {
-  color: #64748b;
-  font-size: 0.88rem;
+.guide-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--rh-text-main);
+  margin: 0 0 0.15rem;
+}
+
+.guide-subtitle {
+  font-size: 0.82rem;
+  color: var(--rh-text-muted);
   margin: 0;
 }
 
-/* Custom Select box design */
-.select-patient-box {
-  min-width: 250px;
+.guide-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
 }
 
-.select-wrapper {
-  position: relative;
+.guide-item-card {
+  background: #f8fafc;
+  border: 1.5px solid var(--rh-border);
+  border-radius: var(--rh-radius-sm);
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.guide-item-top {
   display: flex;
   align-items: center;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  padding: 0 14px;
-  transition: border-color 0.25s, box-shadow 0.25s;
+  justify-content: space-between;
 }
 
-.select-wrapper:focus-within {
-  border-color: #6c5ce7;
-  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.15);
+.guide-item-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--rh-text-muted);
+  letter-spacing: 0.04em;
 }
 
-.select-wrapper select {
-  width: 100%;
-  padding: 12px 24px 12px 30px;
-  border: none;
-  background: transparent;
-  outline: none;
-  font-family: inherit;
-  font-size: 0.9rem;
-  color: #1e293b;
-  font-weight: 600;
-  cursor: pointer;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
+.ns-score-pill {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.select-wrapper i {
-  position: absolute;
-  color: #64748b;
-  font-size: 1.1rem;
+.guide-item-status {
+  font-size: 0.95rem;
+  font-weight: 800;
 }
 
-.select-wrapper .select-arrow {
-  right: 14px;
+.guide-item-text {
+  font-size: 0.82rem;
+  color: var(--rh-text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.guide-ref-footer {
+  margin-top: auto;
+  padding-top: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--rh-text-muted);
+  border-top: 1px dashed #cbd5e1;
+}
+
+.guide-habits-card {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.water-icon {
+  font-size: 1.3rem;
+  color: #0284c7;
+}
+
+.guide-tips-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--rh-text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* ─── Gráficos Clínicos (Pantalla) ──────────────────────────────────────── */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 960px) {
+  .charts-row { grid-template-columns: 1fr; }
+}
+
+.chart-box-card {
+  background: #ffffff;
+  border: 1.5px solid var(--rh-border);
+  border-radius: var(--rh-radius);
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  box-shadow: var(--rh-shadow-sm);
+  transition: all var(--rh-transition);
+}
+
+.chart-box-card:hover {
+  box-shadow: var(--rh-shadow-md);
+  border-color: #cbd5e1;
+}
+
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.chart-header-icon {
+  font-size: 1.5rem;
+}
+
+.icon-green { color: var(--ns-green-dark); }
+.icon-lime { color: var(--ns-green-lime); }
+.icon-orange { color: var(--ns-orange); }
+.icon-darkgreen { color: #026633; }
+
+.chart-card-title {
   font-size: 1rem;
-  pointer-events: none;
+  font-weight: 800;
+  color: var(--rh-text-main);
+  margin: 0;
 }
 
-/* Empty State */
-.empty-patient-state {
+.chart-card-sub {
+  font-size: 0.78rem;
+  color: var(--rh-text-muted);
+  margin: 0;
+}
+
+.chart-canvas-box {
+  position: relative;
+  height: 260px;
+  width: 100%;
+}
+
+/* ─── Tabla Histórica (Pantalla) ─────────────────────────────────────────── */
+.history-table-card {
+  background: #ffffff;
+  border: 1.5px solid var(--rh-border);
+  border-radius: var(--rh-radius);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: var(--rh-shadow-sm);
+}
+
+.table-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.table-card-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--rh-text-main);
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.table-records-tag {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ns-green-dark);
+  background: var(--ns-soft-a);
+  padding: 0.25rem 0.65rem;
+  border-radius: 99px;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.clinical-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.clinical-table th {
+  background: #f8fafc;
+  color: var(--rh-text-secondary);
+  font-weight: 700;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1.5px solid var(--rh-border);
+}
+
+.clinical-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--rh-border-light);
+  color: var(--rh-text-main);
+}
+
+.td-date { font-weight: 700; }
+.td-weight { font-weight: 800; color: var(--ns-green-dark); }
+.td-muted { color: var(--rh-text-muted); }
+
+.badge-chip {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
+.chip-fat { background: var(--ns-soft-d); color: #c2410c; }
+.chip-ict { background: var(--ns-soft-c); color: #b45309; }
+.chip-icc { background: var(--ns-soft-b); color: #557a1e; }
+
+/* ─── Demográfico Admin (Pantalla) ───────────────────────────────────────── */
+.demografico-top-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.section-heading-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--rh-text-main);
+  margin: 0 0 0.2rem;
+}
+
+.section-heading-sub {
+  font-size: 0.85rem;
+  color: var(--rh-text-secondary);
+  margin: 0;
+}
+
+.demographics-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.chart-box-card--full {
+  grid-column: span 2;
+}
+
+@media (max-width: 900px) {
+  .demographics-charts-grid { grid-template-columns: 1fr; }
+  .chart-box-card--full { grid-column: span 1; }
+}
+
+/* ─── Próximos Reportes ─────────────────────────────────────────────────── */
+.upcoming-report-card {
+  background: #ffffff;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: var(--rh-radius-lg);
+  padding: 3.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  box-shadow: var(--rh-shadow-sm);
+}
+
+.upcoming-icon-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: var(--ns-soft-c);
+  color: #d97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.upcoming-badge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--ns-soft-d);
+  color: var(--ns-orange);
+  padding: 0.25rem 0.75rem;
+  border-radius: 99px;
+}
+
+.upcoming-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--rh-text-main);
+  margin: 0;
+  max-width: 600px;
+}
+
+.upcoming-desc {
+  font-size: 0.9rem;
+  color: var(--rh-text-secondary);
+  margin: 0;
+  max-width: 650px;
+  line-height: 1.5;
+}
+
+.upcoming-features {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.upcoming-feat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ns-green-dark);
+  background: var(--ns-soft-a);
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+}
+
+/* ─── Estados (Carga / Vacío) ────────────────────────────────────────────── */
+.state-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  padding: 4rem 1.5rem;
+  background: var(--rh-surface);
+  border-radius: var(--rh-radius);
+  border: 1.5px solid var(--rh-border);
   text-align: center;
-  color: #94a3b8;
+  box-shadow: var(--rh-shadow-sm);
+}
+
+.app-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: var(--ns-green-dark);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.state-text {
+  color: var(--rh-text-secondary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.state-icon-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+.state-icon-circle.error { background: var(--ns-soft-e); color: var(--ns-red); }
+.state-icon-circle.neutral { background: #f1f5f9; color: var(--rh-text-muted); }
+
+.state-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--rh-text-main);
+  margin: 0 0 0.4rem;
+}
+
+.state-desc {
+  font-size: 0.9rem;
+  color: var(--rh-text-muted);
+  margin: 0;
+  max-width: 460px;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════════ */
+/* ─── PLANTILLAS DEDICADAS DE IMPRESIÓN PROFESIONAL (ALTA RESOLUCIÓN Y FORMATO) ─ */
+/* ══════════════════════════════════════════════════════════════════════════════ */
+
+.clinical-pdf-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 734px;
+  background: #ffffff;
+  z-index: -9999;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.clinical-pdf-wrapper.cpdf-visible {
+  opacity: 1;
+}
+
+.clinical-pdf-document {
+  width: 734px;
+  margin: 0 auto;
+  padding: 20px 22px;
+  box-sizing: border-box;
+  background: #ffffff;
+  color: #0f172a;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.45;
+}
+
+/* Membrete Institucional Clínico */
+.cpdf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+}
+
+.cpdf-brand {
+  display: flex;
+  align-items: center;
   gap: 12px;
 }
 
-.empty-patient-state i {
-  font-size: 3.5rem;
-  color: #cbd5e1;
-}
-
-.empty-patient-state p {
-  font-size: 1.05rem;
-  font-weight: 500;
-  max-width: 420px;
-  margin: 0;
-}
-
-.empty-patient-state .sub-msg {
-  font-size: 0.85rem;
-  color: #94a3b8;
-  max-width: 320px;
-}
-
-/* Patient Summary Banner */
-.patient-summary-banner {
-  background: #f8fafc;
-  border-radius: 16px;
-  padding: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 20px;
-  border: 1px solid #f1f5f9;
-}
-
-.patient-profile-summary {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.avatar-circle {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
-  color: #fff;
+.cpdf-logo-box {
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 1.1rem;
 }
 
-.patient-profile-summary h3 {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 2px 0;
+.cpdf-svg-logo {
+  width: 44px;
+  height: 44px;
 }
 
-.patient-profile-summary p {
-  font-size: 0.82rem;
-  color: #64748b;
+.cpdf-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.cpdf-clinic-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: #047857;
   margin: 0;
+  letter-spacing: 0.03em;
 }
 
-.milestones-grid {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.milestone-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.milestone-label {
-  font-size: 0.72rem;
+.cpdf-clinic-subtitle {
+  font-size: 8.5px;
+  font-weight: 800;
+  color: #64748b;
+  margin: 2px 0 0;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #94a3b8;
-  letter-spacing: 0.5px;
-  font-weight: 600;
 }
 
-.milestone-value {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.milestone-change {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.milestone-change.loss {
-  color: #00b894; /* Pérdida de peso/grasa es verde (saludable) */
-}
-
-.milestone-change.gain {
-  color: #e17055; /* Aumento de peso es rojo */
-}
-
-/* =========================================
-   SVG LINE GRAPHS
-   ========================================= */
-.charts-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
-  gap: 24px;
-}
-
-.progress-chart-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 20px;
+.cpdf-folio-box {
+  text-align: right;
+  background: #f8fafc;
   border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 7px 12px;
+}
+
+.cpdf-folio-title {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #047857;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cpdf-folio-meta {
+  font-size: 8.5px;
+  color: #475569;
+  margin-top: 2px;
+}
+
+.cpdf-folio-meta strong {
+  color: #0f172a;
+}
+
+/* Barra de Acento */
+.cpdf-accent-bar {
+  height: 3px;
+  background: linear-gradient(90deg, #047857 0%, #10b981 30%, #84cc16 60%, #eab308 80%, #ef4444 100%);
+  margin-bottom: 14px;
+  border-radius: 2px;
+}
+
+.cpdf-nutriscore-bar {
+  height: 3px;
+  background: linear-gradient(90deg, #047857 0%, #10b981 30%, #84cc16 60%, #eab308 80%, #ef4444 100%);
+  margin-bottom: 14px;
+  border-radius: 2px;
+}
+
+/* Secciones del Documento */
+.cpdf-section {
+  margin-bottom: 14px;
+}
+
+.cpdf-sec-title {
+  font-size: 10px;
+  font-weight: 800;
+  color: #047857;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 3px;
+  margin: 0 0 8px 0;
+}
+
+/* Ficha del Paciente */
+.cpdf-patient-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.cpdf-patient-grid {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   gap: 16px;
 }
 
-.chart-header {
+.cpdf-patient-col {
+  flex: 1;
+}
+
+.cpdf-info-row {
+  font-size: 9.5px;
+  margin: 3px 0;
+  color: #334155;
+}
+
+.cpdf-lbl {
+  font-weight: 700;
+  color: #64748b;
+  display: inline-block;
+  min-width: 95px;
+}
+
+.cpdf-val {
+  color: #0f172a;
+}
+
+/* KPIs Médicos */
+.cpdf-kpis-grid {
   display: flex;
+  gap: 8px;
   justify-content: space-between;
+}
+
+.cpdf-kpis-3col .cpdf-kpi-item {
+  flex: 1;
+}
+
+.cpdf-kpi-item {
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.cpdf-kpi-border-green { border-top: 3px solid #047857; }
+.cpdf-kpi-border-lime { border-top: 3px solid #65a30d; }
+.cpdf-kpi-border-yellow { border-top: 3px solid #d97706; }
+.cpdf-kpi-border-orange { border-top: 3px solid #ea580c; }
+.cpdf-kpi-border-red { border-top: 3px solid #dc2626; }
+
+.cpdf-kpi-lbl {
+  display: block;
+  font-size: 8px;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.cpdf-kpi-num {
+  font-size: 16px;
+  font-weight: 900;
+  color: #0f172a;
+  display: block;
+}
+
+.cpdf-kpi-num small {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.cpdf-kpi-sub {
+  display: block;
+  font-size: 8px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.cpdf-text-green {
+  color: #047857 !important;
+}
+
+/* Guía Diagnóstica en PDF */
+.cpdf-guide-grid {
+  display: flex;
+  gap: 8px;
+}
+
+.cpdf-guide-box {
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 9px 11px;
+}
+
+.cpdf-guide-header {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
 }
 
-.chart-header h4 {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0;
+.cpdf-guide-title {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #0f172a;
 }
 
-.unit-badge {
-  background: #f1f5f9;
-  color: #475569;
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 20px;
+.cpdf-badge-pill {
+  font-size: 8px;
+  font-weight: 800;
+  color: #ffffff;
+  padding: 1px 6px;
+  border-radius: 99px;
   text-transform: uppercase;
 }
 
-.svg-container {
-  width: 100%;
+.cpdf-guide-status {
+  font-size: 9px;
+  font-weight: 800;
+  margin-bottom: 3px;
 }
 
-.progress-svg {
-  width: 100%;
-  height: auto;
-  overflow: visible;
+.cpdf-guide-desc {
+  font-size: 8.5px;
+  color: #475569;
+  margin: 0;
+  line-height: 1.35;
 }
 
-/* Interactive SVG points */
-.chart-point {
-  cursor: pointer;
-  transition: r 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.chart-point-group:hover .chart-point {
-  r: 7.5;
-}
-
-/* Tooltip group */
-.chart-tooltip-g {
-  opacity: 0;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  pointer-events: none;
-  transform: translateY(3px);
-}
-
-.chart-point-group:hover .chart-tooltip-g {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.chart-line {
-  stroke-dasharray: 1000;
-  stroke-dashoffset: 1000;
-  animation: drawLine 2s forwards ease-in-out;
-}
-
-@keyframes drawLine {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-.axis-x-text {
+.cpdf-guide-tips {
+  margin: 4px 0 0;
+  padding-left: 14px;
   font-size: 8px;
-  fill: #94a3b8;
-  font-weight: 600;
+  color: #475569;
+  line-height: 1.4;
 }
 
-.loading-state {
+/* Gráficos en PDF */
+.cpdf-charts-dual {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cpdf-chart-frame {
+  flex: 1 1 0px;
+  min-width: 0;
+  max-width: 50%;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: #ffffff;
   text-align: center;
-  padding: 40px;
-  color: #94a3b8;
-  font-weight: 500;
-}
-
-.btn-primary-sm {
-  display: inline-flex;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
-  color: white;
-  padding: 10px 24px;
-  border-radius: 50px;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.9rem;
-  margin-top: 12px;
-  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.35);
-  transition: transform 0.2s;
+  justify-content: flex-start;
 }
 
-.btn-primary-sm:hover {
-  transform: translateY(-1px);
+.cpdf-chart-frame-full {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: #ffffff;
+  text-align: center;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-/* Responsive adjustments */
-@media screen and (max-width: 768px) {
-  .tracking-header-box {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .select-patient-box {
-    width: 100%;
-  }
-
-  .charts-row {
-    grid-template-columns: 1fr;
-  }
-  
-  .progress-chart-card {
-    padding: 14px;
-  }
+.cpdf-chart-title {
+  font-size: 8.5px;
+  font-weight: 800;
+  color: #334155;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  width: 100%;
 }
 
-.print-only-header,
-.print-only-desc,
-.chart-desc-text,
-.print-glossary-section,
-.print-observations-section,
-.print-validation-section {
-  display: none;
+.cpdf-render-img,
+.cpdf-chart-render,
+.cpdf-donut-img {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: 160px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  background: #ffffff;
 }
 
-.btn-pdf-sm {
-  padding: 8px 14px !important;
-  font-size: 0.82rem !important;
-  border-radius: 8px !important;
+.cpdf-chart-frame-full .cpdf-render-img,
+.cpdf-chart-frame-full .cpdf-chart-render {
+  max-height: 170px;
+}
+
+.cpdf-donut-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
 }
 
-.chart-canvas-container {
-  position: relative;
-  height: 240px;
+/* ─── Estilos Ranking y Barras de Progreso (Pantalla) ─────────────────────── */
+.rank-table-progress-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rank-progress-bg {
   width: 100%;
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 99px;
+  overflow: hidden;
 }
 
-/* =========================================
-   ESTILOS EXCLUSIVOS DE EXPORTACIÓN A PDF
-   ========================================= */
-
-/* Eliminar restricciones de desbordamiento en todos los padres temporales */
-body:has(.exporting-pdf) .main-content,
-body:has(.exporting-pdf) .dashboard-container,
-body:has(.exporting-pdf) .progress-container,
-body:has(.exporting-pdf) .patient-tracking-section,
-body:has(.exporting-pdf) main,
-body:has(.exporting-pdf) .content-layout {
-  overflow: visible !important;
-  width: auto !important;
-  max-width: none !important;
+.rank-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #10b981 0%, #047857 100%);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.pdf-container.exporting-pdf {
-  position: relative !important;
-  width: 680px !important; /* Más angosto para evitar desbordes */
-  background: #ffffff !important;
-  padding: 16px !important; /* Más compacto */
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  box-sizing: border-box !important;
-  display: block !important;
+.rank-medal-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
 }
 
-.pdf-container.exporting-pdf .print-only-header {
-  display: block !important;
-  border-bottom: 2px solid #6c5ce7 !important;
-  padding-bottom: 10px !important;
-  margin-bottom: 12px !important;
+.rank-medal-1 { background: #fef08a; color: #854d0e; }
+.rank-medal-2 { background: #e2e8f0; color: #334155; }
+.rank-medal-3 { background: #ffedd5; color: #9a3412; }
+.rank-medal-other { background: #f1f5f9; color: #64748b; }
+
+
+/* Tablas Fijas */
+.cpdf-table-fixed {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 9px;
 }
 
-.pdf-container.exporting-pdf .print-only-desc {
-  display: block !important;
-  font-size: 0.72rem !important;
-  color: #475569 !important;
-  line-height: 1.35 !important;
-  margin: -6px 0 12px 0 !important;
-  background: #f8fafc !important;
-  padding: 8px 12px !important;
-  border-left: 4px solid #6c5ce7 !important;
-  border-radius: 4px !important;
+.cpdf-table-fixed th {
+  background: #0f172a;
+  color: #ffffff;
+  font-weight: 800;
+  text-align: left;
+  padding: 6px 10px;
+  border: none;
+  letter-spacing: 0.03em;
 }
 
-.pdf-container.exporting-pdf .chart-desc-text {
-  display: block !important;
-  font-size: 0.68rem !important;
-  color: #64748b !important;
-  line-height: 1.3 !important;
-  margin: -3px 0 6px 0 !important;
+.cpdf-table-fixed td {
+  padding: 6px 10px;
+  border-top: 1px solid #e2e8f0;
+  color: #1e293b;
 }
 
-/* Grillas compactas para censo demográfico */
-.pdf-container.exporting-pdf .metrics-grid {
-  grid-template-columns: repeat(3, 1fr) !important;
-  gap: 10px !important;
-  margin-bottom: 15px !important;
+.cpdf-table-fixed tr:nth-child(even) td {
+  background: #f8fafc;
 }
 
-.pdf-container.exporting-pdf .metric-card {
-  padding: 8px 12px !important;
-  gap: 8px !important;
-  border: 1px solid #e2e8f0 !important;
+.cpdf-table-fixed tr:last-child td {
+  border-bottom: none;
 }
 
-.pdf-container.exporting-pdf .metric-value {
+.cpdf-pill {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.cpdf-pill-green { background: #dcfce7; color: #15803d; }
+.cpdf-pill-lime { background: #ecfccb; color: #4d7c0f; }
+.cpdf-pill-yellow { background: #fef9c3; color: #a16207; }
+.cpdf-pill-orange { background: #ffedd5; color: #c2410c; }
+.cpdf-pill-red { background: #fee2e2; color: #b91c1c; }
+
+/* Paginación Segura */
+.cpdf-page-break-avoid {
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+
+/* Pie Institucional */
+.cpdf-footer {
+  margin-top: 16px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 8px;
+  text-align: center;
+  font-size: 8px;
+  color: #94a3b8;
+}
+
+/* ─── Variantes de Tarjetas KPI Nutri-Score ─────────────────────────────── */
+.kpi-ns-green { border-color: rgba(3, 129, 65, 0.25); }
+.kpi-ns-green::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--ns-green-dark); }
+
+.kpi-ns-lime { border-color: rgba(133, 187, 47, 0.3); }
+.kpi-ns-lime::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--ns-green-lime); }
+
+.kpi-ns-yellow { border-color: rgba(254, 203, 2, 0.4); }
+.kpi-ns-yellow::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--ns-yellow); }
+
+.kpi-ns-orange { border-color: rgba(238, 129, 0, 0.3); }
+.kpi-ns-orange::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--ns-orange); }
+
+.kpi-ns-red { border-color: rgba(230, 62, 17, 0.3); }
+.kpi-ns-red::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--ns-red); }
+
+/* ─── Barra de Filtros de Periodo (Seguimiento del Plan) ─────────────────── */
+.periodo-toolbar-card {
+  background: #ffffff;
+  border: 1.5px solid var(--rh-border);
+  border-radius: var(--rh-radius);
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  box-shadow: var(--rh-shadow-sm);
+}
+
+.periodo-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.periodo-toolbar-icon {
+  font-size: 1.6rem;
+  color: var(--ns-green-dark);
+}
+
+.periodo-toolbar-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--rh-text-main);
+  margin: 0;
+}
+
+.periodo-toolbar-sub {
+  font-size: 0.78rem;
+  color: var(--rh-text-muted);
+  margin: 0;
+}
+
+.periodo-toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.periodo-btn-group {
+  display: inline-flex;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: var(--rh-radius-sm);
+  border: 1px solid var(--rh-border);
+}
+
+.btn-periodo-option {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--rh-text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all var(--rh-transition);
+}
+
+.btn-periodo-option:hover {
+  color: var(--rh-text-main);
+}
+
+.btn-periodo-option--active {
+  background: #ffffff;
+  color: var(--ns-green-dark);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.periodo-custom-dates-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+
+.periodo-custom-dates {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.date-field-box {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.date-field-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--rh-text-muted);
+}
+
+.date-field-input {
+  padding: 0.4rem 0.65rem;
+  border-radius: var(--rh-radius-sm);
+  border: 1.5px solid var(--rh-border);
+  background: #ffffff;
+  font-size: 0.8rem;
+  font-family: inherit;
+  color: var(--rh-text-main);
+  outline: none;
+  transition: all var(--rh-transition);
+}
+
+.date-field-input:focus {
+  border-color: var(--ns-green-dark);
+  box-shadow: 0 0 0 3px rgba(3, 129, 65, 0.12);
+}
+
+.date-field-input.date-input-invalid {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+  color: #b91c1c !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+.periodo-date-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+}
+
+.periodo-date-error i {
+  font-size: 0.9rem;
+}
+
+/* ─── Badges / Pills Nutri-Score para Tablas ─────────────────────────────── */
+.badge-ns-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ns-pill-a { background: var(--ns-soft-a); color: var(--ns-green-dark); }
+.ns-pill-b { background: var(--ns-soft-b); color: #557a1e; }
+.ns-pill-c { background: var(--ns-soft-c); color: #b45309; }
+.ns-pill-d { background: var(--ns-soft-d); color: #c2410c; }
+.ns-pill-e { background: var(--ns-soft-e); color: #b91c1c; }
+.ns-pill-muted { background: #f1f5f9; color: var(--rh-text-muted); }
+
+/* ─── Estilos Complementarios para Reporte de Asistencia y Demanda ─────────── */
+.header-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin-nutri-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #ffffff;
+  border: 1.5px solid var(--rh-border);
+  border-radius: var(--rh-radius-sm);
+  padding: 0.35rem 0.75rem;
+  box-shadow: var(--rh-shadow-sm);
+  transition: all var(--rh-transition);
+}
+
+.admin-nutri-selector:focus-within {
+  border-color: var(--ns-green-dark);
+  box-shadow: 0 0 0 3px rgba(3, 129, 65, 0.12);
+}
+
+.selector-mini-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--rh-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.form-select-sm {
+  border: none;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--rh-text-main);
+  cursor: pointer;
+  outline: none;
+}
+
+.kpi-val-text {
   font-size: 1.15rem !important;
+  font-weight: 800;
+  color: var(--rh-text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.pdf-container.exporting-pdf .metric-label {
-  font-size: 0.65rem !important;
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
-/* Acomodar 3 tarjetas demográficas para que quepan en una sola hoja (2 arriba, 1 completa abajo) */
-.pdf-container.exporting-pdf .demographics-row {
-  grid-template-columns: 1fr 1fr !important;
-  gap: 12px !important;
-  margin-bottom: 15px !important;
+.status-optimo { background: var(--ns-soft-a); color: var(--ns-green-dark); }
+.status-atencion { background: var(--ns-soft-e); color: var(--ns-red); }
+.status-moderado { background: var(--ns-soft-d); color: #c2410c; }
+.status-info { background: #e0f2fe; color: #0369a1; }
+.status-neutral { background: #f1f5f9; color: var(--rh-text-muted); }
+
+.donut-canvas {
+  height: 260px;
+  position: relative;
 }
 
-.pdf-container.exporting-pdf .demographics-row article:nth-child(3) {
-  grid-column: span 2 !important;
+.bar-canvas {
+  height: 320px;
+  position: relative;
 }
 
-.pdf-container.exporting-pdf .demo-card {
-  padding: 8px 12px !important;
-  gap: 6px !important;
-  border: 1px solid #cbd5e1 !important;
+/* ─── Clases adicionales de color Nutri-Score y Blue ─────────────────────── */
+.kpi-ns-blue { border-color: rgba(2, 132, 199, 0.3); }
+.kpi-ns-blue::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #0284c7; }
+
+.icon-blue { color: #0284c7; }
+.ns-blue { background: #e0f2fe; color: #0284c7; }
+
+/* ─── Encabezado / Banner de Reporte de Receptividad ─────────────────────── */
+.report-header-banner {
+  background: #ffffff;
+  border: 1.5px solid var(--rh-border);
+  border-radius: var(--rh-radius-lg);
+  padding: 1.75rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  box-shadow: var(--rh-shadow-md);
+  position: relative;
+  overflow: hidden;
+  flex-wrap: wrap;
 }
 
-.pdf-container.exporting-pdf .chart-canvas-container {
-  height: 105px !important; /* Más compacto */
+.banner-gradient-propuesta {
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 40%, #047857 70%, #0f766e 100%);
+  color: #ffffff;
+  border: 1.5px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 8px 28px rgba(6, 78, 59, 0.25);
 }
 
-/* Grillas compactas de evolución clínica (Peso y Grasa en columna de ancho completo) */
-.pdf-container.exporting-pdf .charts-row {
-  grid-template-columns: 1fr !important; /* En columna */
-  gap: 12px !important;
-  margin-bottom: 15px !important;
+.banner-icon-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(4px);
 }
 
-.pdf-container.exporting-pdf .progress-chart-card {
-  padding: 12px 16px !important;
-  gap: 8px !important;
-  border: 1px solid #cbd5e1 !important;
+.banner-text-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 280px;
 }
 
-/* Reducir espacio vertical de barra de paciente y métricas en PDF */
-.pdf-container.exporting-pdf .patient-summary-banner {
-  padding: 8px 12px !important;
-  gap: 8px !important;
-  background: #f8fafc !important;
-  border: 1px solid #cbd5e1 !important;
-  border-radius: 8px !important;
-  margin-bottom: 12px !important;
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
+.banner-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
 }
 
-.pdf-container.exporting-pdf .patient-profile-summary {
-  gap: 8px !important;
-  display: flex !important;
-  align-items: center !important;
+.banner-period-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  padding: 0.2rem 0.65rem;
+  border-radius: 99px;
+  backdrop-filter: blur(4px);
 }
 
-.pdf-container.exporting-pdf .patient-profile-summary h3 {
-  font-size: 0.88rem !important;
-  margin: 0 !important;
+.banner-main-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.25;
 }
 
-.pdf-container.exporting-pdf .patient-profile-summary p {
-  font-size: 0.65rem !important;
-  margin: 0 !important;
+.banner-sub-desc {
+  font-size: 0.88rem;
+  color: #d1fae5;
+  margin: 0;
+  line-height: 1.5;
+  max-width: 820px;
 }
 
-.pdf-container.exporting-pdf .avatar-circle {
-  width: 32px !important;
-  height: 32px !important;
-  font-size: 0.75rem !important;
-  display: flex !important;
+.banner-actions-block {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
 }
 
-.pdf-container.exporting-pdf .milestones-grid {
-  gap: 12px !important;
-  display: flex !important;
+/* ─── Grid y Tarjetas de KPI Detalladas con Descripción ──────────────────── */
+.kpis-grid-detailed {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.5rem;
 }
 
-.pdf-container.exporting-pdf .milestone-item {
-  gap: 1px !important;
-  display: flex !important;
-  flex-direction: column !important;
+.kpi-card-detailed {
+  background: #ffffff;
+  border: 1.5px solid var(--rh-border);
+  border-radius: var(--rh-radius);
+  padding: 1.5rem 1.65rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 220px;
+  box-shadow: var(--rh-shadow-sm);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--rh-transition);
 }
 
-.pdf-container.exporting-pdf .milestone-label {
-  font-size: 0.6rem !important;
+.kpi-card-detailed:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--rh-shadow-md);
+  border-color: #cbd5e1;
 }
 
-.pdf-container.exporting-pdf .milestone-value {
-  font-size: 0.82rem !important;
+.kpi-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
 }
 
-.pdf-container.exporting-pdf .milestone-change {
-  font-size: 0.78rem !important;
+.kpi-icon-box-sm {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
 }
 
-.pdf-container.exporting-pdf .print-glossary-section {
-  display: block !important;
-  margin-top: 15px !important;
-  padding-top: 10px !important;
-  border-top: 2px dashed #cbd5e1 !important;
-  page-break-inside: avoid !important;
+.kpi-category-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.65rem;
+  border-radius: 99px;
 }
 
-.pdf-container.exporting-pdf .glossary-title {
-  font-size: 0.82rem !important;
-  margin: 0 0 8px 0 !important;
+.kpi-main-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
-.pdf-container.exporting-pdf .glossary-grid {
-  gap: 12px !important;
+.kpi-title-text {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--rh-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0;
 }
 
-.pdf-container.exporting-pdf .glossary-item {
-  padding: 8px 12px !important;
-  border: 1px solid #cbd5e1 !important;
+.kpi-val-hero {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--rh-text-main);
+  line-height: 1.15;
+  margin: 0.15rem 0 0.35rem;
 }
 
-.pdf-container.exporting-pdf .glossary-item strong {
-  font-size: 0.74rem !important;
+.kpi-val-hero small {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--rh-text-muted);
+  margin-left: 0.2rem;
 }
 
-.pdf-container.exporting-pdf .glossary-item p {
-  font-size: 0.7rem !important;
+.kpi-desc {
+  font-size: 0.82rem;
+  color: #334155;
+  line-height: 1.5;
+  margin: 0.35rem 0 0;
+  background: #f8fafc;
+  padding: 0.75rem 0.95rem;
+  border-radius: 10px;
+  border-left: 3.5px solid #cbd5e1;
 }
 
-.pdf-container.exporting-pdf .print-observations-section {
-  display: block !important;
-  margin-top: 15px !important;
-  page-break-inside: avoid !important;
+.kpi-footer-sub {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--rh-text-muted);
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--rh-border-light);
+  margin-top: auto;
 }
 
-.pdf-container.exporting-pdf .observations-title {
-  font-size: 0.82rem !important;
-  margin: 0 0 8px 0 !important;
+.kpi-footer-sub i,
+.kpi-footer-sub .bx {
+  font-size: 1rem;
 }
 
-.pdf-container.exporting-pdf .observations-placeholder-lines {
-  gap: 8px !important;
+/* ─── Panel de Diagnósticos Clínicos Automatizados ───────────────────────── */
+.diagnostic-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 1.5rem;
+  margin: 0.25rem 0;
 }
 
-.pdf-container.exporting-pdf .obs-line {
-  border-bottom: 1px dashed #cbd5e1 !important;
-  height: 8px !important;
+.diagnostic-card {
+  background: #ffffff;
+  border: 1.5px solid var(--rh-border);
+  border-radius: var(--rh-radius-lg);
+  padding: 1.75rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: var(--rh-shadow-sm);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--rh-transition);
 }
 
-.pdf-container.exporting-pdf .print-validation-section {
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: flex-end !important;
-  margin-top: 25px !important;
-  padding-top: 15px !important;
-  border-top: 1px solid #cbd5e1 !important;
-  page-break-inside: avoid !important;
+.diagnostic-card:hover {
+  box-shadow: var(--rh-shadow-md);
+  border-color: #cbd5e1;
 }
 
-.pdf-container.exporting-pdf .signature-block {
-  width: 40% !important;
+.diagnostic-card-accent-a::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, var(--ns-green-dark), var(--ns-green-lime));
 }
 
-.pdf-container.exporting-pdf .signature-line {
-  border-bottom: 1.5px solid #94a3b8 !important;
-  margin-bottom: 6px !important;
+.diagnostic-card-accent-b::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #0284c7, #38bdf8);
 }
 
-.pdf-container.exporting-pdf .signature-title {
-  font-size: 0.74rem !important;
+.diagnostic-header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
 }
 
-.pdf-container.exporting-pdf .signature-subtitle {
-  font-size: 0.65rem !important;
+.diagnostic-score-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
 }
 
-.pdf-container.exporting-pdf .stamp-box {
-  width: 100px !important;
-  margin-bottom: 6px !important;
-  padding: 4px !important;
-  font-size: 0.65rem !important;
+.diagnostic-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1;
 }
 
-@media print {
-  /* Ocultar elementos de interfaz interactivos y cabeceras de pantalla */
-  aside.sidebar,
-  .close-mobile,
-  .btn-pdf,
-  .select-patient-box,
-  .empty-patient-state .btn-primary-sm,
-  header p,
-  .tracking-header-box p {
-    display: none !important;
-  }
-
-  /* Mostrar cabecera de impresión profesional */
-  .print-only-header {
-    display: block !important;
-    border-bottom: 2px solid #cbd5e1 !important;
-    padding-bottom: 12px !important;
-    margin-bottom: 20px !important;
-  }
-
-  .print-header-top {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    margin-bottom: 10px !important;
-  }
-
-  .print-brand {
-    color: #6c5ce7 !important;
-    font-size: 1.35rem !important;
-    font-weight: 800 !important;
-    margin: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-  }
-
-  .print-brand i {
-    font-size: 1.5rem !important;
-  }
-
-  .print-title {
-    font-size: 0.85rem !important;
-    font-weight: 700 !important;
-    color: #475569 !important;
-    letter-spacing: 0.5px !important;
-    text-transform: uppercase !important;
-  }
-
-  .print-header-meta {
-    display: flex !important;
-    justify-content: space-between !important;
-    background: #f8fafc !important;
-    padding: 8px 12px !important;
-    border-radius: 8px !important;
-    border: 1px solid #cbd5e1 !important;
-    font-size: 0.78rem !important;
-    color: #334155 !important;
-    margin: 0 !important;
-  }
-
-  .print-meta-col {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 4px !important;
-  }
-
-  .print-meta-col p {
-    margin: 0 !important;
-  }
-
-  .text-right {
-    text-align: right !important;
-  }
-
-  /* SEPARAR REPORTES EN PDF */
-  /* Si imprimimos Reporte Demográfico: ocultar la sección de pacientes */
-  body.print-demografico .patient-tracking-section,
-  body.print-demografico .progreso-header {
-    display: none !important;
-  }
-
-  /* Si imprimimos Reporte de Progreso: ocultar analíticas demográficas generales y la cabecera original */
-  body.print-progreso header,
-  body.print-progreso .metrics-grid,
-  body.print-progreso .demographics-row,
-  body.print-progreso .demografico-header {
-    display: none !important;
-  }
-
-  /* Estructura y márgenes de impresión general */
-  body, .main-content, .dashboard-container {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    background: #fff !important;
-  }
-
-  .catalog-container, .demo-card, .patient-tracking-section, .progress-chart-card {
-    border: none !important;
-    box-shadow: none !important;
-    padding: 10px 0 !important;
-    page-break-inside: avoid !important;
-  }
-
-  .metrics-grid {
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 15px !important;
-  }
-
-  .demographics-row, .charts-row {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 20px !important;
-  }
-
-  .patient-summary-banner {
-    border: 1px solid #cbd5e1 !important;
-    background: #f8fafc !important;
-    padding: 14px !important;
-    page-break-inside: avoid !important;
-  }
-
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
+.diagnostic-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
 }
+
+.diagnostic-category-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--rh-text-muted);
+}
+
+.diagnostic-title {
+  font-size: 1.18rem;
+  font-weight: 800;
+  color: var(--rh-text-main);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.diagnostic-status-tag {
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.diagnostic-desc-lead {
+  font-size: 0.84rem;
+  color: var(--rh-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.diagnostic-callout {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4.5px solid var(--ns-green-dark);
+  border-radius: var(--rh-radius-sm);
+  padding: 1.2rem 1.4rem;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  margin: 0.25rem 0;
+}
+
+.diagnostic-callout.callout-blue {
+  border-left-color: #0284c7;
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+
+.diagnostic-callout.callout-green {
+  border-left-color: var(--ns-green-dark);
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.diagnostic-callout-icon {
+  font-size: 1.45rem;
+  flex-shrink: 0;
+  color: var(--ns-green-dark);
+  margin-top: 0.15rem;
+}
+
+.diagnostic-callout.callout-blue .diagnostic-callout-icon {
+  color: #0284c7;
+}
+
+.diagnostic-body {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--rh-text-main);
+  margin: 0;
+  font-weight: 500;
+}
+
+.diagnostic-footer-meta {
+  margin-top: auto;
+  padding-top: 0.85rem;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: var(--rh-text-muted);
+}
+
+.diagnostic-footer-meta strong {
+  color: var(--rh-text-secondary);
+}
+
+/* ─── Subtítulos informativos y mejoras en Gráficas de Propuesta ──────────── */
+.chart-desc-banner {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--rh-radius-sm);
+  padding: 0.75rem 1.1rem;
+  font-size: 0.82rem;
+  color: #334155;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.chart-desc-banner i,
+.chart-desc-banner .bx {
+  font-size: 1.25rem;
+  color: var(--ns-green-dark);
+  flex-shrink: 0;
+}
+
+.progress-mini-bar {
+  width: 100%;
+  max-width: 90px;
+  height: 7px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 0.6rem;
+}
+
+.progress-mini-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.fill-green { background: var(--ns-green-dark); }
+.fill-lime { background: var(--ns-green-lime); }
+.fill-yellow { background: var(--ns-yellow); }
+.fill-orange { background: var(--ns-orange); }
+.fill-blue { background: #0284c7; }
+
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  margin-right: 0.55rem;
+}
+
+.rank-1 { background: #fef08a; color: #854d0e; }
+.rank-2 { background: #e2e8f0; color: #475569; }
+.rank-3 { background: #fed7aa; color: #9a3412; }
+.rank-other { background: #f1f5f9; color: #64748b; }
+
+
+

@@ -1,157 +1,276 @@
-<div class="main-content">
+<div class="bienestar-admin-container">
 
-  <!-- CABECERA -->
-  <header class="page-header">
-    <div>
-      <h1>Auditoría de Diarios de Bienestar</h1>
-      <p>Panel administrativo para consulta y eliminación permanente de registros.</p>
-    </div>
-    <div class="danger-badge" aria-label="Zona de borrado permanente">🗑️ BORRADO PERMANENTE</div>
-  </header>
+  <!-- ─── SECCIÓN: SELECCIÓN DE PACIENTE ───────────────────────────────────── -->
+  @if (!selectedPaciente()) {
+    <section class="patient-picker-section" aria-label="Selección de paciente">
+      <div class="picker-hero-banner">
+        <div class="picker-hero-content">
+          <div class="picker-icon-badge" aria-hidden="true">
+            <span class="bx bx-shield-quarter"></span>
+          </div>
+          <div>
+            <div class="picker-hero-tag">Módulo de Auditoría de Hábitos</div>
+            <h1 class="picker-hero-title">Diarios de Bienestar y Estilo de Vida</h1>
+            <p class="picker-hero-subtitle">
+              Selecciona un paciente para auditar sus registros de ánimo, calidad de sueño, síntomas e hidratación, con herramientas de eliminación segura e individual o por lote.
+            </p>
+          </div>
+        </div>
 
-  <!-- BUSCADOR -->
-  <section class="search-section" aria-label="Buscar diarios por paciente">
-    <form [formGroup]="searchForm" (ngSubmit)="onSearch()" novalidate class="search-form">
-      <div class="search-wrapper">
-        <label class="form-label" for="pacienteIdInput">ID del Paciente</label>
-        <input
-          type="number"
-          id="pacienteIdInput"
-          class="input-field"
-          placeholder="Ej: 42"
-          formControlName="pacienteId"
-          min="1"
-          (keyup.enter)="onSearch()"
-        />
-      </div>
-      <button type="submit" class="btn-search" [disabled]="searchForm.invalid">
-        <span class="bx bx-search" aria-hidden="true"></span>
-        Buscar Historial
-      </button>
-    </form>
-
-    @if (searchedPacienteId()) {
-      <p class="search-context" aria-live="polite">
-        Mostrando registros del Paciente ID:
-        <strong>#{{ searchedPacienteId() }}</strong>
-        — {{ totalElements() }} registro(s) encontrado(s)
-      </p>
-    }
-  </section>
-
-  <!-- TABLA DE REGISTROS -->
-  @if (!searchedPacienteId()) {
-    <div class="idle-state" role="status">
-      <div class="idle-icon" aria-hidden="true">🔍</div>
-      <h2>Ingresa un ID de paciente para comenzar</h2>
-      <p>Los diarios de bienestar se buscan por ID de paciente.</p>
-    </div>
-  } @else if (historyResource.isLoading()) {
-    <div class="loading-state" aria-live="polite" aria-busy="true">
-      <span class="spinner" aria-hidden="true"></span>
-      <p>Cargando registros...</p>
-    </div>
-  } @else if (historyResource.error()) {
-    <div class="error-state" role="alert">
-      <div class="error-icon" aria-hidden="true">⚠️</div>
-      <h2>No se pudo cargar el historial</h2>
-      <p>Verifica que el ID del paciente sea correcto o que tengas los permisos necesarios.</p>
-    </div>
-  } @else if (diarios().length === 0) {
-    <div class="empty-state" role="status">
-      <div class="empty-icon" aria-hidden="true">📋</div>
-      <h2>Sin registros</h2>
-      <p>Este paciente no tiene diarios de bienestar registrados.</p>
-    </div>
-  } @else {
-    <div class="content-card">
-      <div class="card-header">
-        <div>
-          <h2>Diarios del Paciente #{{ searchedPacienteId() }}</h2>
-          <p>Selecciona un registro para eliminarlo de forma permanente.</p>
+        <!-- Buscador en tiempo real -->
+        <div class="search-input-wrapper">
+          <span class="bx bx-search search-icon" aria-hidden="true"></span>
+          <input
+            type="search"
+            [value]="searchTerm()"
+            (input)="searchTerm.set($any($event.target).value)"
+            class="patient-search-input"
+            placeholder="Buscar paciente por nombre, apellido, correo o ID..."
+            aria-label="Buscar paciente"
+          />
+          @if (searchTerm()) {
+            <button type="button" class="btn-clear-search" (click)="searchTerm.set('')" aria-label="Limpiar búsqueda">
+              <span class="bx bx-x"></span>
+            </button>
+          }
         </div>
       </div>
 
-      <div class="table-wrapper">
-        <table aria-label="Registros de diario del paciente">
-          <thead>
-            <tr>
-              <th scope="col">ID</th>
-              <th scope="col">Fecha</th>
-              <th scope="col">Ánimo</th>
-              <th scope="col">Sueño</th>
-              <th scope="col">Síntoma</th>
-              <th scope="col">Actividad</th>
-              <th scope="col">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (diario of diarios(); track diario.id) {
-              <tr>
-                <td class="td-id" data-label="ID">#{{ diario.id }}</td>
-                <td class="td-fecha" data-label="Fecha">{{ formatFecha(diario.fecha) }}</td>
-                <td data-label="Ánimo">
-                  <span [attr.aria-label]="ESTADO_ANIMO_MAP[diario.estadoAnimo].label">
-                    {{ ESTADO_ANIMO_MAP[diario.estadoAnimo].emoji }}
-                    <span class="td-label-text">{{ ESTADO_ANIMO_MAP[diario.estadoAnimo].label }}</span>
-                  </span>
-                </td>
-                <td data-label="Sueño">
-                  <span class="badge badge-sleep">{{ CALIDAD_SUENO_MAP[diario.calidadSueno].label }}</span>
-                </td>
-                <td data-label="Síntoma">
-                  @if (diario.sintomaPrincipal !== 'NINGUNO') {
-                    <span class="badge badge-symptom">{{ SINTOMA_LABEL[diario.sintomaPrincipal] }}</span>
-                  } @else {
-                    <span class="td-none">—</span>
-                  }
-                </td>
-                <td data-label="Actividad">
-                  @if (diario.tipoActividadSugerida && diario.tipoActividadSugerida !== 'NINGUNA') {
-                    <span
-                      class="badge"
-                      [class.badge-success]="diario.actividadRealizada"
-                      [class.badge-pending]="!diario.actividadRealizada"
-                    >
-                      {{ diario.actividadRealizada ? 'Realizada' : 'Pendiente' }}
-                    </span>
-                  } @else {
-                    <span class="td-none">—</span>
-                  }
-                </td>
-                <td data-label="Acciones">
-                  <button
-                    type="button"
-                    class="btn-delete"
-                    (click)="eliminarDiario(diario)"
-                    [disabled]="isDeleting() === diario.id"
-                    [attr.aria-label]="'Eliminar diario #' + diario.id"
-                    [attr.aria-busy]="isDeleting() === diario.id"
-                  >
-                    @if (isDeleting() === diario.id) {
-                      <span class="bx bx-loader-alt bx-spin" aria-hidden="true"></span>
-                    } @else {
-                      <span class="bx bx-trash" aria-hidden="true"></span>
-                    }
-                    ELIMINAR
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+      <!-- Lista de Pacientes -->
+      @if (pacientesListResource.isLoading()) {
+        <div class="state-container loading-state" role="status" aria-live="polite">
+          <div class="app-spinner"></div>
+          <p class="state-text">Cargando catálogo de pacientes...</p>
+        </div>
+      } @else if (filteredPacientes().length === 0) {
+        <div class="state-container empty-state">
+          <div class="state-icon-circle neutral">
+            <span class="bx bx-user-x"></span>
+          </div>
+          <h3 class="state-title">No se encontraron pacientes</h3>
+          <p class="state-desc">
+            {{ searchTerm() ? 'No hay coincidencias con "' + searchTerm() + '"' : 'Aún no hay pacientes disponibles.' }}
+          </p>
+        </div>
+      } @else {
+        <div class="patients-grid">
+          @for (p of filteredPacientes(); track p.id) {
+            <div class="patient-picker-card" (click)="selectPaciente(p)">
+              <div class="picker-card-header">
+                <div class="patient-avatar-circle">
+                  {{ (p.nombre ? p.nombre[0] : '') + (p.apellidoPaterno ? p.apellidoPaterno[0] : '') }}
+                </div>
+                <div class="patient-card-info">
+                  <h3 class="patient-card-name">
+                    {{ p.nombre }} {{ p.apellidoPaterno }} {{ p.apellidoMaterno ?? '' }}
+                  </h3>
+                  <span class="patient-card-email">{{ p.correo }}</span>
+                </div>
+              </div>
+
+              <div class="picker-card-footer">
+                <span class="patient-id-tag">ID: #{{ p.id }}</span>
+                <span class="btn-view-diary-text">
+                  Ver Diarios de Bienestar <span class="bx bx-chevron-right"></span>
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+  } @else {
+
+    <!-- ─── MODO PACIENTE SELECCIONADO ─────────────────────────────────────── -->
+    <header class="patient-header-bar">
+      <div class="header-left-group">
+        <button type="button" class="btn-back-link" (click)="cambiarPaciente()" title="Volver a la selección de pacientes">
+          <span class="bx bx-arrow-back"></span>
+        </button>
+        <div class="patient-avatar-badge" aria-hidden="true">
+          {{ (selectedPaciente()!.nombre ? selectedPaciente()!.nombre[0] : '') + (selectedPaciente()!.apellidoPaterno ? selectedPaciente()!.apellidoPaterno[0] : '') }}
+        </div>
+        <div class="header-patient-info">
+          <div class="header-pre-title">Auditoría de Bienestar del Paciente</div>
+          <h1 class="header-patient-name">
+            {{ selectedPaciente()!.nombre }} {{ selectedPaciente()!.apellidoPaterno }} {{ selectedPaciente()!.apellidoMaterno ?? '' }}
+          </h1>
+          <span class="header-patient-sub">ID: #{{ selectedPaciente()!.id }} · {{ selectedPaciente()!.correo }}</span>
+        </div>
       </div>
 
-      @if ((historyResource.value()?.totalPages ?? 0) > 1) {
-        <app-pagination
-          [currentPage]="currentPage()"
-          [totalPages]="historyResource.value()?.totalPages ?? 0"
-          [totalElements]="totalElements()"
-          [pageSize]="pageSize()"
-          (pageChange)="onPageChange($event)"
-        />
+      <div class="header-actions-group">
+        <button type="button" class="btn-switch-patient" (click)="cambiarPaciente()">
+          <span class="bx bx-transfer-alt"></span> Cambiar Paciente
+        </button>
+      </div>
+    </header>
+
+    <!-- Barra de Herramientas y Acciones por Lote -->
+    <section class="batch-toolbar-card" aria-label="Acciones por lote">
+      <div class="toolbar-left-actions">
+        <label class="select-all-checkbox-label">
+          <input
+            type="checkbox"
+            class="custom-checkbox"
+            [checked]="isAllSelected()"
+            (change)="toggleSelectAll()"
+            [disabled]="diarios().length === 0"
+          />
+          <span class="select-all-text">Seleccionar Todos ({{ diarios().length }})</span>
+        </label>
+
+        @if (selectedCount() > 0) {
+          <span class="selected-counter-badge">
+            {{ selectedCount() }} seleccionado(s)
+          </span>
+        }
+      </div>
+
+      <div class="toolbar-right-actions">
+        <span class="results-count-tag">
+          Total: {{ totalElements() }} registro(s)
+        </span>
+
+        <button
+          type="button"
+          class="btn-delete-batch"
+          [disabled]="selectedCount() === 0 || isDeletingBatch()"
+          (click)="eliminarSeleccionados()"
+          title="Eliminar todos los reportes de bienestar seleccionados"
+        >
+          @if (isDeletingBatch()) {
+            <span class="bx bx-loader-alt bx-spin"></span> Eliminando...
+          } @else {
+            <span class="bx bx-trash"></span> Eliminar Seleccionados ({{ selectedCount() }})
+          }
+        </button>
+      </div>
+    </section>
+
+    <!-- Resultados -->
+    @if (historyResource.isLoading()) {
+      <div class="state-container loading-state" role="status" aria-live="polite">
+        <div class="app-spinner"></div>
+        <p class="state-text">Cargando registros de bienestar...</p>
+      </div>
+    } @else if (historyResource.error()) {
+      <div class="state-container error-state" role="alert">
+        <div class="state-icon-circle error">
+          <span class="bx bx-error-circle"></span>
+        </div>
+        <h3 class="state-title">Error al consultar los registros</h3>
+        <p class="state-desc">Verifica la conexión e intenta nuevamente.</p>
+        <button type="button" class="btn-primary" (click)="historyResource.reload()">
+          <span class="bx bx-refresh"></span> Reintentar
+        </button>
+      </div>
+    } @else if (diarios().length === 0) {
+      <div class="state-container empty-state">
+        <div class="state-icon-circle neutral">
+          <span class="bx bx-folder-open"></span>
+        </div>
+        <h3 class="state-title">Sin registros encontrados</h3>
+        <p class="state-desc">Este paciente no tiene diarios de bienestar registrados en el sistema.</p>
+      </div>
+    } @else {
+      <div class="records-grid">
+        @for (diario of diarios(); track diario.id) {
+          <article
+            class="record-admin-card"
+            [class.record-admin-card--selected]="isSelected(diario.id)"
+            (click)="toggleSelect(diario.id)"
+          >
+            <!-- Cabecera de Tarjeta -->
+            <div class="record-card-top">
+              <div class="record-top-left">
+                <input
+                  type="checkbox"
+                  class="custom-checkbox record-item-checkbox"
+                  [checked]="isSelected(diario.id)"
+                  (click)="$event.stopPropagation()"
+                  (change)="toggleSelect(diario.id)"
+                  aria-label="Seleccionar este registro"
+                />
+                <span class="record-id-badge">#{{ diario.id }}</span>
+              </div>
+              <span class="record-date-badge">
+                <span class="bx bx-calendar"></span> {{ formatFecha(diario.fecha) }}
+              </span>
+            </div>
+
+            <!-- Cuerpo de Tarjeta -->
+            <div class="record-card-body">
+              <div class="record-metric-row">
+                <span class="metric-lbl">Ánimo:</span>
+                <span class="metric-val">
+                  {{ ESTADO_ANIMO_MAP[diario.estadoAnimo].emoji }} {{ ESTADO_ANIMO_MAP[diario.estadoAnimo].label }}
+                </span>
+              </div>
+
+              <div class="record-metric-row">
+                <span class="metric-lbl">Sueño:</span>
+                <span class="metric-val">
+                  🌙 {{ CALIDAD_SUENO_MAP[diario.calidadSueno].label }} ({{ CALIDAD_SUENO_MAP[diario.calidadSueno].horas }}h)
+                </span>
+              </div>
+
+              <div class="record-metric-row">
+                <span class="metric-lbl">Síntoma:</span>
+                <span class="metric-val">
+                  {{ SINTOMA_LABEL[diario.sintomaPrincipal] }}
+                </span>
+              </div>
+
+              <div class="record-metric-row">
+                <span class="metric-lbl">Actividad:</span>
+                <span class="metric-val" [class.text-success]="diario.actividadRealizada">
+                  {{ diario.actividadRealizada ? '✅ Realizada' : '⏸️ Pendiente' }}
+                </span>
+              </div>
+
+              @if (diario.bebidas && diario.bebidas.length > 0) {
+                <div class="record-beverages-snippet">
+                  <span class="bx bx-coffee"></span>
+                  <span>{{ diario.bebidas.length }} bebida(s) registrada(s)</span>
+                </div>
+              }
+            </div>
+
+            <!-- Botón Eliminar Individual -->
+            <div class="record-card-actions" (click)="$event.stopPropagation()">
+              <button
+                type="button"
+                class="btn-delete-record"
+                (click)="eliminarDiario(diario, $event)"
+                [disabled]="isDeleting() === diario.id"
+                title="Eliminar permanentemente este registro"
+              >
+                @if (isDeleting() === diario.id) {
+                  <span class="bx bx-loader-alt bx-spin"></span> Eliminando...
+                } @else {
+                  <span class="bx bx-trash"></span> Eliminar
+                }
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+
+      @if (historyResource.value() && historyResource.value()!.totalPages > 1) {
+        <div class="pagination-wrap">
+          <app-pagination
+            [currentPage]="currentPage()"
+            [totalPages]="historyResource.value()!.totalPages"
+            [totalElements]="historyResource.value()!.totalElements"
+            [pageSize]="pageSize()"
+            (pageChange)="onPageChange($event)"
+          />
+        </div>
       }
-    </div>
-  }
+    }
+
+  } <!-- end @else (selectedPaciente !== null) -->
 
 </div>

@@ -8,6 +8,8 @@ import {
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { DashboardService } from '../../service/dashboard.service';
 import { AuthService } from '../../../../core/services/auth-service';
 import { CitaResponse } from '../../../citas/interfaces/cita.interface';
@@ -103,42 +105,61 @@ export class PacienteDashboardComponent implements OnInit {
   cargarDatos(): void {
     this.loading.set(true);
     const id = this.pacienteId();
-    if (!id) return;
+    if (!id) {
+      this.loading.set(false);
+      return;
+    }
 
-    this.dashboardService.getUltimaMedida(id).subscribe({
-      next: (res) => this.ultimaMedida.set(res.datos),
-    });
+    forkJoin({
+      medida: this.dashboardService.getUltimaMedida(id).pipe(catchError(() => of(null))),
+      historial: this.dashboardService.getHistorialMedidas(id).pipe(catchError(() => of(null))),
+      citas: this.dashboardService.getCitasPaciente(id).pipe(catchError(() => of(null))),
+      metasResumen: this.dashboardService.getResumenMetasPaciente(id).pipe(catchError(() => of(null))),
+      metas: this.dashboardService.getMetasPaciente(id).pipe(catchError(() => of(null))),
+      planes: this.dashboardService.getPlanesPaciente(id).pipe(catchError(() => of(null))),
+    }).subscribe({
+      next: ({ medida, historial, citas, metasResumen, metas, planes }) => {
+        if (medida?.datos) {
+          this.ultimaMedida.set(medida.datos);
+        }
 
-    this.dashboardService.getHistorialMedidas(id).subscribe({
-      next: (res) => this.historialMedidas.set(res.datos ?? []),
-    });
+        if (historial?.datos) {
+          const sorted = [...historial.datos].sort(
+            (a, b) => new Date(a.fechaMedicion).getTime() - new Date(b.fechaMedicion).getTime()
+          );
+          this.historialMedidas.set(sorted);
+        }
 
-    this.dashboardService.getCitasPaciente(id).subscribe({
-      next: (res) => this.citas.set(res.datos ?? []),
-    });
+        if (citas?.datos) {
+          this.citas.set(citas.datos);
+        }
 
-    this.dashboardService.getResumenMetasPaciente(id).subscribe({
-      next: (res) => {
-        const d = res.datos;
-        if (d) {
+        if (metasResumen?.datos) {
+          const d = metasResumen.datos as any;
           this.metaResumen.set({
-            total: d.total,
-            cumplidas: d.cumplidas,
-            pendientes: d.pendientes,
-            porValidar: d.porValidar,
-            porcentajeExito: d.porcentaje,
+            total: d.total ?? 0,
+            cumplidas: d.cumplidas ?? 0,
+            pendientes: d.pendientes ?? 0,
+            porValidar: d.porValidar ?? 0,
+            porcentajeExito: d.porcentajeExito ?? d.porcentaje ?? (d.total > 0 ? (d.cumplidas / d.total) * 100 : 0),
           });
         }
-      },
-    });
 
-    this.dashboardService.getPlanesPaciente(id).subscribe({
-      next: (res) => {
-        const planes = res.datos ?? [];
-        if (planes.length > 0) {
-          const sorted = [...planes].sort((a, b) => new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime());
-          this.planActivo.set(sorted[0]);
+        if (metas) {
+          const listaMetas = metas.datos?.content ?? (Array.isArray(metas.datos) ? metas.datos : (metas.content ?? []));
+          this.metas.set(listaMetas);
         }
+
+        if (planes?.datos) {
+          const planesList = planes.datos;
+          if (planesList.length > 0) {
+            const sortedPlanes = [...planesList].sort(
+              (a, b) => new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime()
+            );
+            this.planActivo.set(sortedPlanes[0]);
+          }
+        }
+
         this.loading.set(false);
       },
       error: () => this.loading.set(false),

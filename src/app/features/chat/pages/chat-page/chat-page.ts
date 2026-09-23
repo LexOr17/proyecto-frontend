@@ -15,6 +15,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { interval, map, of, switchMap } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
 import { ChatService } from '../../service/chat-service';
 import { PacienteService } from '../../../pacientes/service/paciente-service';
 import { CitaService } from '../../../citas/service/cita-service';
@@ -36,6 +37,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   private readonly pacienteService = inject(PacienteService);
   private readonly citaService = inject(CitaService);
   private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -95,44 +97,82 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
       }
     });
 
+    const targetContactId = Number(
+      this.route.snapshot.queryParamMap.get('pacienteId') ||
+      this.route.snapshot.queryParamMap.get('usuarioId')
+    );
+
     if (this.isNutriologo()) {
       this.pacienteService
         .obtenerPacientes(0, 200)
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe((page) => this.contacts.set(page.content.map(p => ({
-          id: p.id!,
-          nombre: p.nombre,
-          apellidoPaterno: p.apellidoPaterno,
-          apellidoMaterno: p.apellidoMaterno,
-        }))));
+        .subscribe((page) => {
+          const list: ChatContact[] = page.content.map(p => ({
+            id: p.id!,
+            nombre: p.nombre,
+            apellidoPaterno: p.apellidoPaterno,
+            apellidoMaterno: p.apellidoMaterno,
+          }));
+          this.contacts.set(list);
+
+          if (targetContactId) {
+            const found = list.find(c => Number(c.id) === targetContactId);
+            if (found) {
+              this.selectContact(found);
+            }
+          }
+        });
     } else {
-      // PACIENTE: get their citas to find the assigned nutriologoId,
-      // then fetch the nutriólogo's full details.
-      this.citaService
-        .obtenerCitasPorPaciente(userId)
-        .pipe(
-          takeUntilDestroyed(this.destroyRef),
-          map((citas) => {
-            const cita = citas[0];
-            if (!cita?.nutriologoId) throw new Error('Sin nutriólogo asignado');
-            return cita;
-          }),
-        )
+      // PACIENTE: Intenta obtener el nutriólogo del perfil del paciente.
+      this.pacienteService
+        .obtenerPacientePorId(userId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
-          next: (cita) => {
-            const [nombre = '', apellidoPaterno = '', apellidoMaterno] =
-              cita.nombreNutriologo.split(' ');
-            const contact: ChatContact = {
-              id: cita.nutriologoId,
-              nombre,
-              apellidoPaterno,
-              apellidoMaterno,
-            };
-            this.contacts.set([contact]);
-            this.selectContact(contact);
+          next: (paciente) => {
+            if (paciente.nutriologoId) {
+              const contact: ChatContact = {
+                id: paciente.nutriologoId!,
+                nombre: paciente.nombreNutriologo || 'Nutriólogo',
+                apellidoPaterno: paciente.apellidoPaternoNutriologo || '',
+              };
+              this.contacts.set([contact]);
+              this.selectContact(contact);
+            } else {
+              this.cargarNutriologoDesdeCitas(userId);
+            }
+          },
+          error: () => {
+            this.cargarNutriologoDesdeCitas(userId);
           },
         });
     }
+  }
+
+  private cargarNutriologoDesdeCitas(userId: number): void {
+    this.citaService
+      .obtenerCitasPorPaciente(userId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        map((citas) => {
+          const cita = citas[0];
+          if (!cita?.nutriologoId) throw new Error('Sin nutriólogo asignado');
+          return cita;
+        }),
+      )
+      .subscribe({
+        next: (cita) => {
+          const [nombre = '', apellidoPaterno = '', apellidoMaterno] =
+            cita.nombreNutriologo.split(' ');
+          const contact: ChatContact = {
+            id: cita.nutriologoId,
+            nombre,
+            apellidoPaterno,
+            apellidoMaterno,
+          };
+          this.contacts.set([contact]);
+          this.selectContact(contact);
+        },
+      });
   }
 
   ngAfterViewChecked(): void {
@@ -192,7 +232,7 @@ export class ChatPage implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   protected isMine(msg: ChatMessageDTO): boolean {
-    return msg.senderId === this.currentUserId();
+    return Number(msg.senderId) === Number(this.currentUserId());
   }
 
   protected formatTime(timestamp: string): string {

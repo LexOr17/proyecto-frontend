@@ -24,7 +24,22 @@ const pacientesRoutes: Routes = [
   {
     path: ':id',
     component: SeguimientoPaciente,
-    title: 'Seguimiento del Paciente',
+    title: 'Perfil del Paciente',
+  },
+  {
+    path: ':id/seguimiento',
+    loadComponent: () => import('./pages/historial-seguimiento/historial-seguimiento').then(m => m.HistorialSeguimiento),
+    title: 'Historial de Seguimiento',
+  },
+  {
+    path: ':id/seguimiento/nuevo',
+    loadComponent: () => import('./pages/nueva-consulta-seguimiento/nueva-consulta-seguimiento').then(m => m.NuevaConsultaSeguimiento),
+    title: 'Nueva Consulta de Seguimiento',
+  },
+  {
+    path: ':id/seguimiento/:seguimientoId/editar',
+    loadComponent: () => import('./pages/nueva-consulta-seguimiento/nueva-consulta-seguimiento').then(m => m.NuevaConsultaSeguimiento),
+    title: 'Editar Observaciones',
   },
   {
     path: ':id/medidas',

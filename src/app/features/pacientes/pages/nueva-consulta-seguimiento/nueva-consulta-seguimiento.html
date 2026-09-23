@@ -1,0 +1,592 @@
+<div class="main-content">
+  <div class="header-banner">
+    <a (click)="cancelar()" class="back-link" aria-label="Volver al historial">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m15 18-6-6 6-6" />
+      </svg>
+      <span>Volver al historial</span>
+    </a>
+    <h2>{{ isEditMode() ? 'Editar Observaciones de Seguimiento' : 'Nueva Consulta de Seguimiento' }}</h2>
+    @if (pacienteResource.value(); as paciente) {
+    <p class="subtitle">
+      <i class="bx bx-user" aria-hidden="true"></i> Paciente: <strong>{{ paciente.nombre }} {{ paciente.apellidoPaterno }} {{ paciente.apellidoMaterno }}</strong>
+    </p>
+    }
+  </div>
+
+  @if (errorMessage()) {
+  <div class="alert-error" role="alert">
+    <i class="bx bx-error-circle alert-icon" aria-hidden="true"></i>
+    <div class="alert-text">
+      <strong>Atención:</strong>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  </div>
+  }
+
+  <div class="form-container">
+
+    <!-- Sección 1: Selección de Período (Solo en modo Creación) -->
+    @if (!isEditMode()) {
+    <section class="form-section">
+      <div class="section-header-row">
+        <div>
+          <h3 class="section-title"><i class="bx bx-calendar" aria-hidden="true"></i> Período de Revisión</h3>
+          <p class="section-desc">Selecciona el rango de fechas para calcular los indicadores del avance del paciente.</p>
+        </div>
+        <span class="periodo-badge-info">Máximo: Hoy ({{ hoyLocal | date:'dd/MM/yyyy' }})</span>
+      </div>
+
+      <div class="periodo-buttons">
+        <button type="button" class="btn-periodo" [class.active]="periodoTipo() === 'SEMANA'"
+          (click)="cambiarPeriodo('SEMANA')">
+          <i class="bx bx-time-five" aria-hidden="true"></i> Última Semana (7 días)
+        </button>
+        <button type="button" class="btn-periodo" [class.active]="periodoTipo() === 'QUINCENA'"
+          (click)="cambiarPeriodo('QUINCENA')">
+          <i class="bx bx-calendar-event" aria-hidden="true"></i> Últimos 15 días
+        </button>
+        <button type="button" class="btn-periodo" [class.active]="periodoTipo() === 'MES'"
+          (click)="cambiarPeriodo('MES')">
+          <i class="bx bx-calendar-week" aria-hidden="true"></i> Último Mes (30 días)
+        </button>
+        <button type="button" class="btn-periodo" [class.active]="periodoTipo() === 'PERSONALIZADO'"
+          (click)="periodoTipo.set('PERSONALIZADO')">
+          <i class="bx bx-slider-alt" aria-hidden="true"></i> Personalizado
+        </button>
+      </div>
+
+      <div class="dates-inputs-grid">
+        <div class="field-group" [class.has-error]="fechasError() && isSubmitted()">
+          <label for="fechaInicio">
+            Fecha de Inicio <span class="req">*</span>
+          </label>
+          <div class="input-with-icon">
+            <i class="bx bx-calendar-event input-icon" aria-hidden="true"></i>
+            <input id="fechaInicio" type="date" [ngModel]="fechaInicio()" (ngModelChange)="fechaInicio.set($event)"
+              [disabled]="periodoTipo() !== 'PERSONALIZADO'" [max]="fechaFin() || hoyLocal" class="input-control" />
+          </div>
+        </div>
+
+        <div class="field-group" [class.has-error]="fechasError() && isSubmitted()">
+          <label for="fechaFin">
+            Fecha de Fin <span class="req">*</span>
+          </label>
+          <div class="input-with-icon">
+            <i class="bx bx-calendar-check input-icon" aria-hidden="true"></i>
+            <input id="fechaFin" type="date" [ngModel]="fechaFin()" (ngModelChange)="fechaFin.set($event)"
+              [disabled]="periodoTipo() !== 'PERSONALIZADO'" [min]="fechaInicio()" [max]="hoyLocal"
+              class="input-control" />
+          </div>
+        </div>
+      </div>
+
+      @if (fechasError()) {
+      <div class="field-inline-error">
+        <i class="bx bx-info-circle" aria-hidden="true"></i>
+        <span>{{ fechasError() }}</span>
+      </div>
+      }
+    </section>
+    }
+
+    <!-- Sección 2: Indicadores Calculados del Período -->
+    <section class="form-section indicators-section">
+      <div class="section-header-row">
+        <div>
+          <h3 class="section-title"><i class="bx bx-line-chart" aria-hidden="true"></i> Indicadores Calculados del Período</h3>
+          <p class="section-desc">Consolidado automático de métricas antropométricas, adherencia dietética y actividad física.</p>
+        </div>
+      </div>
+
+      <!-- MODO EDICIÓN: DATOS EXISTENTES -->
+      @if (isEditMode()) {
+        @if (existenteResource.value(); as exist) {
+          @let adherence = getAdherenciaBadge(exist.pctCumplimientoAlimentos, exist.pctActividad);
+          
+          <!-- Banner resumen del período evaluado -->
+          <div class="periodo-summary-banner">
+            <div class="summary-meta">
+              <span class="meta-label">Período Evaluado</span>
+              <span class="meta-value">
+                <i class="bx bx-calendar" aria-hidden="true"></i>
+                {{ exist.fechaInicio | date:'dd MMM yyyy' }} — {{ exist.fechaFin | date:'dd MMM yyyy' }}
+              </span>
+            </div>
+            <div class="adherence-badge" [ngClass]="adherence.cssClass">
+              <i class="bx" [ngClass]="adherence.icon" aria-hidden="true"></i>
+              <span>{{ adherence.label }} ({{ adherence.score }}%)</span>
+            </div>
+          </div>
+
+          <!-- Grid de Métricas Desglosadas en Columna (Full Width) -->
+          <div class="metrics-dashboard-grid">
+
+            <!-- Card 1: Evolución Ponderal -->
+            <div class="metric-card peso-card">
+              <div class="card-top">
+                <div class="card-top-left">
+                  <div class="card-icon-box peso-icon">
+                    <i class="bx bx-scale" aria-hidden="true"></i>
+                  </div>
+                  <div class="card-header-titles">
+                    <h4>Control de Peso y Evolución Ponderal</h4>
+                    <span class="card-category">Evaluación Antropométrica</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="peso-wide-content">
+                <div class="peso-flow-box">
+                  <div class="flow-step">
+                    <span class="step-label">Peso Inicial</span>
+                    <span class="step-val">{{ exist.pesoInicio !== null ? (exist.pesoInicio | number:'1.1-2') + ' kg' : 'Sin registro' }}</span>
+                  </div>
+                  <div class="flow-arrow">
+                    <i class="bx bx-right-arrow-alt" aria-hidden="true"></i>
+                  </div>
+                  <div class="flow-step">
+                    <span class="step-label">Peso Final</span>
+                    <span class="step-val highlight">{{ exist.pesoFin !== null ? (exist.pesoFin | number:'1.1-2') + ' kg' : 'Sin registro' }}</span>
+                  </div>
+                </div>
+
+                @if (exist.diferenciaPeso !== null) {
+                  <span class="variance-badge" [class.loss]="exist.diferenciaPeso < 0" [class.gain]="exist.diferenciaPeso > 0" [class.neutral]="exist.diferenciaPeso === 0">
+                    <i class="bx" [class.bx-trending-down]="exist.diferenciaPeso < 0" [class.bx-trending-up]="exist.diferenciaPeso > 0" [class.bx-minus]="exist.diferenciaPeso === 0" aria-hidden="true"></i>
+                    {{ exist.diferenciaPeso > 0 ? '+' : '' }}{{ exist.diferenciaPeso | number:'1.1-2' }} kg
+                    <small>({{ exist.diferenciaPeso < 0 ? 'Pérdida de peso' : (exist.diferenciaPeso > 0 ? 'Aumento de peso' : 'Sin cambio') }})</small>
+                  </span>
+                } @else {
+                  <span class="text-muted-sm">Datos insuficientes para variación ponderal</span>
+                }
+              </div>
+
+              <div class="card-footer-metric">
+                <span class="footer-label">Diagnóstico de Peso:</span>
+                <span class="footer-val">
+                  {{ exist.diferenciaPeso !== null ? (exist.diferenciaPeso < 0 ? 'Evolución favorable en reducción ponderal' : (exist.diferenciaPeso > 0 ? 'Incremento de peso registrado' : 'Peso corporal estable/mantenido')) : 'Registra mediciones en antropometría para ver la tendencia' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Card 2: Adherencia al Plan Alimentario -->
+            <div class="metric-card food-card">
+              <div class="card-top">
+                <div class="card-top-left">
+                  <div class="card-icon-box food-icon">
+                    <i class="bx bx-restaurant" aria-hidden="true"></i>
+                  </div>
+                  <div class="card-header-titles">
+                    <h4>Adherencia Dietética y Registro de Comidas</h4>
+                    <span class="card-category">Monitoreo Nutricional</span>
+                  </div>
+                </div>
+                <span class="main-percentage" [class.high]="exist.pctCumplimientoAlimentos >= 80" [class.mid]="exist.pctCumplimientoAlimentos >= 50 && exist.pctCumplimientoAlimentos < 80" [class.low]="exist.pctCumplimientoAlimentos < 50">
+                  {{ exist.pctCumplimientoAlimentos | number:'1.0-1' }}%
+                </span>
+              </div>
+
+              <div class="progress-bar-container">
+                <div class="progress-fill food-fill" [style.width.%]="exist.pctCumplimientoAlimentos"></div>
+              </div>
+
+              <div class="food-breakdown-grid">
+                <div class="food-pill food-cumplidas" title="Comidas realizadas según el plan">
+                  <div class="food-pill-left">
+                    <span class="pill-dot"></span>
+                    <span class="pill-label">Comidas Cumplidas</span>
+                  </div>
+                  <span class="pill-count">{{ exist.comidasCumplidas }}</span>
+                </div>
+                <div class="food-pill food-modificadas" title="Comidas modificadas por el paciente">
+                  <div class="food-pill-left">
+                    <span class="pill-dot"></span>
+                    <span class="pill-label">Comidas Modificadas</span>
+                  </div>
+                  <span class="pill-count">{{ exist.comidasModificadas }}</span>
+                </div>
+                <div class="food-pill food-saltadas" title="Comidas omitidas o saltadas">
+                  <div class="food-pill-left">
+                    <span class="pill-dot"></span>
+                    <span class="pill-label">Comidas Saltadas</span>
+                  </div>
+                  <span class="pill-count">{{ exist.comidasSaltadas }}</span>
+                </div>
+              </div>
+
+              <div class="card-footer-metric">
+                <span class="footer-label">Total de Registros en el Período:</span>
+                <span class="footer-val"><strong>{{ exist.totalComidasRegistradas }}</strong> comidas monitoreadas en el diario</span>
+              </div>
+            </div>
+
+            <!-- Card 3: Actividad Física y Ejercicio -->
+            <div class="metric-card activity-card">
+              <div class="card-top">
+                <div class="card-top-left">
+                  <div class="card-icon-box activity-icon">
+                    <i class="bx bx-run" aria-hidden="true"></i>
+                  </div>
+                  <div class="card-header-titles">
+                    <h4>Registro de Actividad Física y Ejercicio</h4>
+                    <span class="card-category">Estilo de Vida y Bienestar</span>
+                  </div>
+                </div>
+                <span class="main-percentage green-percentage">
+                  {{ exist.pctActividad | number:'1.0-1' }}%
+                </span>
+              </div>
+
+              <div class="progress-bar-container">
+                <div class="progress-fill activity-fill" [style.width.%]="exist.pctActividad"></div>
+              </div>
+
+              <div class="stat-mini-row">
+                <div class="mini-stat-col">
+                  <span class="mini-lbl">Días con Ejercicio</span>
+                  <span class="mini-val highlight-green">{{ exist.diasActividadRealizada }}</span>
+                </div>
+                <div class="mini-stat-col">
+                  <span class="mini-lbl">Total Días Evaluados</span>
+                  <span class="mini-val">{{ exist.totalDiasExtendidos }}</span>
+                </div>
+                <div class="mini-stat-col">
+                  <span class="mini-lbl">Días de Descanso / Sin Registro</span>
+                  <span class="mini-val text-muted-val">{{ exist.totalDiasExtendidos - exist.diasActividadRealizada > 0 ? exist.totalDiasExtendidos - exist.diasActividadRealizada : 0 }}</span>
+                </div>
+              </div>
+
+              <div class="card-footer-metric">
+                <span class="footer-label">Consistencia Deportiva:</span>
+                <span class="footer-val">{{ exist.pctActividad >= 70 ? 'Excelente regularidad en ejercicio' : (exist.pctActividad >= 40 ? 'Actividad física moderada' : 'Frecuencia baja de ejercicio') }}</span>
+              </div>
+            </div>
+
+            <!-- Card 4: Objetivos y Citas -->
+            <div class="metric-card goals-card">
+              <div class="card-top">
+                <div class="card-top-left">
+                  <div class="card-icon-box goals-icon">
+                    <i class="bx bx-target-lock" aria-hidden="true"></i>
+                  </div>
+                  <div class="card-header-titles">
+                    <h4>Cumplimiento de Objetivos y Asistencia a Consultas</h4>
+                    <span class="card-category">Compromiso y Asistencia</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="dual-metric-container">
+                <div class="dual-metric-item">
+                  <div class="dual-header">
+                    <span class="dual-title"><i class="bx bx-check-double" aria-hidden="true"></i> Objetivos Logrados</span>
+                    <span class="dual-count">{{ exist.metasCumplidas }} / {{ exist.totalMetas }}</span>
+                  </div>
+                  <div class="progress-bar-container mini">
+                    <div class="progress-fill metas-fill" [style.width.%]="exist.totalMetas > 0 ? (exist.metasCumplidas / exist.totalMetas * 100) : 0"></div>
+                  </div>
+                </div>
+
+                <div class="dual-metric-item">
+                  <div class="dual-header">
+                    <span class="dual-title"><i class="bx bx-calendar-check" aria-hidden="true"></i> Asistencia a Consultas</span>
+                    <span class="dual-count">{{ exist.citasCompletadas }} / {{ exist.totalCitas }}</span>
+                  </div>
+                  <div class="progress-bar-container mini">
+                    <div class="progress-fill citas-fill" [style.width.%]="exist.totalCitas > 0 ? (exist.citasCompletadas / exist.totalCitas * 100) : 0"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-footer-metric">
+                <span class="footer-label">Efectividad Global de Objetivos:</span>
+                <span class="footer-val">
+                  {{ exist.totalMetas > 0 ? ((exist.metasCumplidas / exist.totalMetas * 100) | number:'1.0-0') + '% de objetivos alcanzados' : 'Sin objetivos activos en el período' }}
+                </span>
+              </div>
+            </div>
+
+          </div>
+        }
+      } @else {
+        <!-- MODO CREACIÓN: PREVIEW DINÁMICA -->
+        @if (previewResource.isLoading()) {
+          <div class="preview-loading">
+            <div class="spinner-custom"></div>
+            <p>Calculando y consolidando indicadores del paciente para el período...</p>
+          </div>
+        } @else if (previewResource.value(); as preview) {
+          @let adherence = getAdherenciaBadge(preview.pctCumplimientoAlimentos, preview.pctActividad);
+
+          <!-- Banner resumen del período evaluado -->
+          <div class="periodo-summary-banner">
+            <div class="summary-meta">
+              <span class="meta-label">Período Evaluado</span>
+              <span class="meta-value">
+                <i class="bx bx-calendar" aria-hidden="true"></i>
+                {{ preview.fechaInicio | date:'dd MMM yyyy' }} — {{ preview.fechaFin | date:'dd MMM yyyy' }}
+              </span>
+            </div>
+            <div class="adherence-badge" [ngClass]="adherence.cssClass">
+              <i class="bx" [ngClass]="adherence.icon" aria-hidden="true"></i>
+              <span>{{ adherence.label }} ({{ adherence.score }}%)</span>
+            </div>
+          </div>
+
+          <!-- Grid de Métricas Desglosadas en Columna (Full Width) -->
+          <div class="metrics-dashboard-grid">
+
+            <!-- Card 1: Evolución Ponderal -->
+            <div class="metric-card peso-card">
+              <div class="card-top">
+                <div class="card-top-left">
+                  <div class="card-icon-box peso-icon">
+                    <i class="bx bx-scale" aria-hidden="true"></i>
+                  </div>
+                  <div class="card-header-titles">
+                    <h4>Control de Peso y Evolución Ponderal</h4>
+                    <span class="card-category">Evaluación Antropométrica</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="peso-wide-content">
+                <div class="peso-flow-box">
+                  <div class="flow-step">
+                    <span class="step-label">Peso Inicial</span>
+                    <span class="step-val">{{ preview.pesoInicio !== null ? (preview.pesoInicio | number:'1.1-2') + ' kg' : 'Sin registro' }}</span>
+                  </div>
+                  <div class="flow-arrow">
+                    <i class="bx bx-right-arrow-alt" aria-hidden="true"></i>
+                  </div>
+                  <div class="flow-step">
+                    <span class="step-label">Peso Final</span>
+                    <span class="step-val highlight">{{ preview.pesoFin !== null ? (preview.pesoFin | number:'1.1-2') + ' kg' : 'Sin registro' }}</span>
+                  </div>
+                </div>
+
+                @if (preview.diferenciaPeso !== null) {
+                  <span class="variance-badge" [class.loss]="preview.diferenciaPeso < 0" [class.gain]="preview.diferenciaPeso > 0" [class.neutral]="preview.diferenciaPeso === 0">
+                    <i class="bx" [class.bx-trending-down]="preview.diferenciaPeso < 0" [class.bx-trending-up]="preview.diferenciaPeso > 0" [class.bx-minus]="preview.diferenciaPeso === 0" aria-hidden="true"></i>
+                    {{ preview.diferenciaPeso > 0 ? '+' : '' }}{{ preview.diferenciaPeso | number:'1.1-2' }} kg
+                    <small>({{ preview.diferenciaPeso < 0 ? 'Pérdida de peso' : (preview.diferenciaPeso > 0 ? 'Aumento de peso' : 'Sin cambio') }})</small>
+                  </span>
+                } @else {
+                  <span class="text-muted-sm">Sin mediciones registradas en el período</span>
+                }
+              </div>
+
+              <div class="card-footer-metric">
+                <span class="footer-label">Diagnóstico de Peso:</span>
+                <span class="footer-val">
+                  {{ preview.diferenciaPeso !== null ? (preview.diferenciaPeso < 0 ? 'Evolución favorable en reducción ponderal' : (preview.diferenciaPeso > 0 ? 'Incremento de peso registrado' : 'Peso corporal estable/mantenido')) : 'Registra mediciones en antropometría para ver la tendencia' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Card 2: Adherencia al Plan Alimentario -->
+            <div class="metric-card food-card">
+              <div class="card-top">
+                <div class="card-top-left">
+                  <div class="card-icon-box food-icon">
+                    <i class="bx bx-restaurant" aria-hidden="true"></i>
+                  </div>
+                  <div class="card-header-titles">
+                    <h4>Adherencia Dietética y Registro de Comidas</h4>
+                    <span class="card-category">Monitoreo Nutricional</span>
+                  </div>
+                </div>
+                <span class="main-percentage" [class.high]="preview.pctCumplimientoAlimentos >= 80" [class.mid]="preview.pctCumplimientoAlimentos >= 50 && preview.pctCumplimientoAlimentos < 80" [class.low]="preview.pctCumplimientoAlimentos < 50">
+                  {{ preview.pctCumplimientoAlimentos | number:'1.0-1' }}%
+                </span>
+              </div>
+
+              <div class="progress-bar-container">
+                <div class="progress-fill food-fill" [style.width.%]="preview.pctCumplimientoAlimentos"></div>
+              </div>
+
+              <div class="food-breakdown-grid">
+                <div class="food-pill food-cumplidas" title="Comidas realizadas según el plan">
+                  <div class="food-pill-left">
+                    <span class="pill-dot"></span>
+                    <span class="pill-label">Comidas Cumplidas</span>
+                  </div>
+                  <span class="pill-count">{{ preview.comidasCumplidas }}</span>
+                </div>
+                <div class="food-pill food-modificadas" title="Comidas modificadas por el paciente">
+                  <div class="food-pill-left">
+                    <span class="pill-dot"></span>
+                    <span class="pill-label">Comidas Modificadas</span>
+                  </div>
+                  <span class="pill-count">{{ preview.comidasModificadas }}</span>
+                </div>
+                <div class="food-pill food-saltadas" title="Comidas omitidas o saltadas">
+                  <div class="food-pill-left">
+                    <span class="pill-dot"></span>
+                    <span class="pill-label">Comidas Saltadas</span>
+                  </div>
+                  <span class="pill-count">{{ preview.comidasSaltadas }}</span>
+                </div>
+              </div>
+
+              <div class="card-footer-metric">
+                <span class="footer-label">Total de Registros en el Período:</span>
+                <span class="footer-val"><strong>{{ preview.totalComidasRegistradas }}</strong> comidas monitoreadas en el diario</span>
+              </div>
+            </div>
+
+            <!-- Card 3: Actividad Física y Ejercicio -->
+            <div class="metric-card activity-card">
+              <div class="card-top">
+                <div class="card-top-left">
+                  <div class="card-icon-box activity-icon">
+                    <i class="bx bx-run" aria-hidden="true"></i>
+                  </div>
+                  <div class="card-header-titles">
+                    <h4>Registro de Actividad Física y Ejercicio</h4>
+                    <span class="card-category">Estilo de Vida y Bienestar</span>
+                  </div>
+                </div>
+                <span class="main-percentage green-percentage">
+                  {{ preview.pctActividad | number:'1.0-1' }}%
+                </span>
+              </div>
+
+              <div class="progress-bar-container">
+                <div class="progress-fill activity-fill" [style.width.%]="preview.pctActividad"></div>
+              </div>
+
+              <div class="stat-mini-row">
+                <div class="mini-stat-col">
+                  <span class="mini-lbl">Días con Ejercicio</span>
+                  <span class="mini-val highlight-green">{{ preview.diasActividadRealizada }}</span>
+                </div>
+                <div class="mini-stat-col">
+                  <span class="mini-lbl">Total Días Evaluados</span>
+                  <span class="mini-val">{{ preview.totalDiasExtendidos }}</span>
+                </div>
+                <div class="mini-stat-col">
+                  <span class="mini-lbl">Días de Descanso / Sin Registro</span>
+                  <span class="mini-val text-muted-val">{{ preview.totalDiasExtendidos - preview.diasActividadRealizada > 0 ? preview.totalDiasExtendidos - preview.diasActividadRealizada : 0 }}</span>
+                </div>
+              </div>
+
+              <div class="card-footer-metric">
+                <span class="footer-label">Consistencia Deportiva:</span>
+                <span class="footer-val">{{ preview.pctActividad >= 70 ? 'Excelente regularidad en ejercicio' : (preview.pctActividad >= 40 ? 'Actividad física moderada' : 'Frecuencia baja de ejercicio') }}</span>
+              </div>
+            </div>
+
+            <!-- Card 4: Objetivos y Citas -->
+            <div class="metric-card goals-card">
+              <div class="card-top">
+                <div class="card-top-left">
+                  <div class="card-icon-box goals-icon">
+                    <i class="bx bx-target-lock" aria-hidden="true"></i>
+                  </div>
+                  <div class="card-header-titles">
+                    <h4>Cumplimiento de Objetivos y Asistencia a Consultas</h4>
+                    <span class="card-category">Compromiso y Asistencia</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="dual-metric-container">
+                <div class="dual-metric-item">
+                  <div class="dual-header">
+                    <span class="dual-title"><i class="bx bx-check-double" aria-hidden="true"></i> Objetivos Logrados</span>
+                    <span class="dual-count">{{ preview.metasCumplidas }} / {{ preview.totalMetas }}</span>
+                  </div>
+                  <div class="progress-bar-container mini">
+                    <div class="progress-fill metas-fill" [style.width.%]="preview.totalMetas > 0 ? (preview.metasCumplidas / preview.totalMetas * 100) : 0"></div>
+                  </div>
+                </div>
+
+                <div class="dual-metric-item">
+                  <div class="dual-header">
+                    <span class="dual-title"><i class="bx bx-calendar-check" aria-hidden="true"></i> Asistencia a Consultas</span>
+                    <span class="dual-count">{{ preview.citasCompletadas }} / {{ preview.totalCitas }}</span>
+                  </div>
+                  <div class="progress-bar-container mini">
+                    <div class="progress-fill citas-fill" [style.width.%]="preview.totalCitas > 0 ? (preview.citasCompletadas / preview.totalCitas * 100) : 0"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-footer-metric">
+                <span class="footer-label">Efectividad Global de Objetivos:</span>
+                <span class="footer-val">
+                  {{ preview.totalMetas > 0 ? ((preview.metasCumplidas / preview.totalMetas * 100) | number:'1.0-0') + '% de objetivos alcanzados' : 'Sin objetivos activos en el período' }}
+                </span>
+              </div>
+            </div>
+
+          </div>
+        } @else {
+          <div class="empty-indicators-box">
+            <i class="bx bx-calendar-x empty-icon" aria-hidden="true"></i>
+            <p class="empty-msg">Selecciona un rango de fechas válido para calcular y desplegar el avance.</p>
+          </div>
+        }
+      }
+    </section>
+
+    <!-- Sección 3: Observaciones y Notas -->
+    <section class="form-section">
+      <h3 class="section-title"><i class="bx bx-notepad" aria-hidden="true"></i> Notas y Observaciones</h3>
+      <p class="section-desc">Registra las conclusiones del periodo evaluado y las indicaciones a seguir.</p>
+
+      <div class="field-group mb-3" [class.has-error]="observacionesError() && (observacionesTouched() || isSubmitted())">
+        <label for="observaciones">
+          Observaciones Generales del Progreso <span class="req">*</span>
+        </label>
+        <textarea id="observaciones" rows="4" [ngModel]="observaciones()" (ngModelChange)="observaciones.set($event)"
+          (blur)="observacionesTouched.set(true)"
+          placeholder="Escribe tus observaciones detalladas sobre el progreso, adherencia y evolución del paciente en este período..."
+          class="textarea-control"></textarea>
+        
+        <div class="textarea-footer">
+          @if (observacionesError() && (observacionesTouched() || isSubmitted())) {
+            <span class="field-error-text">
+              <i class="bx bx-error" aria-hidden="true"></i> {{ observacionesError() }}
+            </span>
+          } @else {
+            <span class="field-hint">Mínimo 5 caracteres. Campo obligatorio para el registro.</span>
+          }
+          <span class="char-count">{{ observaciones().trim().length }} caracteres</span>
+        </div>
+      </div>
+
+      <div class="field-group mb-3">
+        <label for="conclusiones">Conclusiones <span class="opt">(Opcional)</span></label>
+        <textarea id="conclusiones" rows="3" [ngModel]="conclusiones()" (ngModelChange)="conclusiones.set($event)"
+          placeholder="Conclusiones diagnósticas sobre los resultados del período..." class="textarea-control"></textarea>
+      </div>
+
+      <div class="field-group">
+        <label for="recomendaciones">Recomendaciones y Ajustes al Plan <span class="opt">(Opcional)</span></label>
+        <textarea id="recomendaciones" rows="3" [ngModel]="recomendaciones()"
+          (ngModelChange)="recomendaciones.set($event)"
+          placeholder="Ajustes a la dieta, requerimientos calóricos, actividad o suplementación recomendada..." class="textarea-control"></textarea>
+      </div>
+    </section>
+
+    <!-- Botones de Acción -->
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="cancelar()" [disabled]="isSaving()">
+        <i class="bx bx-x" aria-hidden="true"></i> Cancelar
+      </button>
+      <button type="button" class="btn-primary" (click)="guardar()" [disabled]="isSaving() || (isSubmitted() && !isFormValid())">
+        @if (isSaving()) {
+          <span class="spinner-sm"></span> Guardando...
+        } @else {
+          <i class="bx bx-save" aria-hidden="true"></i>
+          {{ isEditMode() ? 'Actualizar Observaciones' : 'Guardar Consulta de Seguimiento' }}
+        }
+      </button>
+    </div>
+
+  </div>
+</div>

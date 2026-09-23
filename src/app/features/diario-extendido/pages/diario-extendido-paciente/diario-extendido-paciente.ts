@@ -15,7 +15,7 @@ import { DiarioExtendidoService } from '../../service/diario-extendido-service';
 import { AuthService } from '../../../../core/services/auth-service';
 import { NotificationService } from '../../../../shared/service/notification-service';
 import { Pagination } from '../../../../shared/components/pagination/pagination';
-import { Page, PageEvent } from '../../../../shared/interfaces/page.interface';
+import { PageEvent } from '../../../../shared/interfaces/page.interface';
 import {
     BebidaConsumida,
     CalidadSueno,
@@ -102,21 +102,19 @@ export class DiarioExtendidoPaciente {
         return d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
     });
 
+    // ─── Formulario sin valores preseleccionados automáticos ──────────────
     protected readonly form = this.fb.group({
-        estadoAnimo: this.fb.control<EstadoAnimo>('FELIZ', {
-            nonNullable: true,
+        estadoAnimo: this.fb.control<EstadoAnimo | null>(null, {
             validators: Validators.required,
         }),
-        calidadSueno: this.fb.control<CalidadSueno>('BUENA', {
-            nonNullable: true,
+        calidadSueno: this.fb.control<CalidadSueno | null>(null, {
             validators: Validators.required,
         }),
-        sintomaPrincipal: this.fb.control<Sintoma>('NINGUNO', {
-            nonNullable: true,
+        sintomaPrincipal: this.fb.control<Sintoma | null>(null, {
             validators: Validators.required,
         }),
         sintomaDetalle: this.fb.control('', { nonNullable: true }),
-        actividadRealizada: this.fb.control(false, { nonNullable: true }),
+        actividadRealizada: this.fb.control<boolean | null>(null),
         bebidasNombre: this.fb.control('', { nonNullable: true }),
         bebidasCantidad: this.fb.control<number | null>(null),
     });
@@ -125,7 +123,7 @@ export class DiarioExtendidoPaciente {
         this.form.controls.sintomaPrincipal.valueChanges.pipe(
             startWith(this.form.controls.sintomaPrincipal.value),
         ),
-        { initialValue: 'NINGUNO' as Sintoma },
+        { initialValue: null as Sintoma | null },
     );
 
     protected readonly showSintomaDetalle = computed(
@@ -137,6 +135,21 @@ export class DiarioExtendidoPaciente {
         if (!d?.tipoActividadSugerida || d.tipoActividadSugerida === 'NINGUNA') return null;
         const label = TIPO_ACTIVIDAD_LABEL[d.tipoActividadSugerida];
         return d.actividadDetalle ? `${label}: ${d.actividadDetalle}` : label;
+    });
+
+    private readonly formValues = toSignal(
+        this.form.valueChanges.pipe(
+            startWith(this.form.getRawValue()),
+        ),
+        { initialValue: this.form.getRawValue() },
+    );
+
+    protected readonly isFormIncomplete = computed(() => {
+        const v = this.formValues();
+        if (!v?.estadoAnimo || !v?.calidadSueno || !v?.sintomaPrincipal) return true;
+        if (v.sintomaPrincipal === 'OTRO' && !v.sintomaDetalle?.trim()) return true;
+        if (this.sugerenciaTexto() && (v.actividadRealizada === null || v.actividadRealizada === undefined)) return true;
+        return false;
     });
 
     constructor() {
@@ -239,24 +252,56 @@ export class DiarioExtendidoPaciente {
 
     private populateForm(diario: DiarioExtendidoResponse): void {
         this.form.patchValue({
-            ...(diario.estadoAnimo && { estadoAnimo: diario.estadoAnimo }),
-            ...(diario.calidadSueno && { calidadSueno: diario.calidadSueno }),
-            ...(diario.sintomaPrincipal && { sintomaPrincipal: diario.sintomaPrincipal }),
+            estadoAnimo: diario.estadoAnimo ?? null,
+            calidadSueno: diario.calidadSueno ?? null,
+            sintomaPrincipal: diario.sintomaPrincipal ?? null,
             sintomaDetalle: diario.sintomaDetalle ?? '',
-            actividadRealizada: diario.actividadRealizada ?? false,
+            actividadRealizada: diario.actividadRealizada ?? null,
         });
         this.bebidas.set(diario.bebidas ?? []);
     }
 
     private resetForm(): void {
-        this.form.patchValue({
-            estadoAnimo: 'FELIZ',
-            calidadSueno: 'BUENA',
-            sintomaPrincipal: 'NINGUNO',
+        this.form.reset({
+            estadoAnimo: null,
+            calidadSueno: null,
+            sintomaPrincipal: null,
             sintomaDetalle: '',
-            actividadRealizada: false,
+            actividadRealizada: null,
+            bebidasNombre: '',
+            bebidasCantidad: null,
         });
         this.bebidas.set([]);
+    }
+
+    // ─── Setters interactivos ─────────────────────────────────────────────
+    protected setAnimo(mood: EstadoAnimo): void {
+        this.form.controls.estadoAnimo.setValue(mood);
+        this.form.controls.estadoAnimo.markAsTouched();
+    }
+
+    protected setSueno(sueno: CalidadSueno): void {
+        this.form.controls.calidadSueno.setValue(sueno);
+        this.form.controls.calidadSueno.markAsTouched();
+    }
+
+    protected setActividad(realizada: boolean): void {
+        this.form.controls.actividadRealizada.setValue(realizada);
+        this.form.controls.actividadRealizada.markAsTouched();
+    }
+
+    protected onSintomaChange(event: Event): void {
+        const val = (event.target as HTMLSelectElement).value as Sintoma;
+        this.form.controls.sintomaPrincipal.setValue(val || null);
+        this.form.controls.sintomaPrincipal.markAsTouched();
+        const detalleCtrl = this.form.controls.sintomaDetalle;
+        if (val === 'OTRO') {
+            detalleCtrl.setValidators([Validators.required, Validators.maxLength(255)]);
+        } else {
+            detalleCtrl.clearValidators();
+            detalleCtrl.setValue('');
+        }
+        detalleCtrl.updateValueAndValidity();
     }
 
     protected addBebida(): void {
@@ -268,16 +313,42 @@ export class DiarioExtendidoPaciente {
         this.form.controls.bebidasCantidad.setValue(null);
     }
 
+    protected quickAddBebida(nombre: string, cantidad: number): void {
+        this.bebidas.update(list => [...list, { nombre, cantidad }]);
+    }
+
     protected removeBebida(index: number): void {
         this.bebidas.update(list => list.filter((_, i) => i !== index));
     }
 
     protected onSubmit(): void {
-        if (this.form.invalid || this.isSaving() || this.isLocked()) return;
+        this.form.markAllAsTouched();
+        
+        if (this.isLocked()) {
+            this.notificationService.warning('El plazo de registro para este día ha vencido.');
+            return;
+        }
 
         const v = this.form.getRawValue();
-        if (v.sintomaPrincipal === 'OTRO' && !v.sintomaDetalle.trim()) {
-            this.notificationService.error('Por favor, especifica los detalles de tu síntoma.');
+
+        if (!v.estadoAnimo) {
+            this.notificationService.warning('Por favor, selecciona cómo te sientes hoy (estado de ánimo).');
+            return;
+        }
+        if (!v.calidadSueno) {
+            this.notificationService.warning('Por favor, indica tu calidad de descanso.');
+            return;
+        }
+        if (!v.sintomaPrincipal) {
+            this.notificationService.warning('Por favor, selecciona un síntoma o indica "Ninguno".');
+            return;
+        }
+        if (v.sintomaPrincipal === 'OTRO' && !v.sintomaDetalle?.trim()) {
+            this.notificationService.warning('Por favor, especifica el detalle de tu síntoma.');
+            return;
+        }
+        if (this.sugerenciaTexto() && v.actividadRealizada === null) {
+            this.notificationService.warning('Por favor, indica si realizaste la actividad física sugerida.');
             return;
         }
 
@@ -288,8 +359,8 @@ export class DiarioExtendidoPaciente {
                 estadoAnimo: v.estadoAnimo,
                 calidadSueno: v.calidadSueno,
                 sintomaPrincipal: v.sintomaPrincipal,
-                sintomaDetalle: v.sintomaDetalle || undefined,
-                actividadRealizada: v.actividadRealizada,
+                sintomaDetalle: v.sintomaDetalle?.trim() || undefined,
+                actividadRealizada: v.actividadRealizada ?? undefined,
                 bebidas: this.bebidas(),
             })
             .pipe(takeUntilDestroyed(this.destroyRef))
@@ -297,7 +368,8 @@ export class DiarioExtendidoPaciente {
                 next: () => {
                     this.diaryResource.reload();
                     this.historyResource.reload();
-                    this.notificationService.success('¡Registro guardado correctamente!');
+                    this.isEditing.set(false);
+                    this.notificationService.success('¡Registro de bienestar guardado correctamente!');
                     this.isSaving.set(false);
                 },
                 error: () => {

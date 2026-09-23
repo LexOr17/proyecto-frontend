@@ -11,7 +11,7 @@ import {
   PlanResumen,
 } from '../interfaces/dashboard.interfaces';
 import { CitaResponse } from '../../citas/interfaces/cita.interface';
-import { MetaStatusCount } from '../../metas/interfaces/meta.interface';
+import { MetaResponse, MetaStatusCount } from '../../metas/interfaces/meta.interface';
 import { PlanAlimenticioResponse } from '../../planes/interfaces/plan.interface';
 
 @Injectable({ providedIn: 'root' })
@@ -75,6 +75,12 @@ export class DashboardService {
   getCitasPaciente(pacienteId: number): Observable<ApiResponse<CitaResponse[]>> {
     return this.http.get<ApiResponse<CitaResponse[]>>(
       `${this.base}/citas/paciente/${pacienteId}`
+    );
+  }
+
+  getMetasPaciente(pacienteId: number, page = 0, size = 10): Observable<any> {
+    return this.http.get<any>(
+      `${this.base}/metas/paciente/${pacienteId}?page=${page}&size=${size}`
     );
   }
 }

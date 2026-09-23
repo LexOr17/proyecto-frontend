@@ -8,7 +8,7 @@ import {
     signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { DiarioExtendidoService } from '../../service/diario-extendido-service';
@@ -24,6 +24,7 @@ import {
     SINTOMA_LABEL,
     TIPO_ACTIVIDAD_LABEL,
 } from '../../interfaces/diario-extendido.interface';
+import { Paciente } from '../../../pacientes/interfaces/paciente.interface';
 
 interface WeekDay {
     date: Date;
@@ -42,6 +43,7 @@ interface WeekDay {
 export class DiarioExtendidoNutriologo implements OnInit {
     private readonly fb = inject(FormBuilder);
     private readonly route = inject(ActivatedRoute);
+    private readonly router = inject(Router);
     private readonly service = inject(DiarioExtendidoService);
     private readonly pacienteService = inject(PacienteService);
     private readonly notificationService = inject(NotificationService);
@@ -54,6 +56,32 @@ export class DiarioExtendidoNutriologo implements OnInit {
     protected readonly pageSize = signal(10);
     protected readonly selectedDateIso = signal<string>(this.localDateISO(new Date()));
     protected readonly expandedRowId = signal<number | null>(null);
+
+    // ─── Patient Picker (when no patient selected) ──────────────────────
+    protected readonly searchTerm = signal<string>('');
+
+    protected readonly pacientesListResource = rxResource({
+        stream: () => this.pacienteService.obtenerPacientes(0, 100),
+    });
+
+    protected readonly allPacientes = computed((): Paciente[] => {
+        return this.pacientesListResource.value()?.content ?? [];
+    });
+
+    protected readonly filteredPacientes = computed((): Paciente[] => {
+        const term = this.searchTerm().toLowerCase().trim();
+        const list = this.allPacientes();
+        if (!term) return list;
+        return list.filter(p => {
+            const full = `${p.nombre} ${p.apellidoPaterno} ${p.apellidoMaterno ?? ''}`.toLowerCase();
+            return full.includes(term) || (p.id && String(p.id).includes(term)) || (p.correo && p.correo.toLowerCase().includes(term));
+        });
+    });
+
+    protected selectPaciente(id: number): void {
+        this.router.navigate(['/main/diario-extendido/paciente', id]);
+        this.pacienteId.set(id);
+    }
 
     protected readonly ESTADO_ANIMO_MAP = ESTADO_ANIMO_MAP;
     protected readonly CALIDAD_SUENO_MAP = CALIDAD_SUENO_MAP;
@@ -279,7 +307,7 @@ export class DiarioExtendidoNutriologo implements OnInit {
 
     protected formatBebidas(entry: DiarioExtendidoResponse): string {
         if (!entry.bebidas?.length) return '—';
-        return entry.bebidas.map(b => `${b.nombre} (${b.cantidad}L)`).join(', ');
+        return entry.bebidas.map(b => `${b.nombre} (${b.cantidad} ml)`).join(', ');
     }
 
     protected onSuggestionSubmit(): void {

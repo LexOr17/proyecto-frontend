@@ -39,16 +39,32 @@ export class MetasNutriologo {
 
   protected readonly validator = FormValidatorHelper;
 
-  private readonly pacienteId = Number(
+  protected readonly pacienteId = Number(
     this.route.snapshot.paramMap.get('pacienteId') ?? '0'
   );
 
   protected readonly currentPage = signal(0);
-  protected readonly pageSize = signal(5);
+  protected readonly pageSize = signal(6);
   protected readonly isSubmitting = signal(false);
   protected readonly editingMeta = signal<MetaResponse | null>(null);
   protected readonly processingId = signal<number | null>(null);
   protected readonly observacionesMap = signal<Record<number, string>>({});
+
+  // Filtros interactivos
+  protected readonly filtroEstado = signal<'TODOS' | EstadoMeta>('TODOS');
+  protected readonly searchTerm = signal<string>('');
+
+  // Fecha mínima para nuevas metas (hoy)
+  protected readonly hoyFechaStr = new Date().toISOString().split('T')[0];
+
+  // Plantillas clínicas rápidas
+  protected readonly plantillasRapidas = [
+    { label: '💧 Hidratación 2L', texto: 'Beber al menos 2 litros de agua natural distribuidos a lo largo del día.' },
+    { label: '🥗 Porción de Verduras', texto: 'Añadir 1 porción abundante de verduras frescas o al vapor en comida y cena.' },
+    { label: '🚶 8,000 Pasos', texto: 'Completar un mínimo de 8,000 pasos diarios o 30 minutos de caminata continua.' },
+    { label: '🌙 Sueño 7-8h', texto: 'Dormir entre 7 y 8 horas continuas para optimizar la recuperación metabólica.' },
+    { label: '🚫 Sin ultraprocesados', texto: 'Eliminar el consumo de bebidas azucaradas y harinas refinadas durante la noche.' },
+  ];
 
   private readonly editModalRef = viewChild<ElementRef<HTMLElement>>('editModal');
 
@@ -84,6 +100,45 @@ export class MetasNutriologo {
     () => this.metasPorValidar().length > 0 || this.metasActivas().length > 0
   );
 
+  protected readonly porcentajeExito = computed(() => {
+    const c = this.conteoResource.value();
+    if (!c) return 0;
+    const pct = c.porcentaje ?? c.porcentajeExito ?? (c.total > 0 ? (c.cumplidas / c.total) * 100 : 0);
+    return Math.min(100, Math.max(0, Math.round(pct)));
+  });
+
+  // Nivel de adherencia clínico
+  protected readonly nivelCumplimiento = computed(() => {
+    const pct = this.porcentajeExito();
+    const total = this.conteoResource.value()?.total ?? 0;
+    if (total === 0) return { label: 'Sin Objetivos', class: 'level-neutral', icon: 'bx-info-circle' };
+    if (pct >= 80) return { label: 'Adherencia Excelente', class: 'level-excellent', icon: 'bx-award' };
+    if (pct >= 50) return { label: 'Progreso Estable', class: 'level-good', icon: 'bx-trending-up' };
+    return { label: 'Requiere Refuerzo', class: 'level-warning', icon: 'bx-error-circle' };
+  });
+
+  // Métricas para el Gauge circular
+  protected readonly radioGauge = 42;
+  protected readonly circunferenciaGauge = 2 * Math.PI * 42;
+
+  protected getOffsetGauge(pct: number): number {
+    const clampPct = Math.min(100, Math.max(0, pct));
+    return this.circunferenciaGauge - (clampPct / 100) * this.circunferenciaGauge;
+  }
+
+  // Lista filtrada en tiempo real
+  protected readonly metasFiltradas = computed(() => {
+    const all = this.metasResource.value()?.content ?? [];
+    const filtro = this.filtroEstado();
+    const query = this.searchTerm().trim().toLowerCase();
+
+    return all.filter(m => {
+      const matchEstado = filtro === 'TODOS' ? true : m.estado === filtro;
+      const matchQuery = query ? m.descripcion.toLowerCase().includes(query) : true;
+      return matchEstado && matchQuery;
+    });
+  });
+
   protected readonly nuevaMetaForm = this.fb.group({
     descripcion: ['', [Validators.required, Validators.minLength(10)]],
     fechaObjetivo: ['', Validators.required],
@@ -104,6 +159,28 @@ export class MetasNutriologo {
     });
   }
 
+  protected aplicarPlantilla(texto: string): void {
+    this.nuevaMetaForm.patchValue({ descripcion: texto });
+    this.nuevaMetaForm.get('descripcion')?.markAsDirty();
+  }
+
+  protected establecerFechaDias(dias: number): void {
+    const d = new Date();
+    d.setDate(d.getDate() + dias);
+    const iso = d.toISOString().split('T')[0];
+    this.nuevaMetaForm.patchValue({ fechaObjetivo: iso });
+    this.nuevaMetaForm.get('fechaObjetivo')?.markAsDirty();
+  }
+
+  protected setFiltro(estado: 'TODOS' | EstadoMeta): void {
+    this.filtroEstado.set(estado);
+  }
+
+  protected onSearchInput(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    this.searchTerm.set(val);
+  }
+
   protected crearMeta(): void {
     if (this.nuevaMetaForm.invalid) {
       this.nuevaMetaForm.markAllAsTouched();
@@ -121,7 +198,7 @@ export class MetasNutriologo {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.notificationService.success('Meta asignada correctamente');
+          this.notificationService.success('Objetivo asignado correctamente');
           this.nuevaMetaForm.reset();
           this.isSubmitting.set(false);
           this.metasResource.reload();
@@ -162,7 +239,7 @@ export class MetasNutriologo {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.notificationService.success('Meta actualizada correctamente');
+          this.notificationService.success('Objetivo actualizado correctamente');
           this.cerrarEdicion();
           this.metasResource.reload();
           this.conteoResource.reload();
@@ -172,8 +249,8 @@ export class MetasNutriologo {
 
   protected async eliminarMeta(meta: MetaResponse): Promise<void> {
     const confirmed = await this.confirmDialog.open(
-      'Eliminar meta',
-      '¿Estás seguro de eliminar esta meta? Esta acción no se puede deshacer.'
+      'Eliminar objetivo',
+      '¿Estás seguro de eliminar este objetivo? Esta acción no se puede deshacer.'
     );
     if (!confirmed) return;
     this.processingId.set(meta.id);
@@ -182,7 +259,7 @@ export class MetasNutriologo {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.notificationService.success('Meta eliminada');
+          this.notificationService.success('Objetivo eliminado');
           this.processingId.set(null);
           this.metasResource.reload();
           this.conteoResource.reload();
@@ -232,6 +309,7 @@ export class MetasNutriologo {
   }
 
   protected formatearFecha(fecha: string): string {
+    if (!fecha) return 'Sin fecha';
     const date = new Date(fecha + 'T00:00:00');
     return date.toLocaleDateString('es-ES', {
       day: 'numeric',
@@ -240,13 +318,32 @@ export class MetasNutriologo {
     });
   }
 
+  protected diasRestantes(fecha: string): { texto: string; statusClass: string } {
+    if (!fecha) return { texto: '', statusClass: '' };
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const target = new Date(fecha + 'T00:00:00');
+    const diffTime = target.getTime() - hoy.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return { texto: `Venció hace ${Math.abs(diffDays)}d`, statusClass: 'date-overdue' };
+    } else if (diffDays === 0) {
+      return { texto: 'Vence hoy', statusClass: 'date-today' };
+    } else if (diffDays === 1) {
+      return { texto: 'Vence mañana', statusClass: 'date-soon' };
+    } else {
+      return { texto: `${diffDays} días restantes`, statusClass: 'date-future' };
+    }
+  }
+
   protected etiquetaEstado(estado: EstadoMeta): string {
     const labels: Record<EstadoMeta, string> = {
       PENDIENTE: 'En Seguimiento',
       POR_VALIDAR: 'Por Validar',
-      CUMPLIDA: 'Lograda',
-      RECHAZADA: 'Rechazada',
-      NO_CUMPLIDA: 'No Lograda',
+      CUMPLIDA: 'Logrado',
+      RECHAZADA: 'Rechazado',
+      NO_CUMPLIDA: 'No Cumplido',
     };
     return labels[estado];
   }

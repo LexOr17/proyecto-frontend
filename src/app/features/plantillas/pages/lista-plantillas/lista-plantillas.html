@@ -1,123 +1,204 @@
 <div class="main-content">
-  <header>
-    <div class="header-title">
-      <h1><i class="bx bx-notepad" aria-hidden="true"></i> Mis Plantillas</h1>
+  <!-- ── Header Principal ── -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-icon-wrap" aria-hidden="true">
+        <i class="bx bx-book-bookmark"></i>
+      </div>
+      <div>
+        <h1 class="header-title">Plantillas Nutricionales</h1>
+        <p class="header-subtitle">Diseña y organiza tiempos de comida estándar para tus pacientes</p>
+      </div>
     </div>
-    <a routerLink="nueva" class="btn-primary">
-      <i class="bx bx-plus" aria-hidden="true"></i> Nueva Plantilla
+    <a routerLink="nueva" class="btn-create-plantilla">
+      <i class="bx bx-plus-circle" aria-hidden="true"></i>
+      <span>Nueva Plantilla</span>
     </a>
   </header>
 
   <div class="catalog-container">
 
-    <div class="catalog-actions-bar">
-      <div class="search-box">
-        <i class='bx bx-search' aria-hidden="true"></i>
+    <!-- ── Barra de Búsqueda y Filtros ── -->
+    <div class="catalog-toolbar">
+      <div class="search-bar">
+        <i class='bx bx-search search-icon' aria-hidden="true"></i>
         <label for="search-plantillas" class="sr-only">Buscar plantillas</label>
-        <input type="text" id="search-plantillas" placeholder="Buscar plantilla por nombre..."
-          [value]="searchTerm()" (input)="onSearchChange($event)">
-      </div>
-    </div>
-
-    @if (plantillasResource.isLoading()) {
-    <div class="loading-message">
-      <p>Cargando plantillas...</p>
-    </div>
-    } @else {
-
-    <div class="cards-grid" role="list" aria-label="Plantillas guardadas">
-      @for (plantilla of plantillasFiltradas(); track plantilla.id) {
-      <article class="plantilla-card" role="listitem">
-
-        <div class="card-header">
-          <div class="tipo-badge">
-            <span aria-hidden="true">{{ obtenerIconTipo(plantilla.tipoComida) }}</span>
-            {{ obtenerLabelTipo(plantilla.tipoComida) }}
-          </div>
-          <time class="card-date" [attr.datetime]="plantilla.fechaCreacion">
-            {{ plantilla.fechaCreacion | slice: 0 : 10 }}
-          </time>
-        </div>
-
-        <h3 class="card-title">{{ plantilla.nombre }}</h3>
-
-        <p class="card-alimentos">
-          <strong>Alimentos:</strong>
-          @if (plantilla.detalles.length > 0) {
-            {{ plantilla.detalles[0].nombreAlimento }}
-            @if (plantilla.detalles.length > 1) {
-              , {{ plantilla.detalles[1].nombreAlimento }}
-            }
-            @if (plantilla.detalles.length > 2) {
-              <span class="more-label"> +{{ plantilla.detalles.length - 2 }} más</span>
-            }
-          } @else {
-            <em>Sin alimentos</em>
-          }
-        </p>
-
-        <div class="card-macros">
-          <div class="macro-item macro-cal">
-            <span class="macro-value">{{ plantilla.totalCalorias | number: '1.0-0' }}</span>
-            <span class="macro-label">kcal</span>
-          </div>
-          <div class="macro-item macro-p">
-            <span class="macro-value">{{ plantilla.totalProteinas | number: '1.1-1' }}g</span>
-            <span class="macro-label">Prot</span>
-          </div>
-          <div class="macro-item macro-c">
-            <span class="macro-value">{{ plantilla.totalCarbohidratos | number: '1.1-1' }}g</span>
-            <span class="macro-label">Carbs</span>
-          </div>
-          <div class="macro-item macro-g">
-            <span class="macro-value">{{ plantilla.totalGrasas | number: '1.1-1' }}g</span>
-            <span class="macro-label">Grasas</span>
-          </div>
-        </div>
-
-        <div class="card-actions">
-          <a
-            [routerLink]="['editar', plantilla.id]"
-            class="btn-edit"
-            [attr.aria-label]="'Editar plantilla ' + plantilla.nombre">
-            <i class="bx bx-edit" aria-hidden="true"></i> Editar
-          </a>
-
-          <button
-            class="btn-delete"
-            [attr.aria-label]="'Eliminar plantilla ' + plantilla.nombre"
-            [disabled]="isDeleting() === plantilla.id"
-            (click)="eliminarPlantilla(plantilla)">
-            @if (isDeleting() === plantilla.id) {
-              <span aria-hidden="true">⏳</span> Eliminando...
-            } @else {
-              <i class="bx bx-trash" aria-hidden="true"></i> Eliminar
-            }
-          </button>
-        </div>
-
-      </article>
-      } @empty {
-      <div class="empty-message">
-        <i class="bx bx-notepad" aria-hidden="true"></i>
+        <input
+          type="text"
+          id="search-plantillas"
+          placeholder="Buscar por nombre o ingrediente..."
+          [value]="searchTerm()"
+          (input)="onSearchChange($event)">
         @if (searchTerm()) {
-          <p>No se encontraron plantillas que coincidan con "{{ searchTerm() }}"</p>
-        } @else {
-          <p>No hay plantillas creadas aún.</p>
-          <a routerLink="nueva" class="btn-primary-sm">Crear primera plantilla</a>
+          <button type="button" class="btn-clear-search" (click)="limpiarBusqueda()" aria-label="Limpiar búsqueda">
+            <i class="bx bx-x" aria-hidden="true"></i>
+          </button>
         }
       </div>
-      }
+
+      <!-- Segmented Control de Momentos del Día -->
+      <div class="filter-chips" role="radiogroup" aria-label="Filtrar por momento del día">
+        <button
+          type="button"
+          class="chip-btn"
+          [class.active]="selectedTipo() === ''"
+          (click)="selectTipo('')">
+          Todas
+        </button>
+        @for (tipo of tiposComida; track tipo.value) {
+          <button
+            type="button"
+            class="chip-btn"
+            [class.active]="selectedTipo() === tipo.value"
+            (click)="selectTipo(tipo.value)">
+            <span aria-hidden="true">{{ tipo.icon }}</span> {{ tipo.label }}
+          </button>
+        }
+      </div>
     </div>
 
-    @if ((plantillasResource.value()?.totalPages ?? 0) > 0) {
-    <app-pagination
-      [currentPage]="currentPage()"
-      [totalPages]="plantillasResource.value()?.totalPages ?? 0"
-      [totalElements]="plantillasResource.value()?.totalElements ?? 0"
-      [pageSize]="pageSize()"
-      (pageChange)="onPageChange($event)" />
-    }
+    <!-- ── Estado de Carga ── -->
+    @if (plantillasResource.isLoading()) {
+      <div class="loading-state" aria-live="polite">
+        <div class="spinner-ring"></div>
+        <p>Cargando tus plantillas...</p>
+      </div>
+    } @else {
+
+      <!-- ── Grid de Tarjetas ── -->
+      <div class="cards-grid" role="list" aria-label="Plantillas guardadas">
+        @for (plantilla of plantillasFiltradas(); track plantilla.id) {
+          <article class="plantilla-card" role="listitem">
+
+            <!-- Card Header -->
+            <div class="card-header">
+              <div class="tipo-pill" [class]="'tipo-' + plantilla.tipoComida.toLowerCase()">
+                <span class="tipo-icon" aria-hidden="true">{{ obtenerIconTipo(plantilla.tipoComida) }}</span>
+                <span class="tipo-text">{{ obtenerLabelTipo(plantilla.tipoComida) }}</span>
+              </div>
+              <time class="card-date" [attr.datetime]="plantilla.fechaCreacion" title="Fecha de creación">
+                <i class="bx bx-calendar-event" aria-hidden="true"></i>
+                {{ plantilla.fechaCreacion | slice: 0 : 10 }}
+              </time>
+            </div>
+
+            <!-- Card Title -->
+            <h2 class="card-title">{{ plantilla.nombre }}</h2>
+
+            <!-- Alimentos Listados en Tags -->
+            <div class="card-foods-section">
+              <span class="foods-heading">Ingredientes:</span>
+              @if (plantilla.detalles && plantilla.detalles.length > 0) {
+                <div class="foods-tags">
+                  @for (detalle of plantilla.detalles | slice: 0 : 3; track detalle.alimentoId) {
+                    <span class="food-tag" title="{{ detalle.nombreAlimento }}">
+                      {{ detalle.nombreAlimento }}
+                    </span>
+                  }
+                  @if (plantilla.detalles.length > 3) {
+                    <span class="food-tag food-tag-more">
+                      +{{ plantilla.detalles.length - 3 }} más
+                    </span>
+                  }
+                </div>
+              } @else {
+                <p class="foods-empty">Sin alimentos seleccionados</p>
+              }
+            </div>
+
+            <!-- Macro Dashboard Pills -->
+            <div class="card-macros-matrix">
+              <div class="macro-cell macro-cal">
+                <span class="macro-icon" aria-hidden="true">🔥</span>
+                <div class="macro-data">
+                  <span class="macro-num">{{ plantilla.totalCalorias | number: '1.0-0' }}</span>
+                  <span class="macro-unit">kcal</span>
+                </div>
+              </div>
+              <div class="macro-cell macro-pro">
+                <span class="macro-icon" aria-hidden="true">🥩</span>
+                <div class="macro-data">
+                  <span class="macro-num">{{ plantilla.totalProteinas | number: '1.1-1' }}g</span>
+                  <span class="macro-unit">Prot</span>
+                </div>
+              </div>
+              <div class="macro-cell macro-carb">
+                <span class="macro-icon" aria-hidden="true">🌾</span>
+                <div class="macro-data">
+                  <span class="macro-num">{{ plantilla.totalCarbohidratos | number: '1.1-1' }}g</span>
+                  <span class="macro-unit">Carbs</span>
+                </div>
+              </div>
+              <div class="macro-cell macro-fat">
+                <span class="macro-icon" aria-hidden="true">🥑</span>
+                <div class="macro-data">
+                  <span class="macro-num">{{ plantilla.totalGrasas | number: '1.1-1' }}g</span>
+                  <span class="macro-unit">Grasas</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Actions -->
+            <div class="card-actions">
+              <a
+                [routerLink]="['editar', plantilla.id]"
+                class="btn-card-action btn-edit"
+                [attr.aria-label]="'Editar plantilla ' + plantilla.nombre">
+                <i class="bx bx-edit-alt" aria-hidden="true"></i>
+                <span>Editar</span>
+              </a>
+
+              <button
+                type="button"
+                class="btn-card-action btn-delete"
+                [attr.aria-label]="'Eliminar plantilla ' + plantilla.nombre"
+                [disabled]="isDeleting() === plantilla.id"
+                (click)="eliminarPlantilla(plantilla)">
+                @if (isDeleting() === plantilla.id) {
+                  <span class="spinner-sm" aria-hidden="true"></span>
+                  <span>Borrando...</span>
+                } @else {
+                  <i class="bx bx-trash-alt" aria-hidden="true"></i>
+                  <span>Eliminar</span>
+                }
+              </button>
+            </div>
+
+          </article>
+        } @empty {
+          <!-- Empty State -->
+          <div class="empty-state">
+            <div class="empty-state-icon" aria-hidden="true">
+              <i class="bx bx-food-menu"></i>
+            </div>
+            @if (searchTerm() || selectedTipo()) {
+              <h3 class="empty-title">Sin resultados de búsqueda</h3>
+              <p class="empty-desc">No encontramos plantillas que coincidan con tus filtros aplicados.</p>
+              <button type="button" class="btn-reset-filters" (click)="limpiarBusqueda(); selectTipo('')">
+                <i class="bx bx-refresh" aria-hidden="true"></i> Limpiar filtros
+              </button>
+            } @else {
+              <h3 class="empty-title">Aún no has creado plantillas</h3>
+              <p class="empty-desc">Crea tu primera plantilla de comida para armar planes alimenticios más rápido.</p>
+              <a routerLink="nueva" class="btn-create-plantilla">
+                <i class="bx bx-plus" aria-hidden="true"></i> Crear Primera Plantilla
+              </a>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- ── Paginación ── -->
+      @if ((plantillasResource.value()?.totalPages ?? 0) > 0) {
+        <div class="pagination-wrapper">
+          <app-pagination
+            [currentPage]="currentPage()"
+            [totalPages]="plantillasResource.value()?.totalPages ?? 0"
+            [totalElements]="plantillasResource.value()?.totalElements ?? 0"
+            [pageSize]="pageSize()"
+            (pageChange)="onPageChange($event)" />
+        </div>
+      }
 
     }
 

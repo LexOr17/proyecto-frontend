@@ -1,175 +1,421 @@
-<div class="pw">
+<div class="hm-container">
 
-  <!-- ── Page Header ── -->
-  <header class="pg-hd">
-    <a [routerLink]="['/main/pacientes', pacienteId()]" class="pg-hd__back"
-      aria-label="Volver al seguimiento del paciente">
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="m15 18-6-6 6-6" />
-      </svg>
-      Volver al seguimiento
-    </a>
-    <div class="pg-hd__row">
-      <div class="pg-hd__ico" aria-hidden="true">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 12h6" /><path d="M12 9v6" />
-          <path d="M3 9a2 2 0 0 1 2-2h1V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v2h1a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+  <!-- ══════════════════════════════════════════════
+       CABECERA DE PÁGINA (HEADER CLÍNICO)
+  ══════════════════════════════════════════════ -->
+  <header class="hm-header">
+    <div class="hm-header__nav">
+      <a [routerLink]="['/main/pacientes', pacienteId()]" class="hm-back-btn" aria-label="Volver al seguimiento del paciente">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m15 18-6-6 6-6" />
         </svg>
+        <span>Volver al seguimiento</span>
+      </a>
+    </div>
+
+    <div class="hm-header__main">
+      <div class="hm-header__profile">
+        <div class="hm-avatar" aria-hidden="true">
+          {{ inicialesPaciente() }}
+        </div>
+        <div class="hm-header__info">
+          <div class="hm-badge-row">
+            <span class="hm-pill hm-pill--primary">Historial de Salud</span>
+            @if (pacienteResource.value(); as p) {
+              <span class="hm-pill hm-pill--muted">Expediente #{{ p.id }}</span>
+            }
+          </div>
+          <h1 class="hm-title">
+            {{ nombreCompleto() || 'Expediente del Paciente' }}
+          </h1>
+          <p class="hm-subtitle">
+            Registro, evaluación y seguimiento patológico, farmacológico y sintomatológico.
+          </p>
+        </div>
       </div>
-      <div class="pg-hd__txt">
-        <h1 class="pg-hd__h1">Historial Médico</h1>
-        @if (pacienteResource.value(); as p) {
-          <p class="pg-hd__name">{{ nombreCompleto() }}</p>
+
+      <!-- Métricas rápidas de cabecera -->
+      <div class="hm-quick-stats">
+        @if (imcData(); as imc) {
+          <div class="hm-stat-card">
+            <span class="hm-stat-card__lbl">IMC Actual</span>
+            <div class="hm-stat-card__val">
+              <strong>{{ imc.imc }}</strong>
+              <span class="hm-imc-tag" [class]="imc.clase">{{ imc.estado }}</span>
+            </div>
+          </div>
+        }
+        @if (historialResource.value(); as pagina) {
+          <div class="hm-stat-card">
+            <span class="hm-stat-card__lbl">Evaluaciones</span>
+            <div class="hm-stat-card__val">
+              <strong>{{ pagina.totalElements }}</strong>
+              <span class="hm-stat-card__sub">registros</span>
+            </div>
+          </div>
         }
       </div>
     </div>
   </header>
 
-  <!-- ═══════════════════════════════════════
-       FORMULARIO
-  ═══════════════════════════════════════ -->
-  <section class="f-card" id="historial-form" aria-label="Formulario de historial médico">
+  <!-- ══════════════════════════════════════════════
+       FORMULARIO DE EVALUACIÓN MÉDICA
+  ══════════════════════════════════════════════ -->
+  <section class="hm-form-card" id="historial-form" aria-label="Formulario de Historial Médico">
 
-    <div class="f-card__top">
-      <h2 class="f-card__ttl">
-        {{ modoEdicion() ? 'Editar Historial Médico' : 'Nuevo Historial Médico' }}
-      </h2>
-      <p class="f-card__sub">
-        {{ modoEdicion()
-          ? 'Modifica los campos y guarda los cambios.'
-          : 'Completa los campos con la información médica actual del paciente.' }}
-      </p>
+    <!-- Encabezado del Formulario -->
+    <div class="hm-form-card__header">
+      <div class="hm-form-card__title-group">
+        <div class="hm-step-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <line x1="10" y1="9" x2="8" y2="9"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="hm-form-card__title">
+            {{ modoEdicion() ? 'Editar Evaluación de Salud' : 'Nueva Evaluación de Salud' }}
+          </h2>
+          <p class="hm-form-card__subtitle">
+            {{ modoEdicion()
+              ? 'Actualice los antecedentes, síntomas y medicamentos del paciente.'
+              : 'Complete los datos requeridos para guardar la evaluación.' }}
+          </p>
+        </div>
+      </div>
+
+      @if (modoEdicion()) {
+        <div class="hm-editing-alert" role="status" aria-live="polite">
+          <div class="hm-editing-alert__txt">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            <span>Modificando registro del <strong>{{ formatDate(editingFecha()) }}</strong></span>
+          </div>
+          <button type="button" class="hm-btn-ghost-sm" (click)="cancelarEdicion()">
+            Cancelar
+          </button>
+        </div>
+      }
     </div>
 
-    @if (modoEdicion()) {
-      <div class="edit-banner" role="status" aria-live="polite">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor"
-          viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-        </svg>
-        <span>Editando el registro del <strong>{{ formatDate(editingFecha()) }}</strong></span>
-        <button type="button" class="edit-banner__x" (click)="cancelarEdicion()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor"
-            viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+    <!-- Alerta Global de Validación si intenta enviar incompleto -->
+    @if (submitted() && (!isPaso1Valido || !isPaso2Valido || !isPaso3Valido || form.invalid)) {
+      <div class="hm-validation-banner" role="alert">
+        <div class="hm-validation-banner__icon">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+            <line x1="12" y1="8" x2="12" y2="12" stroke-width="2" stroke-linecap="round"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5" stroke-linecap="round"></line>
           </svg>
-          Cancelar
-        </button>
+        </div>
+        <div class="hm-validation-banner__content">
+          <strong>Atención: El formulario contiene información incompleta</strong>
+          <ul>
+            @if (selectedEnfermedades().length === 0) {
+              <li>Paso 1: Debe seleccionar al menos una enfermedad o marcar "Ninguna".</li>
+            }
+            @if (showOtraEnfermedad() && form.get('otraEnfermedad')?.value?.trim()?.length! < 3) {
+              <li>Paso 1: Especifique la otra enfermedad (mínimo 3 caracteres).</li>
+            }
+            @if (selectedSintomas().length === 0) {
+              <li>Paso 2: Debe seleccionar al menos un síntoma presente o marcar "Ninguno".</li>
+            }
+            @if (showOtroSintoma() && form.get('otroSintoma')?.value?.trim()?.length! < 3) {
+              <li>Paso 2: Especifique el otro síntoma (mínimo 3 caracteres).</li>
+            }
+            @if (showDescripcionMedicamento() && form.get('descripcionMedicamento')?.value?.trim()?.length! < 3) {
+              <li>Paso 3: Proporcione el nombre y dosis del medicamento o suplemento.</li>
+            }
+          </ul>
+        </div>
       </div>
     }
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="f-body">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="hm-form-body">
 
-      <!-- ── Paso 1 · Enfermedades ── -->
-      <fieldset class="paso">
-        <legend class="paso__hd">
-          <span class="paso__n paso__n--r" aria-hidden="true">01</span>
-          <div class="paso__meta">
-            <span class="paso__ttl">Enfermedades Conocidas</span>
-            <span class="paso__sub">Seleccione todas las que apliquen</span>
+      <!-- ══════════════════════════════════════════════
+           PASO 1: ENFERMEDADES CONOCIDAS
+      ══════════════════════════════════════════════ -->
+      <fieldset class="hm-step" id="paso-enfermedades" [class.hm-step--invalid]="submitted() && !isPaso1Valido">
+        <legend class="hm-step__legend">
+          <div class="hm-step__badge hm-step__badge--rose" aria-hidden="true">01</div>
+          <div class="hm-step__meta">
+            <div class="hm-step__title-row">
+              <span class="hm-step__title">Enfermedades Conocidas</span>
+              <span class="hm-badge-count" [class.hm-badge-count--active]="selectedEnfermedades().length > 0">
+                {{ selectedEnfermedades().length }} seleccionada(s)
+              </span>
+              @if (submitted() && !isPaso1Valido) {
+                <span class="hm-tag-error">Requerido</span>
+              }
+            </div>
+            <p class="hm-step__desc">
+              Seleccione las patologías diagnosticadas en el paciente o marque <em>"Ninguna"</em>.
+            </p>
           </div>
         </legend>
-        <div class="paso__bd">
-          <div class="cgrid" role="group" aria-label="Enfermedades conocidas">
-            @for (opt of enfermedadesOptions; track opt.value) {
+
+        <div class="hm-step__content">
+          <!-- Barra de Búsqueda y Filtros de Enfermedades -->
+          <div class="hm-toolbar">
+            <div class="hm-search-box">
+              <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="8" stroke-width="2"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65" stroke-width="2" stroke-linecap="round"></line>
+              </svg>
+              <input
+                type="search"
+                [value]="enfermedadSearch()"
+                (input)="enfermedadSearch.set($any($event.target).value)"
+                placeholder="Buscar enfermedad (ej. Diabetes, Hipertensión...)"
+                aria-label="Buscar enfermedad" />
+              @if (enfermedadSearch()) {
+                <button type="button" class="hm-clear-search" (click)="enfermedadSearch.set('')" title="Limpiar búsqueda">
+                  &times;
+                </button>
+              }
+            </div>
+
+            <!-- Categorías rápidas -->
+            <div class="hm-cat-pills" role="radiogroup" aria-label="Filtrar por categoría de enfermedad">
+              <button type="button" class="hm-cat-pill" [class.hm-cat-pill--active]="enfermedadCategory() === 'TODAS'" (click)="enfermedadCategory.set('TODAS')">Todas</button>
+              <button type="button" class="hm-cat-pill" [class.hm-cat-pill--active]="enfermedadCategory() === 'METABOLICAS'" (click)="enfermedadCategory.set('METABOLICAS')">Metabólicas</button>
+              <button type="button" class="hm-cat-pill" [class.hm-cat-pill--active]="enfermedadCategory() === 'CARDIOVASCULARES'" (click)="enfermedadCategory.set('CARDIOVASCULARES')">Cardiovasculares</button>
+              <button type="button" class="hm-cat-pill" [class.hm-cat-pill--active]="enfermedadCategory() === 'RESPIRATORIAS'" (click)="enfermedadCategory.set('RESPIRATORIAS')">Respiratorias</button>
+              <button type="button" class="hm-cat-pill" [class.hm-cat-pill--active]="enfermedadCategory() === 'DIGESTIVAS'" (click)="enfermedadCategory.set('DIGESTIVAS')">Digestivas</button>
+              <button type="button" class="hm-cat-pill" [class.hm-cat-pill--active]="enfermedadCategory() === 'OTRAS'" (click)="enfermedadCategory.set('OTRAS')">Otras</button>
+            </div>
+
+            <div class="hm-quick-actions">
+              <button type="button" class="hm-btn-link" (click)="seleccionarNingunaEnfermedad()">
+                Marcar "Ninguna"
+              </button>
+              @if (selectedEnfermedades().length > 0) {
+                <button type="button" class="hm-btn-link hm-btn-link--danger" (click)="limpiarEnfermedades()">
+                  Limpiar selección
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Cuadrícula de opciones de enfermedades -->
+          <div class="hm-chip-grid" role="group" aria-label="Opciones de enfermedades">
+            @for (opt of filteredEnfermedades(); track opt.value) {
               <button
                 type="button"
-                class="cg-item cg-item--r"
-                [class.cg-item--on]="isEnfermedadSelected(opt.value)"
+                class="hm-chip hm-chip--rose"
+                [class.hm-chip--selected]="isEnfermedadSelected(opt.value)"
                 [attr.aria-pressed]="isEnfermedadSelected(opt.value)"
                 (click)="toggleEnfermedad(opt.value)">
-                <span class="cg-item__sq" aria-hidden="true"></span>
-                {{ opt.label }}
+                <span class="hm-chip__checkbox" aria-hidden="true">
+                  @if (isEnfermedadSelected(opt.value)) {
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <polyline points="20 6 9 17 4 12" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                    </svg>
+                  }
+                </span>
+                <span class="hm-chip__label">{{ opt.label }}</span>
               </button>
             }
           </div>
+
+          @if (filteredEnfermedades().length === 0) {
+            <div class="hm-no-results">
+              <p>No se encontraron enfermedades con el término <em>"{{ enfermedadSearch() }}"</em>.</p>
+              <button type="button" class="hm-btn-ghost-sm" (click)="enfermedadSearch.set(''); enfermedadCategory.set('TODAS')">
+                Restablecer filtros
+              </button>
+            </div>
+          }
+
+          <!-- Campo condicional para Otra Enfermedad -->
           @if (showOtraEnfermedad()) {
-            <div class="paso__xtra">
-              <label class="paso__lbl" for="otraEnfermedad">
-                Especifique la enfermedad <span class="req" aria-hidden="true">*</span>
-              </label>
-              <input id="otraEnfermedad" type="text" formControlName="otraEnfermedad" class="inp"
-                placeholder="Descripción de la enfermedad" />
+            <div class="hm-conditional-box" [class.hm-conditional-box--error]="submitted() && isFieldInvalid('otraEnfermedad')">
+              <div class="hm-conditional-box__header">
+                <label class="hm-field-label" for="otraEnfermedad">
+                  Especifique el nombre y detalle de la enfermedad <span class="req">*</span>
+                </label>
+                <span class="hm-char-count">
+                  {{ form.get('otraEnfermedad')?.value?.length || 0 }} / 500
+                </span>
+              </div>
+              <input
+                id="otraEnfermedad"
+                type="text"
+                formControlName="otraEnfermedad"
+                class="hm-input"
+                [class.hm-input--error]="submitted() && isFieldInvalid('otraEnfermedad')"
+                placeholder="Ej: Hipotiroidismo de Hashimoto, Miastenia gravis..."
+                maxlength="500" />
+              @if (submitted() && isFieldInvalid('otraEnfermedad')) {
+                <small class="hm-field-error" role="alert">
+                  Debe proporcionar la descripción de la enfermedad (mínimo 3 caracteres).
+                </small>
+              }
             </div>
           }
         </div>
       </fieldset>
 
-      <div class="paso-sep" aria-hidden="true"></div>
-
-      <!-- ── Paso 2 · Alergias ── -->
-      <fieldset class="paso">
-        <legend class="paso__hd">
-          <span class="paso__n paso__n--a" aria-hidden="true">02</span>
-          <div class="paso__meta">
-            <span class="paso__ttl">Alergias</span>
-            <span class="paso__sub">Opcional — alergias a alimentos, medicamentos, etc.</span>
+      <!-- ══════════════════════════════════════════════
+           PASO 2: SÍNTOMAS ACTUALES
+      ══════════════════════════════════════════════ -->
+      <fieldset class="hm-step" id="paso-sintomas" [class.hm-step--invalid]="submitted() && !isPaso2Valido">
+        <legend class="hm-step__legend">
+          <div class="hm-step__badge hm-step__badge--amber" aria-hidden="true">02</div>
+          <div class="hm-step__meta">
+            <div class="hm-step__title-row">
+              <span class="hm-step__title">Síntomas Actuales</span>
+              <span class="hm-badge-count" [class.hm-badge-count--active]="selectedSintomas().length > 0">
+                {{ selectedSintomas().length }} seleccionado(s)
+              </span>
+              @if (submitted() && !isPaso2Valido) {
+                <span class="hm-tag-error">Requerido</span>
+              }
+            </div>
+            <p class="hm-step__desc">
+              Indique los síntomas presentes en la consulta o marque <em>"Ninguno"</em>.
+            </p>
           </div>
         </legend>
-        <div class="paso__bd">
-          <textarea id="alergias" formControlName="alergias" class="inp inp--ta" rows="3"
-            placeholder="Ej: penicilina, mariscos, látex, ácaros..."></textarea>
-        </div>
-      </fieldset>
 
-      <div class="paso-sep" aria-hidden="true"></div>
+        <div class="hm-step__content">
+          <!-- Barra de Búsqueda y Filtros de Síntomas -->
+          <div class="hm-toolbar">
+            <div class="hm-search-box">
+              <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="8" stroke-width="2"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65" stroke-width="2" stroke-linecap="round"></line>
+              </svg>
+              <input
+                type="search"
+                [value]="sintomaSearch()"
+                (input)="sintomaSearch.set($any($event.target).value)"
+                placeholder="Buscar síntoma (ej. Cansancio, Mareo, Reflujo...)"
+                aria-label="Buscar síntoma" />
+              @if (sintomaSearch()) {
+                <button type="button" class="hm-clear-search" (click)="sintomaSearch.set('')" title="Limpiar búsqueda">
+                  &times;
+                </button>
+              }
+            </div>
 
-      <!-- ── Paso 3 · Síntomas ── -->
-      <fieldset class="paso">
-        <legend class="paso__hd">
-          <span class="paso__n paso__n--o" aria-hidden="true">03</span>
-          <div class="paso__meta">
-            <span class="paso__ttl">Síntomas Actuales</span>
-            <span class="paso__sub">Seleccione los síntomas presentes en el paciente</span>
+            <!-- Categorías rápidas -->
+            <div class="hm-cat-pills" role="radiogroup" aria-label="Filtrar por categoría de síntoma">
+              <button type="button" class="hm-cat-pill" [class.hm-cat-pill--active]="sintomaCategory() === 'TODOS'" (click)="sintomaCategory.set('TODOS')">Todos</button>
+              <button type="button" class="hm-cat-pill" [class.hm-cat-pill--active]="sintomaCategory() === 'GENERALES'" (click)="sintomaCategory.set('GENERALES')">Generales</button>
+              <button type="button" class="hm-cat-pill" [class.hm-cat-pill--active]="sintomaCategory() === 'DIGESTIVOS'" (click)="sintomaCategory.set('DIGESTIVOS')">Digestivos</button>
+              <button type="button" class="hm-cat-pill" [class.hm-cat-pill--active]="sintomaCategory() === 'RESPIRATORIOS'" (click)="sintomaCategory.set('RESPIRATORIOS')">Respiratorios</button>
+              <button type="button" class="hm-cat-pill" [class.hm-cat-pill--active]="sintomaCategory() === 'NEUROLOGICOS'" (click)="sintomaCategory.set('NEUROLOGICOS')">Neurológicos</button>
+              <button type="button" class="hm-cat-pill" [class.hm-cat-pill--active]="sintomaCategory() === 'MUSCULARES'" (click)="sintomaCategory.set('MUSCULARES')">Músculo-cutáneos</button>
+              <button type="button" class="hm-cat-pill" [class.hm-cat-pill--active]="sintomaCategory() === 'OTROS'" (click)="sintomaCategory.set('OTROS')">Otros</button>
+            </div>
+
+            <div class="hm-quick-actions">
+              <button type="button" class="hm-btn-link" (click)="seleccionarNingunSintoma()">
+                Marcar "Ninguno"
+              </button>
+              @if (selectedSintomas().length > 0) {
+                <button type="button" class="hm-btn-link hm-btn-link--danger" (click)="limpiarSintomas()">
+                  Limpiar selección
+                </button>
+              }
+            </div>
           </div>
-        </legend>
-        <div class="paso__bd">
-          <div class="cgrid" role="group" aria-label="Síntomas actuales">
-            @for (opt of sintomasOptions; track opt.value) {
+
+          <!-- Cuadrícula de opciones de síntomas -->
+          <div class="hm-chip-grid" role="group" aria-label="Opciones de síntomas">
+            @for (opt of filteredSintomas(); track opt.value) {
               <button
                 type="button"
-                class="cg-item cg-item--o"
-                [class.cg-item--on]="isSintomaSelected(opt.value)"
+                class="hm-chip hm-chip--amber"
+                [class.hm-chip--selected]="isSintomaSelected(opt.value)"
                 [attr.aria-pressed]="isSintomaSelected(opt.value)"
                 (click)="toggleSintoma(opt.value)">
-                <span class="cg-item__sq" aria-hidden="true"></span>
-                {{ opt.label }}
+                <span class="hm-chip__checkbox" aria-hidden="true">
+                  @if (isSintomaSelected(opt.value)) {
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <polyline points="20 6 9 17 4 12" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                    </svg>
+                  }
+                </span>
+                <span class="hm-chip__label">{{ opt.label }}</span>
               </button>
             }
           </div>
+
+          @if (filteredSintomas().length === 0) {
+            <div class="hm-no-results">
+              <p>No se encontraron síntomas con el término <em>"{{ sintomaSearch() }}"</em>.</p>
+              <button type="button" class="hm-btn-ghost-sm" (click)="sintomaSearch.set(''); sintomaCategory.set('TODOS')">
+                Restablecer filtros
+              </button>
+            </div>
+          }
+
+          <!-- Campo condicional para Otro Síntoma -->
           @if (showOtroSintoma()) {
-            <div class="paso__xtra">
-              <label class="paso__lbl" for="otroSintoma">
-                Especifique el síntoma <span class="req" aria-hidden="true">*</span>
-              </label>
-              <input id="otroSintoma" type="text" formControlName="otroSintoma" class="inp"
-                placeholder="Descripción del síntoma" />
+            <div class="hm-conditional-box" [class.hm-conditional-box--error]="submitted() && isFieldInvalid('otroSintoma')">
+              <div class="hm-conditional-box__header">
+                <label class="hm-field-label" for="otroSintoma">
+                  Especifique el síntoma referido <span class="req">*</span>
+                </label>
+                <span class="hm-char-count">
+                  {{ form.get('otroSintoma')?.value?.length || 0 }} / 500
+                </span>
+              </div>
+              <input
+                id="otroSintoma"
+                type="text"
+                formControlName="otroSintoma"
+                class="hm-input"
+                [class.hm-input--error]="submitted() && isFieldInvalid('otroSintoma')"
+                placeholder="Ej: Visión borrosa ocasional, hormigueo en manos..."
+                maxlength="500" />
+              @if (submitted() && isFieldInvalid('otroSintoma')) {
+                <small class="hm-field-error" role="alert">
+                  Debe proporcionar la descripción del síntoma (mínimo 3 caracteres).
+                </small>
+              }
             </div>
           }
         </div>
       </fieldset>
 
-      <div class="paso-sep" aria-hidden="true"></div>
-
-      <!-- ── Paso 4 · Medicamentos ── -->
-      <fieldset class="paso">
-        <legend class="paso__hd">
-          <span class="paso__n paso__n--b" aria-hidden="true">04</span>
-          <div class="paso__meta">
-            <span class="paso__ttl">Medicamentos / Suplementos</span>
-            <span class="paso__sub">Estado del paciente respecto al consumo</span>
+      <!-- ══════════════════════════════════════════════
+           PASO 3: MEDICAMENTOS Y SUPLEMENTOS
+      ══════════════════════════════════════════════ -->
+      <fieldset class="hm-step" id="paso-medicamentos" [class.hm-step--invalid]="submitted() && !isPaso3Valido">
+        <legend class="hm-step__legend">
+          <div class="hm-step__badge hm-step__badge--indigo" aria-hidden="true">03</div>
+          <div class="hm-step__meta">
+            <div class="hm-step__title-row">
+              <span class="hm-step__title">Medicamentos y Suplementos</span>
+              @if (submitted() && !isPaso3Valido) {
+                <span class="hm-tag-error">Detalle requerido</span>
+              }
+            </div>
+            <p class="hm-step__desc">
+              Estado de tratamiento farmacológico, suplementación nutricional o herbolaria.
+            </p>
           </div>
         </legend>
-        <div class="paso__bd">
-          <div class="mopts" role="radiogroup"
-            aria-label="Estado del consumo de medicamentos o suplementos">
+
+        <div class="hm-step__content">
+          <!-- Radio Cards de Estado -->
+          <div class="hm-radio-cards" role="radiogroup" aria-label="Estado de consumo de medicamentos o suplementos">
             @for (opt of estadoMedicamentoOptions; track opt.value) {
               <label
-                class="mopt"
-                [class.mopt--on]="estadoMedicamento() === opt.value"
+                class="hm-radio-card"
+                [class.hm-radio-card--selected]="estadoMedicamento() === opt.value"
                 [for]="'med-' + opt.value">
                 <input
                   type="radio"
@@ -179,97 +425,227 @@
                   [value]="opt.value"
                   [checked]="estadoMedicamento() === opt.value"
                   (change)="onEstadoChange(opt.value)" />
-                <span class="mopt__dot" aria-hidden="true"></span>
-                <span class="mopt__lbl">{{ opt.label }}</span>
+                <div class="hm-radio-card__icon" aria-hidden="true">
+                  @if (opt.value === 'NUNCA') {
+                    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  } @else if (opt.value === 'ACTUALMENTE') {
+                    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    </svg>
+                  } @else {
+                    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  }
+                </div>
+                <div class="hm-radio-card__body">
+                  <span class="hm-radio-card__title">{{ opt.label }}</span>
+                  <span class="hm-radio-card__desc">{{ opt.description }}</span>
+                </div>
+                <div class="hm-radio-card__dot" aria-hidden="true"></div>
               </label>
             }
           </div>
+
+          <!-- Campo condicional para descripción de medicamentos -->
           @if (showDescripcionMedicamento()) {
-            <div class="paso__xtra">
-              <label class="paso__lbl" for="descripcionMedicamento">
-                Nombre, dosis y frecuencia <span class="req" aria-hidden="true">*</span>
-              </label>
-              <textarea id="descripcionMedicamento" formControlName="descripcionMedicamento"
-                class="inp inp--ta" rows="3"
-                placeholder="Ej: Metformina 850 mg, 1 tableta cada 12 horas"></textarea>
+            <div class="hm-conditional-box" [class.hm-conditional-box--error]="submitted() && isFieldInvalid('descripcionMedicamento')">
+              <div class="hm-conditional-box__header">
+                <label class="hm-field-label" for="descripcionMedicamento">
+                  Nombre, dosis y pauta de administración <span class="req">*</span>
+                </label>
+                <span class="hm-char-count">
+                  {{ form.get('descripcionMedicamento')?.value?.length || 0 }} / 500
+                </span>
+              </div>
+              <textarea
+                id="descripcionMedicamento"
+                formControlName="descripcionMedicamento"
+                class="hm-input hm-input--textarea"
+                [class.hm-input--error]="submitted() && isFieldInvalid('descripcionMedicamento')"
+                rows="3"
+                placeholder="Ej: Metformina 850 mg (1 tableta c/12h con alimentos), Omeprazol 20 mg (1 cap en ayunas), Proteína Whey (1 scoop post-entreno)..."
+                maxlength="500"></textarea>
+              @if (submitted() && isFieldInvalid('descripcionMedicamento')) {
+                <small class="hm-field-error" role="alert">
+                  Debe proporcionar la descripción del tratamiento o suplemento (mínimo 3 caracteres).
+                </small>
+              }
             </div>
           }
         </div>
       </fieldset>
 
-      <div class="paso-sep" aria-hidden="true"></div>
+      <!-- ══════════════════════════════════════════════
+           PASO 4: ALERGIAS E INTOLERANCIAS
+      ══════════════════════════════════════════════ -->
+      <fieldset class="hm-step" id="paso-alergias">
+        <legend class="hm-step__legend">
+          <div class="hm-step__badge hm-step__badge--teal" aria-hidden="true">04</div>
+          <div class="hm-step__meta">
+            <div class="hm-step__title-row">
+              <span class="hm-step__title">Alergias e Intolerancias</span>
+              <span class="hm-badge-optional">Opcional</span>
+            </div>
+            <p class="hm-step__desc">
+              Reacciones adversas a fármacos, alimentos o factores ambientales.
+            </p>
+          </div>
+        </legend>
 
-      <!-- ── Paso 5 · Medidas Antropométricas (solo lectura) ── -->
-      <div class="paso paso--info">
-        <div class="paso__hd">
-          <span class="paso__n paso__n--g" aria-hidden="true">05</span>
-          <div class="paso__meta">
-            <span class="paso__ttl">Medidas Antropométricas Vinculadas</span>
-            <span class="paso__sub">Las medidas más recientes registradas para este paciente</span>
+        <div class="hm-step__content">
+          <!-- Sugerencias rápidas clicables -->
+          <div class="hm-suggestions">
+            <span class="hm-suggestions__label">Sugerencias rápidas:</span>
+            <div class="hm-suggestions__chips">
+              @for (sug of alergiasSugeridas; track sug) {
+                <button
+                  type="button"
+                  class="hm-sug-chip"
+                  (click)="agregarAlergiaSugerida(sug)"
+                  [title]="'Agregar ' + sug">
+                  + {{ sug }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="hm-input-group">
+            <div class="hm-conditional-box__header">
+              <label class="hm-field-label" for="alergias">
+                Detalle de alergias conocidas
+              </label>
+              <span class="hm-char-count">
+                {{ form.get('alergias')?.value?.length || 0 }} / 500
+              </span>
+            </div>
+            <textarea
+              id="alergias"
+              formControlName="alergias"
+              class="hm-input hm-input--textarea"
+              rows="2"
+              placeholder="Ej: Penicilina (rash cutáneo), Mariscos (edema), Intolerancia severa a la lactosa..."
+              maxlength="500"></textarea>
           </div>
         </div>
-        <div class="paso__bd">
+      </fieldset>
+
+      <!-- ══════════════════════════════════════════════
+           PASO 5: MEDIDAS ANTROPOMÉTRICAS VINCULADAS
+      ══════════════════════════════════════════════ -->
+      <div class="hm-step hm-step--readonly" id="paso-medidas">
+        <div class="hm-step__legend">
+          <div class="hm-step__badge hm-step__badge--emerald" aria-hidden="true">05</div>
+          <div class="hm-step__meta">
+            <div class="hm-step__title-row">
+              <span class="hm-step__title">Medidas Antropométricas Vinculadas</span>
+              <span class="hm-badge-auto">Sincronización Automática</span>
+            </div>
+            <p class="hm-sync-note__desc">
+              La medición más reciente del paciente se asocia de forma automática al registro.
+            </p>
+          </div>
+        </div>
+
+        <div class="hm-step__content">
           @if (ultimaMedidaResource.isLoading()) {
-            <p class="minf__loading">Cargando medidas...</p>
+            <div class="hm-loading-pill">
+              <svg class="hm-spin" width="16" height="16" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.25"></circle>
+                <path fill="currentColor" opacity="0.75" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+              <span>Consultando mediciones antropométricas...</span>
+            </div>
           } @else if (ultimaMedidaResource.value(); as m) {
-            <div class="minf">
-              <div class="minf__chips">
-                <span class="minf__chip minf__chip--main">
-                  <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                    aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M3 6h18M3 12h18M3 18h18" />
-                  </svg>
-                  Peso&nbsp;<b>{{ m.peso }} kg</b>
-                </span>
-                <span class="minf__chip minf__chip--main">Talla&nbsp;<b>{{ m.altura }} cm</b></span>
+            <div class="hm-measure-card">
+              <div class="hm-measure-grid">
+                <div class="hm-measure-item hm-measure-item--main">
+                  <span class="hm-measure-item__label">Peso Corporal</span>
+                  <strong class="hm-measure-item__val">{{ m.peso }} <small>kg</small></strong>
+                </div>
+                <div class="hm-measure-item hm-measure-item--main">
+                  <span class="hm-measure-item__label">Estatura</span>
+                  <strong class="hm-measure-item__val">{{ m.altura }} <small>cm</small></strong>
+                </div>
+                @if (imcData(); as imc) {
+                  <div class="hm-measure-item hm-measure-item--imc">
+                    <span class="hm-measure-item__label">Índice Masa Corporal (IMC)</span>
+                    <div class="hm-measure-item__imc-val">
+                      <strong>{{ imc.imc }} <small>kg/m²</small></strong>
+                      <span class="hm-imc-badge" [class]="imc.clase">{{ imc.estado }}</span>
+                    </div>
+                  </div>
+                }
                 @if (m.cintura) {
-                  <span class="minf__chip">Cintura&nbsp;<b>{{ m.cintura }} cm</b></span>
+                  <div class="hm-measure-item">
+                    <span class="hm-measure-item__label">Cintura</span>
+                    <span class="hm-measure-item__subval">{{ m.cintura }} cm</span>
+                  </div>
                 }
                 @if (m.cadera) {
-                  <span class="minf__chip">Cadera&nbsp;<b>{{ m.cadera }} cm</b></span>
+                  <div class="hm-measure-item">
+                    <span class="hm-measure-item__label">Cadera</span>
+                    <span class="hm-measure-item__subval">{{ m.cadera }} cm</span>
+                  </div>
                 }
                 @if (m.cuello) {
-                  <span class="minf__chip">Cuello&nbsp;<b>{{ m.cuello }} cm</b></span>
+                  <div class="hm-measure-item">
+                    <span class="hm-measure-item__label">Cuello</span>
+                    <span class="hm-measure-item__subval">{{ m.cuello }} cm</span>
+                  </div>
                 }
               </div>
-              <p class="minf__date">
-                <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                  aria-hidden="true">
+              <div class="hm-measure-footer">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                Medición del {{ formatDate(m.fechaMedicion) }} — se vinculará automáticamente a este registro
-              </p>
+                <span>Medición efectuada el <strong>{{ formatDate(m.fechaMedicion) }}</strong> ({{ formatRelativeTime(m.fechaMedicion) }})</span>
+              </div>
             </div>
           } @else {
-            <p class="minf__empty">
-              No hay medidas antropométricas registradas para este paciente.
-            </p>
+            <div class="hm-measure-empty">
+              <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p class="hm-measure-empty__title">Sin mediciones previas registradas</p>
+                <p class="hm-measure-empty__sub">El historial se creará sin medidas vinculadas hasta que registre la primera medición.</p>
+              </div>
+            </div>
           }
         </div>
       </div>
 
-      <!-- ── Acciones ── -->
-      <div class="f-foot">
+      <!-- ══════════════════════════════════════════════
+           BARRA DE ACCIONES DEL FORMULARIO
+      ══════════════════════════════════════════════ -->
+      <div class="hm-form-actions">
         @if (modoEdicion()) {
-          <button type="button" class="btn btn--ghost" (click)="cancelarEdicion()">
-            Cancelar edición
+          <button type="button" class="hm-btn hm-btn--ghost" (click)="cancelarEdicion()">
+            Cancelar Edición
+          </button>
+        } @else {
+          <button type="button" class="hm-btn hm-btn--ghost" (click)="resetForm()">
+            Limpiar Todo
           </button>
         }
-        <button type="submit" class="btn btn--save" [disabled]="isSubmitting()">
+
+        <button type="submit" class="hm-btn hm-btn--primary" [disabled]="isSubmitting()">
           @if (isSubmitting()) {
-            <svg class="btn__spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="hm-spin" width="16" height="16" fill="none" viewBox="0 0 24 24" aria-hidden="true">
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.25"></circle>
               <path fill="currentColor" opacity="0.75" d="M4 12a8 8 0 018-8v8H4z"></path>
             </svg>
-            Guardando...
+            <span>Guardando Evaluación...</span>
           } @else {
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              aria-hidden="true">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
             </svg>
-            {{ modoEdicion() ? 'Actualizar Historial' : 'Registrar Historial' }}
+            <span>{{ modoEdicion() ? 'Actualizar Historial' : 'Guardar Evaluación Médica' }}</span>
           }
         </button>
       </div>
@@ -277,227 +653,281 @@
     </form>
   </section>
 
-  <!-- ═══════════════════════════════════════
-       HISTORIAL DE REGISTROS
-  ═══════════════════════════════════════ -->
-  <section class="hs" aria-label="Historial de registros médicos">
+  <!-- ══════════════════════════════════════════════
+       HISTORIAL DE REGISTROS (TIMELINE MODERNO)
+  ══════════════════════════════════════════════ -->
+  <section class="hm-records-section" aria-label="Historial de Evaluaciones">
 
-    <div class="hs__hd">
-      <h2 class="hs__ttl">Historial de Registros</h2>
-      <p class="hs__sub">Registros médicos del paciente, del más reciente al más antiguo.</p>
+    <div class="hm-records-header">
+      <div>
+        <h2 class="hm-records-title">Historial de Evaluaciones</h2>
+        <p class="hm-records-subtitle">
+          Cronología de antecedentes y evoluciones del paciente.
+        </p>
+      </div>
+
+      <!-- Filtros de la lista histórica -->
+      <div class="hm-records-controls">
+        <div class="hm-search-box hm-search-box--sm">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="8" stroke-width="2"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65" stroke-width="2" stroke-linecap="round"></line>
+          </svg>
+          <input
+            type="search"
+            [value]="historialSearch()"
+            (input)="historialSearch.set($any($event.target).value)"
+            placeholder="Filtrar evaluaciones..."
+            aria-label="Filtrar historial" />
+        </div>
+
+        <select
+          class="hm-select-filter"
+          [value]="historialEstadoFilter()"
+          (change)="historialEstadoFilter.set($any($event.target).value)"
+          aria-label="Filtrar por medicación">
+          <option value="TODOS">Todas las medicaciones</option>
+          <option value="NUNCA">Sin Medicamentos</option>
+          <option value="ACTUALMENTE">Actualmente en Tratamiento</option>
+          <option value="ANTERIORMENTE">Tratamiento Pasado</option>
+        </select>
+      </div>
     </div>
 
     @if (historialResource.isLoading()) {
-      <div class="st st--load" role="status" aria-live="polite">
-        <svg class="st__spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-          aria-hidden="true">
+      <div class="hm-state hm-state--loading" role="status" aria-live="polite">
+        <svg class="hm-spin" width="36" height="36" fill="none" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.2"></circle>
-          <path fill="currentColor" opacity="0.75" d="M4 12a8 8 0 018-8v8H4z"></path>
+          <path fill="currentColor" opacity="0.8" d="M4 12a8 8 0 018-8v8H4z"></path>
         </svg>
-        <span>Cargando registros...</span>
+        <p class="hm-state__title">Cargando historial...</p>
+        <p class="hm-state__sub">Consultando base de datos</p>
       </div>
 
     } @else if (historialResource.error()) {
-      <div class="st st--err" role="alert">
-        <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-          aria-hidden="true">
+      <div class="hm-state hm-state--error" role="alert">
+        <svg width="36" height="36" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" stroke-width="2" />
           <path stroke-linecap="round" stroke-width="2" d="M12 8v4m0 4h.01" />
         </svg>
-        <p>No se pudieron cargar los registros. Intente de nuevo.</p>
+        <p class="hm-state__title">Error al consultar el historial</p>
+        <p class="hm-state__sub">No se pudo cargar la información. Intente recargar la página.</p>
+        <button type="button" class="hm-btn hm-btn--ghost" (click)="historialResource.reload()">
+          Reintentar
+        </button>
       </div>
 
     } @else if (historialResource.value(); as pagina) {
 
       @if (pagina.empty) {
-        <div class="st st--empty">
-          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"
-            aria-hidden="true">
-            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
-            <rect width="6" height="4" x="9" y="3" rx="1" />
-          </svg>
-          <p class="st__ttl">Sin registros</p>
-          <p class="st__sub">Aún no hay historiales médicos para este paciente. ¡Crea el primero!</p>
+        <div class="hm-state hm-state--empty">
+          <div class="hm-empty-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="12" y1="18" x2="12" y2="12"></line>
+              <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+          </div>
+          <p class="hm-state__title">Aún no hay evaluaciones médicas registradas</p>
+          <p class="hm-state__sub">Complete el formulario superior para crear el primer registro del paciente.</p>
+          <button type="button" class="hm-btn hm-btn--primary" (click)="scrollToElement('historial-form')">
+            Crear Primera Evaluación
+          </button>
+        </div>
+
+      } @else if (filteredHistorialRecords().length === 0) {
+        <div class="hm-state hm-state--no-matches">
+          <p class="hm-state__title">Sin resultados coincidentes</p>
+          <p class="hm-state__sub">No se encontraron evaluaciones con los filtros actuales.</p>
+          <button type="button" class="hm-btn-ghost-sm" (click)="historialSearch.set(''); historialEstadoFilter.set('TODOS')">
+            Limpiar filtros de búsqueda
+          </button>
         </div>
 
       } @else {
 
-        <ul class="rec-list" role="list">
-          @for (h of pagina.content; track h.id) {
-            <li class="rec" [class]="'rec--' + h.estadoMedicamento.toLowerCase()">
+        <div class="hm-timeline" role="list">
+          @for (h of filteredHistorialRecords(); track h.id) {
+            <article class="hm-record-card" [class]="'hm-record-card--' + h.estadoMedicamento.toLowerCase()" role="listitem">
 
-              <!-- ── Barra superior: fecha + badge + acciones ── -->
-              <div class="rec__top">
-                <div class="rec__date-grp">
-                  <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                    aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <time class="rec__date" [dateTime]="h.fechaRegistro">
-                    {{ formatDate(h.fechaRegistro) }}
-                  </time>
+              <!-- Cabecera de la tarjeta del registro -->
+              <div class="hm-record-card__header">
+                <div class="hm-record-card__meta">
+                  <div class="hm-record-date-badge">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <time [dateTime]="h.fechaRegistro">{{ formatDate(h.fechaRegistro) }}</time>
+                  </div>
+                  <span class="hm-record-relative">({{ formatRelativeTime(h.fechaRegistro) }})</span>
                 </div>
-                <span class="rbadge" [class]="getEstadoBadgeClass(h.estadoMedicamento)">
-                  {{ getEstadoLabel(h.estadoMedicamento) }}
-                </span>
-                <div class="rec__acts">
-                  <button
-                    type="button"
-                    class="ric ric--ed"
-                    (click)="editarHistorial(h)"
-                    [attr.aria-label]="'Editar historial del ' + formatDate(h.fechaRegistro)">
-                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                      aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Editar
-                  </button>
-                  <button
-                    type="button"
-                    class="ric ric--dl"
-                    (click)="eliminarHistorial(h.id)"
-                    [attr.aria-label]="'Eliminar historial del ' + formatDate(h.fechaRegistro)">
-                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                      aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Eliminar
-                  </button>
+
+                <div class="hm-record-card__right">
+                  <span class="hm-med-badge" [class]="getEstadoBadgeClass(h.estadoMedicamento)">
+                    <span class="hm-med-badge__dot"></span>
+                    {{ getEstadoLabel(h.estadoMedicamento) }}
+                  </span>
+
+                  <!-- Botones de Acción -->
+                  <div class="hm-record-actions">
+                    <button
+                      type="button"
+                      class="hm-btn-icon hm-btn-icon--edit"
+                      (click)="editarHistorial(h)"
+                      [attr.aria-label]="'Editar evaluación del ' + formatDate(h.fechaRegistro)"
+                      title="Editar registro">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      <span>Editar</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="hm-btn-icon hm-btn-icon--delete"
+                      (click)="eliminarHistorial(h.id)"
+                      [attr.aria-label]="'Eliminar evaluación del ' + formatDate(h.fechaRegistro)"
+                      title="Eliminar registro">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      <span>Eliminar</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <!-- ── Cuerpo: 2 columnas ── -->
-              <div class="rec__body">
+              <!-- Cuerpo del Registro: Bloques de Diagnóstico, Síntomas, Medicación y Alergias -->
+              <div class="hm-record-grid">
 
-                <!-- Columna izquierda: Enfermedades + Síntomas -->
-                <div class="rcol">
-                  <p class="rcol__lbl rcol__lbl--r">
-                    <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                      aria-hidden="true">
+                <!-- Bloque 1: Enfermedades -->
+                <div class="hm-detail-block">
+                  <span class="hm-detail-block__title hm-detail-block__title--rose">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
-                    Enfermedades
-                  </p>
-                  <div class="rcol__val">
-                    @if (h.enfermedades.length > 0) {
-                      <div class="rtags">
-                        @for (e of h.enfermedades.slice(0, 6); track e) {
-                          <span class="rtag rtag--r">{{ getEnfermedadLabel(e) }}</span>
-                        }
-                        @if (h.enfermedades.length > 6) {
-                          <span class="rtag rtag--n">+{{ h.enfermedades.length - 6 }} más</span>
-                        }
-                      </div>
+                    Enfermedades Diagnosticadas
+                  </span>
+
+                  <div class="hm-tag-list">
+                    @if (h.enfermedades && h.enfermedades.length > 0) {
+                      @for (e of h.enfermedades; track e) {
+                        <span class="hm-record-tag hm-record-tag--rose">
+                          {{ getEnfermedadLabel(e) }}
+                        </span>
+                      }
                       @if (h.otraEnfermedad) {
-                        <p class="rnote">{{ h.otraEnfermedad }}</p>
+                        <div class="hm-record-note">
+                          <strong>Otra patología:</strong> {{ h.otraEnfermedad }}
+                        </div>
                       }
                     } @else {
-                      <p class="rempty">Sin enfermedades registradas</p>
+                      <span class="hm-empty-text">Sin enfermedades registradas</span>
                     }
                   </div>
+                </div>
 
-                  <p class="rcol__lbl rcol__lbl--o">
-                    <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                      aria-hidden="true">
+                <!-- Bloque 2: Síntomas -->
+                <div class="hm-detail-block">
+                  <span class="hm-detail-block__title hm-detail-block__title--amber">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
-                    Síntomas
-                  </p>
-                  <div class="rcol__val">
-                    @if (h.sintomas.length > 0) {
-                      <div class="rtags">
-                        @for (s of h.sintomas.slice(0, 6); track s) {
-                          <span class="rtag rtag--o">{{ getSintomaLabel(s) }}</span>
-                        }
-                        @if (h.sintomas.length > 6) {
-                          <span class="rtag rtag--n">+{{ h.sintomas.length - 6 }} más</span>
-                        }
-                      </div>
+                    Síntomas Presentes
+                  </span>
+
+                  <div class="hm-tag-list">
+                    @if (h.sintomas && h.sintomas.length > 0) {
+                      @for (s of h.sintomas; track s) {
+                        <span class="hm-record-tag hm-record-tag--amber">
+                          {{ getSintomaLabel(s) }}
+                        </span>
+                      }
                       @if (h.otroSintoma) {
-                        <p class="rnote">{{ h.otroSintoma }}</p>
+                        <div class="hm-record-note">
+                          <strong>Otro síntoma:</strong> {{ h.otroSintoma }}
+                        </div>
                       }
                     } @else {
-                      <p class="rempty">Sin síntomas registrados</p>
+                      <span class="hm-empty-text">Sin síntomas registrados</span>
                     }
                   </div>
                 </div>
 
-                <!-- Columna derecha: Alergias + Medicamento -->
-                <div class="rcol rcol--border">
-                  <p class="rcol__lbl rcol__lbl--a">
-                    <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                      aria-hidden="true">
+                <!-- Bloque 3: Medicación / Suplementos -->
+                <div class="hm-detail-block">
+                  <span class="hm-detail-block__title hm-detail-block__title--indigo">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    </svg>
+                    Medicamentos y Suplementos
+                  </span>
+
+                  @if (h.descripcionMedicamento) {
+                    <p class="hm-record-text">{{ h.descripcionMedicamento }}</p>
+                  } @else {
+                    <span class="hm-empty-text">Sin tratamiento farmacológico</span>
+                  }
+                </div>
+
+                <!-- Bloque 4: Alergias -->
+                <div class="hm-detail-block">
+                  <span class="hm-detail-block__title hm-detail-block__title--teal">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                     </svg>
-                    Alergias
-                  </p>
-                  <div class="rcol__val">
-                    @if (h.alergias) {
-                      <p class="rtext">{{ h.alergias }}</p>
-                    } @else {
-                      <p class="rempty">Sin alergias registradas</p>
-                    }
-                  </div>
+                    Alergias e Intolerancias
+                  </span>
 
-                  <p class="rcol__lbl rcol__lbl--b">
-                    <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                      aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
-                    </svg>
-                    Medicamento / Suplemento
-                  </p>
-                  <div class="rcol__val">
-                    @if (h.descripcionMedicamento) {
-                      <p class="rtext">{{ h.descripcionMedicamento }}</p>
-                    } @else {
-                      <p class="rempty">No aplica</p>
-                    }
-                  </div>
+                  @if (h.alergias) {
+                    <p class="hm-record-text hm-record-text--alert">{{ h.alergias }}</p>
+                  } @else {
+                    <span class="hm-empty-text">Sin alergias declaradas</span>
+                  }
                 </div>
 
-              </div><!-- /.rec__body -->
-
-              <!-- ── Fila medidas antropométricas ── -->
-              <div class="rec__meds">
-                <span class="rmed__lbl">
-                  <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                    aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M3 6h18M3 12h18M3 18h18" />
-                  </svg>
-                  Medidas vinculadas
-                </span>
-                @if (h.medidaAntropometrica; as m) {
-                  <div class="rmed__chips">
-                    <span class="rmed__chip">Peso <b>{{ m.peso }}</b> kg</span>
-                    <span class="rmed__chip">Talla <b>{{ m.altura }}</b> cm</span>
-                    @if (m.cintura) {
-                      <span class="rmed__chip">Cintura <b>{{ m.cintura }}</b> cm</span>
-                    }
-                    @if (m.cadera) {
-                      <span class="rmed__chip">Cadera <b>{{ m.cadera }}</b> cm</span>
-                    }
-                    @if (m.cuello) {
-                      <span class="rmed__chip">Cuello <b>{{ m.cuello }}</b> cm</span>
-                    }
-                  </div>
-                  <span class="rmed__date">{{ formatDate(m.fechaMedicion) }}</span>
-                } @else {
-                  <p class="rempty">Sin medidas antropométricas vinculadas</p>
-                }
               </div>
 
-            </li>
+              <!-- Fila de medidas antropométricas vinculadas al registro -->
+              @if (h.medidaAntropometrica; as m) {
+                <div class="hm-record-measures">
+                  <div class="hm-record-measures__label">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 6h18M3 12h18M3 18h18" />
+                    </svg>
+                    <span>Medidas Asociadas:</span>
+                  </div>
+
+                  <div class="hm-record-measures__chips">
+                    <span class="hm-mchip hm-mchip--main">Peso: <b>{{ m.peso }} kg</b></span>
+                    <span class="hm-mchip hm-mchip--main">Talla: <b>{{ m.altura }} cm</b></span>
+                    @if (m.cintura) {
+                      <span class="hm-mchip">Cintura: <b>{{ m.cintura }} cm</b></span>
+                    }
+                    @if (m.cadera) {
+                      <span class="hm-mchip">Cadera: <b>{{ m.cadera }} cm</b></span>
+                    }
+                    @if (m.cuello) {
+                      <span class="hm-mchip">Cuello: <b>{{ m.cuello }} cm</b></span>
+                    }
+                  </div>
+
+                  <span class="hm-record-measures__date">Medición del {{ formatDate(m.fechaMedicion) }}</span>
+                </div>
+              }
+
+            </article>
           }
-        </ul>
+        </div>
 
         <app-pagination
           [currentPage]="currentPage()"

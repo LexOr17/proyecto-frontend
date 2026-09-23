@@ -28,8 +28,11 @@ export class SugerenciaService {
       .pipe(map((r) => r.datos ?? []));
   }
 
-  obtenerMisSugerencias(page = 0, size = 10): Observable<Page<Sugerencia> | null> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  obtenerMisSugerencias(page = 0, size = 10, estado?: string): Observable<Page<Sugerencia> | null> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (estado) {
+      params = params.set('estado', estado);
+    }
     return this.http
       .get<ApiResponse<Page<Sugerencia>>>(`${this.baseUrl}/mis-sugerencias`, { params })
       .pipe(map((r) => r.datos));

@@ -19,6 +19,7 @@ import { Pagination } from '../../../../shared/components/pagination/pagination'
 import { Paciente } from '../../../pacientes/interfaces/paciente.interface';
 import { PlanAlimenticioResponse } from '../../interfaces/plan.interface';
 import { PageEvent } from '../../../../shared/interfaces/page.interface';
+import { FormValidatorHelper } from '../../../../shared/helpers/form-validator-helper';
 
 @Component({
   selector: 'app-lista-planes',
@@ -52,10 +53,15 @@ export class ListaPlanes {
   protected pacienteModal = signal<Paciente | null>(null);
 
   protected form = this.fb.group({
-    nombre: ['', Validators.required],
-    fechaInicio: ['', Validators.required],
+    nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
+    fechaInicio: ['', [Validators.required, FormValidatorHelper.fechaFuturaValidator()]],
     duracionDias: [15, [Validators.required, Validators.min(1), Validators.max(90)]],
   });
+
+  /** Fecha mínima para el input date (hoy) */
+  protected get minDate(): string {
+    return new Date().toISOString().split('T')[0];
+  }
 
   constructor() {
     effect(() => {
@@ -115,9 +121,13 @@ export class ListaPlanes {
     this.form.reset({
       nombre: `Plan - ${paciente.nombre}`,
       fechaInicio: hoy,
-      duracionDias: 15,
+      duracionDias: 14,
     });
     this.modalAbierto.set(true);
+  }
+
+  protected setDuracionPreset(dias: number): void {
+    this.form.patchValue({ duracionDias: dias });
   }
 
   protected cerrarModal(): void {

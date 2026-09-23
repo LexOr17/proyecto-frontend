@@ -28,5 +28,6 @@ export interface MetaStatusCount {
   rechazadas: number;
   noCumplidas: number;
   total: number;
-  porcentaje: number;
+  porcentaje?: number;
+  porcentajeExito?: number;
 }

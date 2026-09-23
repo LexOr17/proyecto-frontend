@@ -92,9 +92,9 @@ export class CitaService {
 
   // ─── Paciente ──────────────────────────────────────────────────────────────
 
-  solicitarCita(pacienteId: number, request: CitaSolicitudRequest): Observable<CitaResponse> {
+  solicitarCita(request: CitaSolicitudRequest): Observable<CitaResponse> {
     return this.http
-      .post<ApiResponse<CitaResponse>>(`${this.baseUrl}/solicitar/${pacienteId}`, request)
+      .post<ApiResponse<CitaResponse>>(`${this.baseUrl}/solicitar`, request)
       .pipe(map((r) => r.datos!));
   }
 

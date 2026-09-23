@@ -4,7 +4,6 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { ReporteService } from '../../service/reporte.service';
 import { AuthService } from '../../../../core/services/auth-service';
 import { Chart } from 'chart.js/auto';
-import html2pdf from 'html2pdf.js';
 
 interface HistorialMedidaLocal {
   fecha: string;
@@ -116,12 +115,12 @@ export class MiProgreso {
           datasets: [{
             label: 'Peso (kg)',
             data: progreso.pesos,
-            borderColor: '#6c5ce7',
-            backgroundColor: 'rgba(108, 92, 231, 0.15)',
+            borderColor: '#4f46e5',
+            backgroundColor: 'rgba(79, 70, 229, 0.12)',
             borderWidth: 3,
             fill: true,
             tension: 0.35,
-            pointBackgroundColor: '#6c5ce7',
+            pointBackgroundColor: '#4f46e5',
             pointBorderColor: '#ffffff',
             pointBorderWidth: 2,
             pointRadius: 5,
@@ -154,12 +153,12 @@ export class MiProgreso {
           datasets: [{
             label: 'Grasa (%)',
             data: progreso.porcentajesGrasa,
-            borderColor: '#fd79a8',
-            backgroundColor: 'rgba(253, 121, 168, 0.15)',
+            borderColor: '#ec4899',
+            backgroundColor: 'rgba(236, 72, 153, 0.12)',
             borderWidth: 3,
             fill: true,
             tension: 0.35,
-            pointBackgroundColor: '#fd79a8',
+            pointBackgroundColor: '#ec4899',
             pointBorderColor: '#ffffff',
             pointBorderWidth: 2,
             pointRadius: 5,
@@ -170,40 +169,21 @@ export class MiProgreso {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { display: false }
+            legend: {
+              position: 'bottom',
+              labels: {
+                usePointStyle: true,
+                boxWidth: 8,
+                font: { size: 11, family: "'Inter', sans-serif" },
+              },
+            },
           },
           scales: {
             x: { grid: { display: false } },
-            y: { grid: { color: '#f1f5f9' } }
-          }
-        }
+            y: { grid: { color: '#f1f5f9' } },
+          },
+        },
       });
     }
-  }
-
-  // ─── DESCARGA DE PDF ─────────────────────────────────────────────────────────────
-
-  protected descargarPDFProgreso(): void {
-    const element = document.getElementById('reporte-personal-pdf');
-    if (!element) return;
-
-    element.classList.add('exporting-pdf');
-
-    const fullname = this.authService.userFullName() || 'mi';
-    const cleanName = fullname.toLowerCase().replace(/\s+/g, '_');
-
-    setTimeout(() => {
-      const opt = {
-        margin:       10,
-        filename:     `mi_progreso_${cleanName}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2.2, useCORS: true, logging: false },
-        jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' }
-      };
-
-      html2pdf().from(element).set(opt as any).save().then(() => {
-        element.classList.remove('exporting-pdf');
-      });
-    }, 150);
   }
 }

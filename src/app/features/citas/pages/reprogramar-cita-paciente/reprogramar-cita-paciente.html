@@ -21,9 +21,10 @@
       <div class="form-group">
         <label for="nuevaFechaHoraInicio">Nueva fecha y hora propuesta</label>
         <input type="datetime-local" id="nuevaFechaHoraInicio" formControlName="nuevaFechaHoraInicio"
+          [min]="minDatetime"
           [class.error]="isInvalid('nuevaFechaHoraInicio')">
         @if (isInvalid('nuevaFechaHoraInicio')) {
-          <small class="error-msg" role="alert">La fecha es requerida</small>
+          <small class="error-msg" role="alert">{{ getErrorMessage('nuevaFechaHoraInicio', 'fecha') }}</small>
         }
       </div>
 

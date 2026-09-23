@@ -9,6 +9,8 @@ import {
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { DashboardService } from '../../service/dashboard.service';
 import { AdminDashboardStats } from '../../interfaces/dashboard.interfaces';
 
@@ -44,26 +46,21 @@ export class AdminDashboardComponent implements OnInit {
   cargarDatos(): void {
     this.loading.set(true);
 
-    // Estadísticas del admin
-    this.dashboardService.getAdminStats().subscribe({
-      next: (res) => {
-        if (res.datos) this.stats.set(res.datos);
-      },
-    });
-
-    // Reporte demográfico para las gráficas
-    this.dashboardService.getReporteDemografico().subscribe({
-      next: (data) => {
-        this.reporteDemografico.set(data);
-        this.procesarGraficas(data);
-      },
-    });
-
-    // Usuarios recientes
-    this.dashboardService.getUsuariosRecientes().subscribe({
-      next: (res) => {
-        const usuarios = res?.datos?.content ?? [];
-        this.usuariosRecientes.set(usuarios.slice(0, 6));
+    forkJoin({
+      stats: this.dashboardService.getAdminStats().pipe(catchError(() => of(null))),
+      demo: this.dashboardService.getReporteDemografico().pipe(catchError(() => of(null))),
+      usuarios: this.dashboardService.getUsuariosRecientes().pipe(catchError(() => of(null))),
+    }).subscribe({
+      next: ({ stats, demo, usuarios }) => {
+        if (stats?.datos) {
+          this.stats.set(stats.datos);
+        }
+        if (demo) {
+          this.reporteDemografico.set(demo);
+          this.procesarGraficas(demo);
+        }
+        const lista = usuarios?.datos?.content ?? (Array.isArray(usuarios?.datos) ? usuarios.datos : (usuarios?.content ?? []));
+        this.usuariosRecientes.set(lista.slice(0, 6));
         this.loading.set(false);
       },
       error: () => this.loading.set(false),

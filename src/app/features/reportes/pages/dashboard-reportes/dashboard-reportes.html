@@ -1,347 +1,3466 @@
-<div class="main-content">
-  <header>
-    <div class="header-title">
-      <h1><i class="bx bx-bar-chart-alt-2" aria-hidden="true"></i> Panel de Analíticas</h1>
-      <p class="header-subtitle">Analiza datos demográficos de pacientes e historiales de progreso clínico</p>
+<div class="reportes-hub-container">
+
+  <!-- ─── HERO HEADER CON CINTA NUTRI-SCORE ────────────────────────────────── -->
+  <header class="hub-hero-card" role="region" aria-label="Encabezado del Centro de Reportes">
+    <div class="hub-hero-icon" aria-hidden="true">
+      <span class="bx bxl-apple"></span>
     </div>
-    <button type="button" class="btn-pdf" (click)="descargarPDFDemografico()">
-      <i class="bx bxs-file-pdf" aria-hidden="true"></i> Exportar Demográfico
-    </button>
+    <div class="hub-hero-content">
+      <div class="hub-badge-tag">
+        <span class="bx bx-check-shield"></span> Reportes Nutricionales
+      </div>
+      <h1 class="hub-hero-title">Centro de Reportes</h1>
+      <p class="hub-hero-subtitle">
+        Genera informes de evolución física y estadísticas.
+      </p>
+    </div>
   </header>
 
-  <div class="dashboard-container">
-    <!-- Carga general de estadísticas demográficas -->
-    @if (demograficoResource.isLoading()) {
-      <div class="loading-state">
-        <p>Cargando datos demográficos...</p>
+  <!-- ─── SELECTOR VISUAL DE REPORTES (TABS CON SEMÁFORO NUTRI-SCORE) ───────── -->
+  <nav class="reports-selector-nav" aria-label="Catálogo de reportes disponibles">
+    @for (tab of reportTabs(); track tab.id) {
+    <button type="button" class="report-tab-btn" [class.report-tab-btn--active]="activeTab() === tab.id"
+      [class.report-tab-btn--upcoming]="tab.isUpcoming" (click)="setTab(tab.id)">
+      <div class="tab-btn-icon-box" [class]="'icon-ns-' + (tab.badgeType || 'a')">
+        <span class="bx {{ tab.icon }}" aria-hidden="true"></span>
       </div>
-    } @else {
-      <!-- ─── REPORTE DEMOGRÁFICO CONTENEDOR DE PDF ────────────────────────── -->
-      <div id="reporte-demografico-pdf" class="pdf-container">
-        <!-- Cabecera de Impresión Profesional (Solo visible en PDF) -->
-        <div class="print-only-header demografico-header" aria-hidden="true">
-          <div class="print-header-top">
-            <h2 class="print-brand"><i class="bx bxl-apple"></i> BIENESTAR</h2>
-            <span class="print-title">REPORTE DEMOGRÁFICO DE PACIENTES</span>
-          </div>
-          <div class="print-header-meta">
-            <p><strong>Censo Total:</strong> {{ demograficoResource.value()?.totalPacientes || 0 }} pacientes</p>
-            <p><strong>Fecha de Emisión:</strong> {{ fechaActual | date: 'dd/MM/yyyy' }}</p>
-          </div>
+      <div class="tab-btn-text-group">
+        <div class="tab-btn-top">
+          <span class="tab-btn-title">{{ tab.title }}</span>
+          @if (tab.badge) {
+          <span class="tab-btn-badge" [class]="'badge-ns-' + (tab.badgeType || 'a')">{{ tab.badge }}</span>
+          }
         </div>
-
-        <!-- Introducción de Reporte Clínico (Solo visible en PDF) -->
-        <div class="print-only-desc" aria-hidden="true">
-          <p>
-            Este informe consolida los datos demográficos y la distribución del censo de pacientes de la institución
-            médica <strong>Bienestar</strong> a la fecha de emisión. La información recopilada en este censo permite
-            analizar la pirámide poblacional atendida, optimizar la asignación de recursos clínicos y mantener un control de calidad en
-            las derivaciones a nuestros especialistas de nutrición clínica y dietética.
-          </p>
-        </div>
-
-        <!-- ─── CARDS DE MÉTRICAS GENERALES ─────────────────────────────────── -->
-        <section class="metrics-grid" aria-label="Métricas demográficas globales">
-          <div class="metric-card">
-            <div class="metric-icon val-pacientes">
-              <i class="bx bx-group" aria-hidden="true"></i>
-            </div>
-            <div class="metric-info">
-              <span class="metric-value">{{ demograficoResource.value()?.totalPacientes || 0 }}</span>
-              <span class="metric-label">Pacientes Totales</span>
-            </div>
-          </div>
-
-          <div class="metric-card">
-            <div class="metric-icon val-nutriologos">
-              <i class="bx bx-badge-check" aria-hidden="true"></i>
-            </div>
-            <div class="metric-info">
-              <span class="metric-value">{{ totalGeneros() }}</span>
-              <span class="metric-label">Géneros Registrados</span>
-            </div>
-          </div>
-
-          <div class="metric-card">
-            <div class="metric-icon val-edad">
-              <i class="bx bx-calendar-star" aria-hidden="true"></i>
-            </div>
-            <div class="metric-info">
-              <span class="metric-value">{{ totalRangosEdad() }}</span>
-              <span class="metric-label">Grupos de Edad</span>
-            </div>
-          </div>
-        </section>
-
-        <!-- ─── SECCIÓN DEMOGRÁFICA PRINCIPAL ──────────────────────────────── -->
-        <section class="demographics-row" aria-label="Distribución demográfica de pacientes">
-          <!-- Tarjeta de Distribución de Género (Chart.js) -->
-          <article class="demo-card">
-            <h3 class="demo-card-title"><i class="bx bx-pie-chart-alt-2"></i> Distribución de Género</h3>
-            <p class="chart-desc-text" aria-hidden="true">Representa la distribución biológica de la población clínica activa, sirviendo de base para la personalización de planes basados en las guías de requerimientos energéticos por género.</p>
-            <div class="chart-canvas-container">
-              <canvas id="canvas-genero"></canvas>
-            </div>
-          </article>
-
-          <!-- Tarjeta de Distribución de Edad (Chart.js) -->
-          <article class="demo-card">
-            <h3 class="demo-card-title"><i class="bx bx-bar-chart-alt"></i> Grupos de Edad</h3>
-            <p class="chart-desc-text" aria-hidden="true">Muestra la segmentación etaria de los pacientes. Permite identificar las prioridades clínicas en pediatría, adultos y adultos mayores atendidos en la institución.</p>
-            <div class="chart-canvas-container">
-              <canvas id="canvas-edad"></canvas>
-            </div>
-          </article>
-
-          <!-- Tarjeta de Distribución por Nutriólogo (Chart.js) -->
-          <article class="demo-card">
-            <h3 class="demo-card-title"><i class="bx bx-user-voice"></i> Por Nutriólogo</h3>
-            <p class="chart-desc-text" aria-hidden="true">Distribución absoluta de la carga de pacientes activos y derivaciones médicas asignadas a cada especialista del equipo de salud de la clínica.</p>
-            <div class="chart-canvas-container">
-              <canvas id="canvas-nutriologo"></canvas>
-            </div>
-          </article>
-        </section>
-
-        <!-- Bloque de Firmas y Validación (Solo visible en PDF) -->
-        <div class="print-validation-section" aria-hidden="true">
-          <div class="signature-block">
-            <div class="signature-line"></div>
-            <p class="signature-title">Firma de Coordinación Médica</p>
-            <p class="signature-subtitle">Auditoría Clínica Bienestar</p>
-          </div>
-          <div class="signature-block">
-            <div class="stamp-box">
-              <i class="bx bx-badge-check" style="font-size: 2.2rem; color: #6c5ce7;"></i>
-              <span>VALIDADO</span>
-            </div>
-            <p class="signature-title">Sello Institucional</p>
-            <p class="signature-subtitle">Registro Oficial No. 849-B</p>
-          </div>
-        </div>
+        <p class="tab-btn-desc">{{ tab.subtitle }}</p>
       </div>
+    </button>
     }
+  </nav>
 
-    <!-- ─── SECCIÓN DE SEGUIMIENTO CLÍNICO INDIVIDUAL DE PACIENTES ─────────── -->
-    <section class="patient-tracking-section" aria-label="Seguimiento de progreso clínico del paciente">
-      <div class="tracking-header-box">
-        <div class="tracking-title-info">
-          <h2><i class="bx bx-line-chart" aria-hidden="true"></i> Progreso de Peso y Composición Corporal</h2>
-          <p>Selecciona un paciente para ver la evolución de sus medidas antropométricas registradas</p>
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- ─── 1. REPORTE DE EVOLUCIÓN DE PACIENTES (PROGRESO) ────────────────────── -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'progreso') {
+  <section class="report-content-section" aria-label="Reporte de Evolución de Pacientes">
+
+    <!-- SUB-SECCIÓN A: SELECTOR VISUAL DE PACIENTE (Si no hay paciente seleccionado) -->
+    @if (!selectedPaciente()) {
+    <div class="patient-picker-box">
+      <div class="picker-header-row">
+        <div>
+          <h2 class="picker-box-title">Selecciona un Paciente</h2>
+          <p class="picker-box-desc">Elige un paciente para cargar sus mediciones, gráficos de evolución e
+            informe descargable.</p>
         </div>
 
-        <!-- Selector de Paciente -->
-        <div class="select-patient-box">
-          <label for="select-patient" class="sr-only">Seleccionar Paciente</label>
-          <div class="select-wrapper">
-            <i class="bx bx-user" aria-hidden="true"></i>
-            <select id="select-patient" (change)="seleccionarPaciente($event)">
-              <option value="">-- Seleccionar Paciente --</option>
-              @for (p of pacientesList(); track p.id) {
-                <option [value]="p.id">{{ p.nombre }} {{ p.apellidoPaterno }}</option>
-              }
-            </select>
-            <i class="bx bx-chevron-down select-arrow" aria-hidden="true"></i>
-          </div>
-          @if (pacienteIdSeleccionado() && pacienteStats()) {
-            <button type="button" class="btn-pdf btn-pdf-sm" (click)="descargarPDFProgreso()" style="margin-top: 10px; width: 100%;">
-              <i class="bx bxs-file-pdf" aria-hidden="true"></i> Exportar Progreso
-            </button>
+        <!-- Buscador en tiempo real -->
+        <div class="picker-search-field">
+          <span class="bx bx-search search-icon" aria-hidden="true"></span>
+          <input type="search" [value]="searchTerm()" (input)="searchTerm.set($any($event.target).value)"
+            class="search-control-input" placeholder="Buscar por nombre, correo o ID..."
+            aria-label="Buscar paciente para el reporte" />
+          @if (searchTerm()) {
+          <button type="button" class="btn-clear-term" (click)="searchTerm.set('')" aria-label="Borrar búsqueda">
+            <span class="bx bx-x"></span>
+          </button>
           }
         </div>
       </div>
 
-      <!-- Contenedor del Progreso del Paciente Seleccionado -->
-      @if (!pacienteIdSeleccionado()) {
-        <div class="empty-patient-state">
-          <i class="bx bx-trending-up" aria-hidden="true"></i>
-          <p>Selecciona un paciente del menú superior para graficar su progreso antropométrico</p>
-        </div>
-      } @else if (progresoResource.isLoading()) {
-        <div class="loading-state">
-          <p>Cargando mediciones del paciente...</p>
-        </div>
+      @if (pacientesResource.isLoading()) {
+      <div class="state-container loading-state">
+        <div class="app-spinner"></div>
+        <p class="state-text">Cargando lista de pacientes...</p>
+      </div>
+      } @else if (filteredPacientes().length === 0) {
+      <div class="state-container empty-state">
+        <div class="state-icon-circle neutral"><span class="bx bx-user-x"></span></div>
+        <h3 class="state-title">No se encontraron pacientes</h3>
+        <p class="state-desc">{{ searchTerm() ? 'Sin resultados para "' + searchTerm() + '"' : 'No hay pacientes
+          registrados.' }}</p>
+      </div>
       } @else {
-        
-        @if (pacienteStats(); as stats) {
-          <!-- REPORTE DE PROGRESO CONTENEDOR DE PDF -->
-          <div id="reporte-progreso-pdf" class="pdf-container">
-            <!-- Cabecera de Impresión Profesional de Progreso (Solo visible en PDF) -->
-            <div class="print-only-header progreso-header" aria-hidden="true">
-              <div class="print-header-top">
-                <h2 class="print-brand"><i class="bx bxl-apple"></i> BIENESTAR</h2>
-                <span class="print-title">REPORTE CLÍNICO DE EVOLUCIÓN ANTROPOMÉTRICA</span>
-              </div>
-              <div class="print-header-meta">
-                <div class="print-meta-col">
-                  <p><strong>Paciente:</strong> {{ pacienteSeleccionado()?.nombre }} {{ pacienteSeleccionado()?.apellidoPaterno }}</p>
-                  <p><strong>Género:</strong> {{ pacienteSeleccionado()?.genero === 'MASCULINO' ? 'Masculino' : 'Femenino' }}</p>
-                </div>
-                <div class="print-meta-col">
-                  <p><strong>Correo:</strong> {{ pacienteSeleccionado()?.correo }}</p>
-                  <p><strong>Teléfono:</strong> {{ pacienteSeleccionado()?.telefono }}</p>
-                </div>
-                <div class="print-meta-col text-right">
-                  <p><strong>Fecha de Emisión:</strong> {{ fechaActual | date: 'dd/MM/yyyy' }}</p>
-                  <p><strong>Total Mediciones:</strong> {{ stats.totalRegistros }} registros</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Introducción de Evolución de Progreso (Solo visible en PDF) -->
-            <div class="print-only-desc" aria-hidden="true">
-              <p>
-                Este documento clínico detalla la evolución antropométrica y el progreso corporal del paciente
-                <strong>{{ pacienteSeleccionado()?.nombre }} {{ pacienteSeleccionado()?.apellidoPaterno }}</strong>.
-                Los datos históricos presentados corresponden a las mediciones oficiales registradas en el consultorio,
-                trazando la tendencia de peso corporal y grasa para guiar la prescripción dietética actual.
-              </p>
-            </div>
-
-            <!-- Métrica de Progreso Rápido -->
-            <div class="patient-summary-banner">
-              <div class="patient-profile-summary">
-                <span class="avatar-circle" aria-hidden="true">
-                  {{ pacienteSeleccionado()?.nombre?.charAt(0) }}{{ pacienteSeleccionado()?.apellidoPaterno?.charAt(0) }}
-                </span>
-                <div>
-                  <h3>{{ pacienteSeleccionado()?.nombre }} {{ pacienteSeleccionado()?.apellidoPaterno }}</h3>
-                  <p>Historial Clínico: {{ stats.totalRegistros }} mediciones registradas</p>
-                </div>
-              </div>
-
-              <!-- Grid de Hitos -->
-              <div class="milestones-grid">
-                <div class="milestone-item">
-                  <span class="milestone-label">Peso Inicial</span>
-                  <span class="milestone-value">{{ stats.pesoInicial | number: '1.1-1' }} kg</span>
-                </div>
-                <div class="milestone-item">
-                  <span class="milestone-label">Peso Actual</span>
-                  <span class="milestone-value">{{ stats.pesoActual | number: '1.1-1' }} kg</span>
-                </div>
-                <div class="milestone-item">
-                  <span class="milestone-label">Evolución Peso</span>
-                  <span
-                    class="milestone-change"
-                    [class.loss]="stats.pesoDiferencia < 0"
-                    [class.gain]="stats.pesoDiferencia > 0"
-                  >
-                    <i
-                      class="bx"
-                      [class.bx-trending-down]="stats.pesoDiferencia < 0"
-                      [class.bx-trending-up]="stats.pesoDiferencia > 0"
-                      aria-hidden="true"
-                    ></i>
-                    {{ stats.pesoDiferencia > 0 ? '+' : '' }}{{ stats.pesoDiferencia | number: '1.1-1' }} kg
-                  </span>
-                </div>
-                
-                <div class="milestone-item">
-                  <span class="milestone-label">Grasa Corporal</span>
-                  <span class="milestone-value">{{ stats.grasaActual | number: '1.1-1' }}%</span>
-                </div>
-                <div class="milestone-item">
-                  <span class="milestone-label">Evolución Grasa</span>
-                  <span
-                    class="milestone-change"
-                    [class.loss]="stats.grasaDiferencia < 0"
-                    [class.gain]="stats.grasaDiferencia > 0"
-                  >
-                    <i
-                      class="bx"
-                      [class.bx-trending-down]="stats.grasaDiferencia < 0"
-                      [class.bx-trending-up]="stats.grasaDiferencia > 0"
-                      aria-hidden="true"
-                    ></i>
-                    {{ stats.grasaDiferencia > 0 ? '+' : '' }}{{ stats.grasaDiferencia | number: '1.1-1' }}%
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- ─── GRÁFICOS DE PROGRESO ────────────────────────────────────── -->
-            <div class="charts-row">
-              <!-- Gráfico de Peso (Chart.js) -->
-              <article class="progress-chart-card">
-                <div class="chart-header">
-                  <h4>Evolución del Peso Corporal</h4>
-                  <span class="unit-badge">kg</span>
-                </div>
-                <p class="chart-desc-text" aria-hidden="true">Muestra la curva cronológica de masa corporal total. El objetivo es supervisar la velocidad de pérdida o ganancia de peso adaptada a las metas de salud del paciente.</p>
-                <div class="chart-canvas-container">
-                  <canvas id="canvas-peso"></canvas>
-                </div>
-              </article>
-
-              <!-- Gráfico de Porcentaje de Grasa (Chart.js) -->
-              <article class="progress-chart-card">
-                <div class="chart-header">
-                  <h4>Evolución del Porcentaje de Grasa</h4>
-                  <span class="unit-badge">% Grasa</span>
-                </div>
-                <p class="chart-desc-text" aria-hidden="true">Monitoreo clínico de la masa adiposa. Permite validar que el peso perdido o ganado provenga de compartimentos grasos y no de masa muscular activa.</p>
-                <div class="chart-canvas-container">
-                  <canvas id="canvas-grasa"></canvas>
-                </div>
-              </article>
-            </div>
-
-            <!-- Sección de Glosario e Interpretación Clínico (Solo visible en PDF) -->
-            <div class="print-glossary-section" aria-hidden="true">
-              <h4 class="glossary-title"><i class="bx bx-help-circle"></i> Guía de Interpretación de Indicadores de Salud</h4>
-              <div class="glossary-grid">
-                <div class="glossary-item">
-                  <strong>Índice Cintura/Talla (ICT):</strong>
-                  <p>Mide la distribución de grasa abdominal. Valores menores o iguales a 0.50 indican peso saludable y bajo riesgo cardiovascular. Valores de 0.51 a 0.55 indican riesgo moderado, y superiores a 0.55 indican riesgo alto.</p>
-                </div>
-                <div class="glossary-item">
-                  <strong>Índice Cintura/Cadera (ICC):</strong>
-                  <p>Evalúa el patrón de acumulación de grasa (tipo ginoide o androide). Valores normales son menores a 0.80 en mujeres y 0.90 en hombres, sirviendo como indicador predictivo de riesgo de síndrome metabólico.</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Área de Anotaciones Clínicas (Solo visible en PDF) -->
-            <div class="print-observations-section" aria-hidden="true">
-              <h4 class="observations-title"><i class="bx bx-edit"></i> Observaciones Clínicas y Recomendaciones Nutricionales</h4>
-              <div class="observations-placeholder-lines">
-                <div class="obs-line"></div>
-                <div class="obs-line"></div>
-                <div class="obs-line"></div>
-              </div>
-            </div>
-
-            <!-- Bloque de Firmas y Validación (Solo visible en PDF) -->
-            <div class="print-validation-section" aria-hidden="true">
-              <div class="signature-block">
-                <div class="signature-line"></div>
-                <p class="signature-title">Firma del Especialista</p>
-                <p class="signature-subtitle">Nutriólogo Clínico Responsable</p>
-              </div>
-              <div class="signature-block">
-                <div class="stamp-box">
-                  <i class="bx bx-badge-check" style="font-size: 2.2rem; color: #6c5ce7;"></i>
-                  <span>REGISTRADO</span>
-                </div>
-                <p class="signature-title">Cédula Profesional</p>
-                <p class="signature-subtitle">Autorizado por el Depto. de Salud</p>
-              </div>
-            </div>
+      <div class="picker-grid">
+        @for (p of filteredPacientes(); track p.id) {
+        <article class="picker-patient-card" (click)="selectPaciente(p)">
+          <div class="picker-patient-avatar">
+            {{ (p.nombre ? p.nombre[0] : '') + (p.apellidoPaterno ? p.apellidoPaterno[0] : '') }}
           </div>
+          <div class="picker-patient-details">
+            <h3 class="picker-patient-name">{{ p.nombre }} {{ p.apellidoPaterno }} {{ p.apellidoMaterno ?? '' }}</h3>
+            <span class="picker-patient-email">{{ p.correo }}</span>
+            <span class="picker-patient-tag">ID: #{{ p.id }}</span>
+          </div>
+          <button type="button" class="btn-select-card" aria-label="Generar reporte de este paciente">
+            <span class="bx bx-file"></span> Ver Reporte
+          </button>
+        </article>
+        }
+      </div>
+      }
+    </div>
+
+    } @else {
+
+    <!-- SUB-SECCIÓN B: REPORTE DEL PACIENTE SELECCIONADO (INTERACTIVO EN PANTALLA) -->
+    <header class="patient-selected-bar">
+      <div class="patient-selected-left">
+        <button type="button" class="btn-back-square" (click)="cambiarPaciente()"
+          title="Volver a la selección de pacientes">
+          <span class="bx bx-arrow-back"></span>
+        </button>
+        <div class="selected-avatar-badge" aria-hidden="true">
+          {{ (selectedPaciente()!.nombre ? selectedPaciente()!.nombre[0] : '') + (selectedPaciente()!.apellidoPaterno ?
+          selectedPaciente()!.apellidoPaterno[0] : '') }}
+        </div>
+        <div>
+          <div class="patient-report-tag">Informe Antropométrico</div>
+          <h2 class="selected-patient-title">
+            {{ selectedPaciente()!.nombre }} {{ selectedPaciente()!.apellidoPaterno }} {{
+            selectedPaciente()!.apellidoMaterno ?? '' }}
+          </h2>
+          <span class="selected-patient-sub">
+            ID: #{{ selectedPaciente()!.id }} · {{ selectedPaciente()!.correo }} · {{ selectedPaciente()!.telefono ||
+            'Sin teléfono' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="patient-selected-actions">
+        <button type="button" class="btn-change-patient" (click)="cambiarPaciente()">
+          <span class="bx bx-transfer-alt"></span> Cambiar Paciente
+        </button>
+
+        @if (pacienteStats()) {
+        <button type="button" class="btn-export-pdf" [disabled]="isExportingProgreso()"
+          (click)="descargarPDFProgreso()">
+          @if (isExportingProgreso()) {
+          <span class="app-spinner-sm"></span> Generando PDF...
+          } @else {
+          <span class="bx bxs-file-pdf"></span> Exportar PDF
+          }
+        </button>
+        }
+      </div>
+    </header>
+
+    <!-- Contenido del Reporte en Pantalla -->
+    @if (progresoResource.isLoading()) {
+    <div class="state-container loading-state">
+      <div class="app-spinner"></div>
+      <p class="state-text">Cargando mediciones y trazabilidad del paciente...</p>
+    </div>
+    } @else if (!pacienteStats()) {
+    <div class="state-container empty-state">
+      <div class="state-icon-circle neutral"><span class="bx bx-line-chart"></span></div>
+      <h3 class="state-title">Sin mediciones antropométricas</h3>
+      <p class="state-desc">Este paciente aún no cuenta con evaluaciones corporales registradas en sus consultas.</p>
+    </div>
+    } @else {
+
+    <!-- ─── CARDS DE KPIS CORPORALES (GAMA NUTRI-SCORE) ───────────────── -->
+    <section class="kpis-grid" aria-label="Métricas clave de evolución">
+
+      <!-- Peso Inicial (Naranja D) -->
+      <div class="kpi-card kpi-ns-orange">
+        <div class="kpi-icon-box ns-d">
+          <span class="bx bx-left-arrow-alt"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Peso Inicial</span>
+          <span class="kpi-val">{{ pacienteStats()?.pesoInicial | number: '1.1-1' }} <small>kg</small></span>
+        </div>
+      </div>
+
+      <!-- Peso Actual (Verde Lima B) -->
+      <div class="kpi-card kpi-ns-lime">
+        <div class="kpi-icon-box ns-b">
+          <span class="bx bx-target-lock"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Peso Actual</span>
+          <span class="kpi-val">{{ pacienteStats()?.pesoActual | number: '1.1-1' }} <small>kg</small></span>
+        </div>
+      </div>
+
+      <!-- Cambio de Peso (Verde Oscuro A si baja / Rojo E si sube) -->
+      <div class="kpi-card" [class.kpi-ns-green]="(pacienteStats()?.pesoDiferencia ?? 0) <= 0"
+        [class.kpi-ns-red]="(pacienteStats()?.pesoDiferencia ?? 0) > 0">
+        <div class="kpi-icon-box" [class.ns-a]="(pacienteStats()?.pesoDiferencia ?? 0) <= 0"
+          [class.ns-e]="(pacienteStats()?.pesoDiferencia ?? 0) > 0">
+          <span class="bx" [class.bx-trending-down]="(pacienteStats()?.pesoDiferencia ?? 0) <= 0"
+            [class.bx-trending-up]="(pacienteStats()?.pesoDiferencia ?? 0) > 0"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Variación Neta</span>
+          <span class="kpi-val">
+            {{ (pacienteStats()?.pesoDiferencia ?? 0) > 0 ? '+' : '' }}{{ pacienteStats()?.pesoDiferencia | number:
+            '1.1-1' }} <small>kg</small>
+          </span>
+        </div>
+      </div>
+
+      <!-- Grasa Corporal (Amarillo C) -->
+      <div class="kpi-card kpi-ns-yellow">
+        <div class="kpi-icon-box ns-c">
+          <span class="bx bx-pie-chart-alt"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Grasa Corporal</span>
+          <span class="kpi-val">{{ pacienteStats()?.grasaActual | number: '1.1-1' }} <small>%</small></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── GUÍA DE INTERPRETACIÓN CLÍNICA ─────── -->
+    <section class="clinical-guide-section" aria-label="Interpretación diagnóstica y recomendaciones">
+      <div class="guide-header-row">
+        <span class="bx bx-info-circle guide-header-icon"></span>
+        <div>
+          <h3 class="guide-title">Interpretación Diagnóstica & Pautas de Salud</h3>
+          <p class="guide-subtitle">Referencias antropométricas basadas en la OMS, Sociedad Internacional de Nutrición y estándares clínicos.</p>
+        </div>
+      </div>
+
+      <div class="guide-cards-grid">
+        <!-- Tarjeta de Diagnóstico de Grasa -->
+        @let fatEval = interpretacionGrasa(pacienteStats()?.grasaActual, selectedPaciente()?.genero);
+        <div class="guide-item-card">
+          <div class="guide-item-top">
+            <span class="guide-item-tag">Grasa Corporal</span>
+            <span class="ns-score-pill" [style.background-color]="fatEval.color">{{ fatEval.score }}</span>
+          </div>
+          <div class="guide-item-status" [style.color]="fatEval.color">{{ fatEval.nivel }}</div>
+          <p class="guide-item-text">{{ fatEval.desc }}</p>
+          <div class="guide-ref-footer">
+            <span>Referencia: {{ selectedPaciente()?.genero === 'MASCULINO' ? '10% – 20% (Hombres)' : '18% – 28%
+              (Mujeres)' }}</span>
+          </div>
+        </div>
+
+        <!-- Tarjeta de Diagnóstico de Cintura/Talla (ICT) -->
+        @let ictEval = interpretacionICT(pacienteStats()?.ultimoICT);
+        <div class="guide-item-card">
+          <div class="guide-item-top">
+            <span class="guide-item-tag">Riesgo Cardiovascular (ICT)</span>
+            <span class="ns-score-pill" [style.background-color]="ictEval.color">{{ ictEval.score }}</span>
+          </div>
+          <div class="guide-item-status" [style.color]="ictEval.color">{{ ictEval.nivel }}</div>
+          <p class="guide-item-text">{{ ictEval.desc }}</p>
+          <div class="guide-ref-footer">
+            <span>Índice Actual: {{ pacienteStats()?.ultimoICT ? (pacienteStats()?.ultimoICT | number: '1.2-2') :
+              'Pendiente' }} (Óptimo: &lt; 0.50)</span>
+          </div>
+        </div>
+
+        <!-- Tarjeta de Pautas y Hábitos Sugeridos -->
+        <div class="guide-item-card guide-habits-card">
+          <div class="guide-item-top">
+            <span class="guide-item-tag">Pautas de Acompañamiento</span>
+            <span class="bx bx-water water-icon"></span>
+          </div>
+          <ul class="guide-tips-list">
+            <li><strong>💧 Hidratación:</strong> Meta diaria recomendada de <strong>{{
+                aguaSugeridaLitros(pacienteStats()?.pesoActual) }} L</strong> de agua natural.</li>
+            <li><strong>🏃 Actividad:</strong> 150 min/semana de ejercicio aeróbico o fuerza.</li>
+            <li><strong>🥗 Fibra & Registro:</strong> Cumplir el plan prescrito y registrar comidas en el diario.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── GRÁFICOS INTERACTIVOS (CHART.JS) ─────── -->
+    <section class="charts-row" aria-label="Gráficos de evolución física">
+      <article class="chart-box-card chart-peso-box">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-line-chart icon-green"></span>
+          <div>
+            <h3 class="chart-card-title">Tendencia de Peso Corporal (kg)</h3>
+            <p class="chart-card-sub">Evolución registrada a lo largo de las consultas</p>
+          </div>
+        </div>
+        <div class="chart-canvas-box">
+          <canvas id="canvas-peso"></canvas>
+        </div>
+      </article>
+
+      <article class="chart-box-card chart-grasa-box">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-pie-chart icon-orange"></span>
+          <div>
+            <h3 class="chart-card-title">Porcentaje de Grasa Corporal (%)</h3>
+            <p class="chart-card-sub">Estimación metabólica según parámetros corporales</p>
+          </div>
+        </div>
+        <div class="chart-canvas-box">
+          <canvas id="canvas-grasa"></canvas>
+        </div>
+      </article>
+    </section>
+
+    <!-- ─── TABLA HISTÓRICA DETALLADA ────────────────────────────────── -->
+    <section class="history-table-card" aria-label="Historial cronológico de mediciones">
+      <div class="table-card-header">
+        <h3 class="table-card-title"><span class="bx bx-calendar-event"></span> Historial de Evaluaciones</h3>
+        <span class="table-records-tag">{{ pacienteStats()?.totalRegistros }} registros</span>
+      </div>
+      <div class="table-responsive">
+        <table class="clinical-table">
+          <thead>
+            <tr>
+              <th scope="col">Fecha de Medición</th>
+              <th scope="col">Peso (kg)</th>
+              <th scope="col">Grasa Corporal</th>
+              <th scope="col">Cintura / Talla (ICT)</th>
+              <th scope="col">Cintura / Cadera (ICC)</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (fecha of progresoResource.value()?.fechas; track $index) {
+            <tr>
+              <td class="td-date"><strong>{{ fecha }}</strong></td>
+              <td class="td-weight">{{ progresoResource.value()?.pesos?.[$index] | number: '1.1-1' }} kg</td>
+              <td>
+                @if (progresoResource.value()?.porcentajesGrasa?.[$index]) {
+                <span class="badge-chip chip-fat">{{ progresoResource.value()?.porcentajesGrasa?.[$index] | number:
+                  '1.1-1' }}%</span>
+                } @else {
+                <span class="td-muted">—</span>
+                }
+              </td>
+              <td>
+                @if (progresoResource.value()?.indicesCinturaTalla?.[$index]) {
+                <span class="badge-chip chip-ict">{{ progresoResource.value()?.indicesCinturaTalla?.[$index] | number:
+                  '1.2-2' }}</span>
+                } @else {
+                <span class="td-muted">—</span>
+                }
+              </td>
+              <td>
+                @if (progresoResource.value()?.indicesCinturaCadera?.[$index]) {
+                <span class="badge-chip chip-icc">{{ progresoResource.value()?.indicesCinturaCadera?.[$index] | number:
+                  '1.2-2' }}</span>
+                } @else {
+                <span class="td-muted">—</span>
+                }
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    }
+
+    } <!-- end @else (selectedPaciente !== null) -->
+
+  </section>
+  }
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- ─── 2. REPORTE DEMOGRÁFICO Y CENSO (SOLO ADMINISTRADOR) ─────────────── -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'demografico' && isAdmin()) {
+  <section class="report-content-section" aria-label="Reporte Demográfico y Censo">
+
+    <div class="demografico-top-actions">
+      <div>
+        <h2 class="section-heading-title">Censo y Distribución Poblacional</h2>
+        <p class="section-heading-sub">Indicadores globales sobre pacientes atendidos, segmentación de
+          género y grupos de edad.</p>
+      </div>
+      <button type="button" class="btn-export-pdf" [disabled]="isExportingDemografico()"
+        (click)="descargarPDFDemografico()">
+        @if (isExportingDemografico()) {
+        <span class="app-spinner-sm"></span> Generando PDF...
         } @else {
-          <div class="empty-patient-state">
-            <i class="bx bx-info-circle" aria-hidden="true"></i>
-            <p>Este paciente no tiene suficientes medidas antropométricas registradas para generar gráficas de progreso.</p>
-            <p class="sub-msg">Se requieren al menos 2 registros en distintas fechas para trazar la línea de tendencia.</p>
-            <a [routerLink]="['/main/pacientes', pacienteIdSeleccionado(), 'medidas']" class="btn-primary-sm">
-              <i class="bx bx-plus"></i> Registrar Medidas
-            </a>
+        <span class="bx bxs-file-pdf"></span> Exportar Censo PDF
+        }
+      </button>
+    </div>
+
+    @if (demograficoResource.isLoading()) {
+    <div class="state-container loading-state">
+      <div class="app-spinner"></div>
+      <p class="state-text">Cargando censo institucional...</p>
+    </div>
+    } @else if (demograficoResource.error()) {
+    <div class="state-container error-state">
+      <div class="state-icon-circle error"><span class="bx bx-error-circle"></span></div>
+      <h3 class="state-title">Error al consultar el censo</h3>
+      <p class="state-desc">Verifica tus permisos de administrador e intenta nuevamente.</p>
+    </div>
+    } @else {
+
+    <!-- Métricas Generales en Pantalla -->
+    <div class="kpis-grid demografico-kpis">
+      <div class="kpi-card kpi-ns-green">
+        <div class="kpi-icon-box ns-a">
+          <span class="bx bx-group"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Pacientes Registrados</span>
+          <span class="kpi-val">{{ demograficoResource.value()?.totalPacientes || 0 }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-ns-lime">
+        <div class="kpi-icon-box ns-b">
+          <span class="bx bx-badge-check"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Géneros Segmentados</span>
+          <span class="kpi-val">{{ totalGeneros() }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-ns-orange">
+        <div class="kpi-icon-box ns-d">
+          <span class="bx bx-calendar-star"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Grupos Etarios</span>
+          <span class="kpi-val">{{ totalRangosEdad() }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gráficos Demográficos en Pantalla -->
+    <div class="demographics-charts-grid">
+      <article class="chart-box-card">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-pie-chart-alt-2 icon-green"></span>
+          <div>
+            <h3 class="chart-card-title">Distribución por Género</h3>
+            <p class="chart-card-sub">Porcentaje de población atendida según sexo biológico</p>
           </div>
+        </div>
+        <div class="chart-canvas-box">
+          <canvas id="canvas-genero"></canvas>
+        </div>
+      </article>
+
+      <article class="chart-box-card">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-bar-chart-alt icon-lime"></span>
+          <div>
+            <h3 class="chart-card-title">Grupos de Edad</h3>
+            <p class="chart-card-sub">Segmentación etaria de pacientes registrados</p>
+          </div>
+        </div>
+        <div class="chart-canvas-box">
+          <canvas id="canvas-edad"></canvas>
+        </div>
+      </article>
+
+      <article class="chart-box-card chart-box-card--full">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-user-voice icon-darkgreen"></span>
+          <div>
+            <h3 class="chart-card-title">Carga de Pacientes por Nutriólogo</h3>
+            <p class="chart-card-sub">Volumen de derivaciones y pacientes asignados a cada especialista</p>
+          </div>
+        </div>
+        <div class="chart-canvas-box">
+          <canvas id="canvas-nutriologo"></canvas>
+        </div>
+      </article>
+    </div>
+
+    }
+
+  </section>
+  }
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- ─── 3. REPORTE DE SEGUIMIENTO DEL PLAN ALIMENTICIO (ADHERENCIA) ────────── -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'adherencia') {
+  <section class="report-content-section" aria-label="Reporte de Seguimiento del Plan Alimenticio">
+
+    <!-- SUB-SECCIÓN A: SELECTOR VISUAL DE PACIENTE (Si no hay paciente seleccionado) -->
+    @if (!selectedPaciente()) {
+    <div class="patient-picker-box">
+      <div class="picker-header-row">
+        <div>
+          <h2 class="picker-box-title">Selecciona un Paciente</h2>
+          <p class="picker-box-desc">Elige un paciente para evaluar el apego a su plan alimenticio, objetivos alcanzados y días de desviación.</p>
+        </div>
+
+        <!-- Buscador en tiempo real -->
+        <div class="picker-search-field">
+          <span class="bx bx-search search-icon" aria-hidden="true"></span>
+          <input type="search" [value]="searchTerm()" (input)="searchTerm.set($any($event.target).value)"
+            class="search-control-input" placeholder="Buscar por nombre, correo o ID..."
+            aria-label="Buscar paciente para el reporte de seguimiento" />
+          @if (searchTerm()) {
+          <button type="button" class="btn-clear-term" (click)="searchTerm.set('')" aria-label="Borrar búsqueda">
+            <span class="bx bx-x"></span>
+          </button>
+          }
+        </div>
+      </div>
+
+      @if (pacientesResource.isLoading()) {
+      <div class="state-container loading-state">
+        <div class="app-spinner"></div>
+        <p class="state-text">Cargando lista de pacientes...</p>
+      </div>
+      } @else if (filteredPacientes().length === 0) {
+      <div class="state-container empty-state">
+        <div class="state-icon-circle neutral"><span class="bx bx-user-x"></span></div>
+        <h3 class="state-title">No se encontraron pacientes</h3>
+        <p class="state-desc">{{ searchTerm() ? 'Sin resultados para "' + searchTerm() + '"' : 'No hay pacientes registrados.' }}</p>
+      </div>
+      } @else {
+      <div class="picker-grid">
+        @for (p of filteredPacientes(); track p.id) {
+        <article class="picker-patient-card" (click)="selectPaciente(p)">
+          <div class="picker-patient-avatar">
+            {{ (p.nombre ? p.nombre[0] : '') + (p.apellidoPaterno ? p.apellidoPaterno[0] : '') }}
+          </div>
+          <div class="picker-patient-details">
+            <h3 class="picker-patient-name">{{ p.nombre }} {{ p.apellidoPaterno }} {{ p.apellidoMaterno ?? '' }}</h3>
+            <span class="picker-patient-email">{{ p.correo }}</span>
+            <span class="picker-patient-tag">ID: #{{ p.id }}</span>
+          </div>
+          <button type="button" class="btn-select-card" aria-label="Generar reporte de seguimiento de este paciente">
+            <span class="bx bx-food-menu"></span> Ver Seguimiento
+          </button>
+        </article>
+        }
+      </div>
+      }
+    </div>
+
+    } @else {
+
+    <!-- SUB-SECCIÓN B: REPORTE DEL PACIENTE SELECCIONADO (INTERACTIVO EN PANTALLA) -->
+    <header class="patient-selected-bar">
+      <div class="patient-selected-left">
+        <button type="button" class="btn-back-square" (click)="cambiarPaciente()"
+          title="Volver a la selección de pacientes">
+          <span class="bx bx-arrow-back"></span>
+        </button>
+        <div class="selected-avatar-badge" aria-hidden="true">
+          {{ (selectedPaciente()!.nombre ? selectedPaciente()!.nombre[0] : '') + (selectedPaciente()!.apellidoPaterno ?
+          selectedPaciente()!.apellidoPaterno[0] : '') }}
+        </div>
+        <div>
+          <div class="patient-report-tag">Seguimiento del Plan Nutricional</div>
+          <h2 class="selected-patient-title">
+            {{ selectedPaciente()!.nombre }} {{ selectedPaciente()!.apellidoPaterno }} {{
+            selectedPaciente()!.apellidoMaterno ?? '' }}
+          </h2>
+          <span class="selected-patient-sub">
+            ID: #{{ selectedPaciente()!.id }} · {{ selectedPaciente()!.correo }} · {{ periodoFechas().etiqueta }}
+          </span>
+        </div>
+      </div>
+
+      <div class="patient-selected-actions">
+        <button type="button" class="btn-change-patient" (click)="cambiarPaciente()">
+          <span class="bx bx-transfer-alt"></span> Cambiar Paciente
+        </button>
+
+        @if (seguimientoPlanResource.value()) {
+        <button type="button" class="btn-export-pdf" [disabled]="isExportingSeguimiento()"
+          (click)="descargarPDFSeguimiento()">
+          @if (isExportingSeguimiento()) {
+          <span class="app-spinner-sm"></span> Generando PDF...
+          } @else {
+          <span class="bx bxs-file-pdf"></span> Exportar Seguimiento PDF
+          }
+        </button>
+        }
+      </div>
+    </header>
+
+    <!-- Barra de Filtros de Periodo -->
+    <section class="periodo-toolbar-card" aria-label="Filtro de intervalo de fechas">
+      <div class="periodo-toolbar-left">
+        <span class="bx bx-calendar-check periodo-toolbar-icon"></span>
+        <div>
+          <h3 class="periodo-toolbar-title">Intervalo de Análisis</h3>
+          <p class="periodo-toolbar-sub">Selecciona el periodo para calcular el apego y las desviaciones registradas</p>
+        </div>
+      </div>
+
+      <div class="periodo-toolbar-controls">
+        <div class="periodo-btn-group" role="group" aria-label="Filtro temporal">
+          <button type="button" class="btn-periodo-option" [class.btn-periodo-option--active]="periodoTipo() === 'semana'"
+            (click)="setPeriodoTipo('semana')">
+            7 Días
+          </button>
+          <button type="button" class="btn-periodo-option" [class.btn-periodo-option--active]="periodoTipo() === 'mes'"
+            (click)="setPeriodoTipo('mes')">
+            30 Días
+          </button>
+          <button type="button" class="btn-periodo-option" [class.btn-periodo-option--active]="periodoTipo() === 'personalizado'"
+            (click)="setPeriodoTipo('personalizado')">
+            Personalizado
+          </button>
+        </div>
+
+        @if (periodoTipo() === 'personalizado') {
+        <div class="periodo-custom-dates-wrapper">
+          <div class="periodo-custom-dates">
+            <div class="date-field-box">
+              <label for="filter-inicio" class="date-field-label">Desde:</label>
+              <input id="filter-inicio" type="date" [value]="fechaInicioFiltro()"
+                [max]="fechaFinFiltro() || hoyIso()"
+                [class.date-input-invalid]="errorFechasSeguimiento()"
+                (input)="fechaInicioFiltro.set($any($event.target).value)" class="date-field-input" />
+            </div>
+            <div class="date-field-box">
+              <label for="filter-fin" class="date-field-label">Hasta:</label>
+              <input id="filter-fin" type="date" [value]="fechaFinFiltro()"
+                [min]="fechaInicioFiltro()"
+                [max]="hoyIso()"
+                [class.date-input-invalid]="errorFechasSeguimiento()"
+                (input)="fechaFinFiltro.set($any($event.target).value)" class="date-field-input" />
+            </div>
+          </div>
+          @if (errorFechasSeguimiento()) {
+            <div class="periodo-date-error" role="alert">
+              <i class="bx bx-error-circle" aria-hidden="true"></i>
+              <span>{{ errorFechasSeguimiento() }}</span>
+            </div>
+          }
+        </div>
+        }
+      </div>
+    </section>
+
+    <!-- Contenido del Reporte de Seguimiento -->
+    @if (seguimientoPlanResource.isLoading()) {
+    <div class="state-container loading-state">
+      <div class="app-spinner"></div>
+      <p class="state-text">Analizando registros de comidas, objetivos y desviaciones del paciente...</p>
+    </div>
+    } @else if (seguimientoPlanResource.error()) {
+    <div class="state-container error-state">
+      <div class="state-icon-circle error"><span class="bx bx-error-circle"></span></div>
+      <h3 class="state-title">Error al consultar el seguimiento</h3>
+      <p class="state-desc">No fue posible cargar los datos del periodo seleccionado. Intenta nuevamente.</p>
+    </div>
+    } @else if (!seguimientoPlanResource.value()) {
+    <div class="state-container empty-state">
+      <div class="state-icon-circle neutral"><span class="bx bx-food-menu"></span></div>
+      <h3 class="state-title">Sin registros en este periodo</h3>
+      <p class="state-desc">El paciente no tiene registros en el diario de comidas para el intervalo seleccionado.</p>
+    </div>
+    } @else {
+    @let seg = seguimientoPlanResource.value()!;
+    @let apegoEval = interpretacionApego(seg.porcentajeApego);
+    @let metasEval = interpretacionMetas(seg.metasCumplidas, seg.totalMetas);
+
+    <!-- ─── CARDS DE KPIS DE SEGUIMIENTO ───────────── -->
+    <section class="kpis-grid" aria-label="Métricas clave de seguimiento del plan">
+
+      <!-- Porcentaje de Apego -->
+      <div class="kpi-card" [class.kpi-ns-green]="seg.porcentajeApego >= 85"
+        [class.kpi-ns-lime]="seg.porcentajeApego >= 70 && seg.porcentajeApego < 85"
+        [class.kpi-ns-yellow]="seg.porcentajeApego >= 50 && seg.porcentajeApego < 70"
+        [class.kpi-ns-orange]="seg.porcentajeApego >= 35 && seg.porcentajeApego < 50"
+        [class.kpi-ns-red]="seg.porcentajeApego < 35">
+        <div class="kpi-icon-box" [class.ns-a]="seg.porcentajeApego >= 85"
+          [class.ns-b]="seg.porcentajeApego >= 70 && seg.porcentajeApego < 85"
+          [class.ns-c]="seg.porcentajeApego >= 50 && seg.porcentajeApego < 70"
+          [class.ns-d]="seg.porcentajeApego >= 35 && seg.porcentajeApego < 50"
+          [class.ns-e]="seg.porcentajeApego < 35">
+          <span class="bx bx-dish"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Apego al Plan</span>
+          <span class="kpi-val">{{ seg.porcentajeApego | number: '1.1-1' }} <small>%</small></span>
+        </div>
+      </div>
+
+      <!-- Cumplimiento de Objetivos -->
+      <div class="kpi-card kpi-ns-green">
+        <div class="kpi-icon-box ns-a">
+          <span class="bx bx-target-lock"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Objetivos Cumplidos</span>
+          <span class="kpi-val">{{ seg.metasCumplidas }} <small>/ {{ seg.totalMetas }} ({{ seg.porcentajeCumplimientoMetas | number: '1.0-0' }}%)</small></span>
+        </div>
+      </div>
+
+      <!-- Total de Comidas Evaluadas -->
+      <div class="kpi-card kpi-ns-lime">
+        <div class="kpi-icon-box ns-b">
+          <span class="bx bx-calendar-star"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Comidas Registradas</span>
+          <span class="kpi-val">{{ seg.totalRegistros }} <small>({{ seg.registrosCumplidos }} cumplidas)</small></span>
+        </div>
+      </div>
+
+      <!-- Día de Mayor Desviación -->
+      <div class="kpi-card kpi-ns-orange">
+        <div class="kpi-icon-box ns-d">
+          <span class="bx bx-error-alt"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Mayor Desviación</span>
+          <span class="kpi-val">{{ diaMayorDesviacion().dia }} <small>({{ diaMayorDesviacion().cantidad }} variaciones)</small></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── GUÍA DE INTERPRETACIÓN CLÍNICA ─────── -->
+    <section class="clinical-guide-section" aria-label="Interpretación diagnóstica de adherencia y objetivos">
+      <div class="guide-header-row">
+        <span class="bx bx-info-circle guide-header-icon"></span>
+        <div>
+          <h3 class="guide-title">Interpretación Diagnóstica de Adherencia & Pautas Nutricionales</h3>
+          <p class="guide-subtitle">Evaluación de apego calórico, cumplimiento de objetivos y variaciones en los horarios de comida.</p>
+        </div>
+      </div>
+
+      <div class="guide-cards-grid">
+        <!-- Tarjeta de Diagnóstico de Apego -->
+        <div class="guide-item-card">
+          <div class="guide-item-top">
+            <span class="guide-item-tag">Apego Nutricional</span>
+            <span class="ns-score-pill" [style.background-color]="apegoEval.color">{{ apegoEval.score }}</span>
+          </div>
+          <div class="guide-item-status" [style.color]="apegoEval.color">{{ apegoEval.nivel }}</div>
+          <p class="guide-item-text">{{ apegoEval.desc }}</p>
+          <div class="guide-ref-footer">
+            <span>Apego Calculado: {{ seg.porcentajeApego | number: '1.1-1' }}% (Meta ideal: &ge; 80%)</span>
+          </div>
+        </div>
+
+        <!-- Tarjeta de Diagnóstico de Objetivos -->
+        <div class="guide-item-card">
+          <div class="guide-item-top">
+            <span class="guide-item-tag">Cumplimiento de Objetivos</span>
+            <span class="ns-score-pill" [style.background-color]="metasEval.color">{{ metasEval.score }}</span>
+          </div>
+          <div class="guide-item-status" [style.color]="metasEval.color">{{ metasEval.nivel }}</div>
+          <p class="guide-item-text">{{ metasEval.desc }}</p>
+          <div class="guide-ref-footer">
+            <span>{{ seg.metasCumplidas }} de {{ seg.totalMetas }} objetivos ({{ seg.metasEnProgreso }} en progreso)</span>
+          </div>
+        </div>
+
+        <!-- Tarjeta de Pautas y Recomendaciones Clínicas -->
+        <div class="guide-item-card guide-habits-card">
+          <div class="guide-item-top">
+            <span class="guide-item-tag">Pautas para el Paciente</span>
+            <span class="bx bx-check-shield water-icon" style="color: var(--ns-green-dark);"></span>
+          </div>
+          <ul class="guide-tips-list">
+            <li><strong>⏰ Regularidad:</strong> Priorizar la consistencia en el horario de las comidas principales.</li>
+            <li><strong>📝 Registro:</strong> Reportar inmediatamente sustituciones o comidas fuera de casa.</li>
+            <li><strong>🎯 Objetivos:</strong> Enfocarse en los objetivos en progreso para la siguiente consulta.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── GRÁFICOS INTERACTIVOS (CHART.JS) ─────── -->
+    <section class="charts-row" aria-label="Gráficos de objetivos y desglose de comidas">
+      <article class="chart-box-card">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-pie-chart-alt-2 icon-green"></span>
+          <div>
+            <h3 class="chart-card-title">Cumplimiento de Objetivos</h3>
+            <p class="chart-card-sub">Distribución de objetivos cumplidos, en progreso y no cumplidos</p>
+          </div>
+        </div>
+        <div class="chart-canvas-box">
+          <canvas id="canvas-metas"></canvas>
+        </div>
+      </article>
+
+      <article class="chart-box-card">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-dish icon-lime"></span>
+          <div>
+            <h3 class="chart-card-title">Desglose de Registros de Comidas</h3>
+            <p class="chart-card-sub">Comidas cumplidas vs. modificadas, saltadas y no registradas</p>
+          </div>
+        </div>
+        <div class="chart-canvas-box">
+          <canvas id="canvas-apego"></canvas>
+        </div>
+      </article>
+
+      <article class="chart-box-card chart-box-card--full">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-bar-chart-alt-2 icon-orange"></span>
+          <div>
+            <h3 class="chart-card-title">Días de Desviación Semanal</h3>
+            <p class="chart-card-sub">Frecuencia de comidas modificadas o saltadas según el día de la semana</p>
+          </div>
+        </div>
+        <div class="chart-canvas-box">
+          <canvas id="canvas-desviacion"></canvas>
+        </div>
+      </article>
+    </section>
+
+    <!-- ─── TABLA DE RESUMEN Y DETALLE DE CUMPLIMIENTO ───────────────── -->
+    <section class="history-table-card" aria-label="Resumen detallado de adherencia y diario">
+      <div class="table-card-header">
+        <h3 class="table-card-title"><span class="bx bx-list-check"></span> Resumen Estadístico del Periodo</h3>
+        <span class="table-records-tag">{{ seg.totalRegistros }} registros evaluados</span>
+      </div>
+      <div class="table-responsive">
+        <table class="clinical-table">
+          <thead>
+            <tr>
+              <th scope="col">Concepto de Seguimiento</th>
+              <th scope="col">Cantidad</th>
+              <th scope="col">Porcentaje / Proporción</th>
+              <th scope="col">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td-date"><strong>Comidas Cumplidas según Plan</strong></td>
+              <td class="td-weight">{{ seg.registrosCumplidos }}</td>
+              <td>
+                @if (seg.totalRegistros > 0) {
+                <span class="badge-chip chip-icc">{{ ((seg.registrosCumplidos / seg.totalRegistros) * 100) | number: '1.1-1' }}%</span>
+                } @else {
+                <span class="td-muted">—</span>
+                }
+              </td>
+              <td><span class="badge-ns-pill ns-pill-a">Óptimo (A)</span></td>
+            </tr>
+            <tr>
+              <td class="td-date"><strong>Comidas con Modificaciones</strong></td>
+              <td><strong>{{ seg.registrosModificados }}</strong></td>
+              <td>
+                @if (seg.totalRegistros > 0) {
+                <span class="badge-chip chip-ict">{{ ((seg.registrosModificados / seg.totalRegistros) * 100) | number: '1.1-1' }}%</span>
+                } @else {
+                <span class="td-muted">—</span>
+                }
+              </td>
+              <td><span class="badge-ns-pill ns-pill-c">Moderado (C)</span></td>
+            </tr>
+            <tr>
+              <td class="td-date"><strong>Comidas Saltadas / Omitidas</strong></td>
+              <td><strong>{{ seg.registrosSaltados }}</strong></td>
+              <td>
+                @if (seg.totalRegistros > 0) {
+                <span class="badge-chip chip-fat">{{ ((seg.registrosSaltados / seg.totalRegistros) * 100) | number: '1.1-1' }}%</span>
+                } @else {
+                <span class="td-muted">—</span>
+                }
+              </td>
+              <td><span class="badge-ns-pill ns-pill-d">Atención (D)</span></td>
+            </tr>
+            <tr>
+              <td class="td-date"><strong>Comidas No Registradas</strong></td>
+              <td>{{ seg.registrosNoRegistrados }}</td>
+              <td>
+                @if (seg.totalRegistros > 0) {
+                <span class="td-muted">{{ ((seg.registrosNoRegistrados / seg.totalRegistros) * 100) | number: '1.1-1' }}%</span>
+                } @else {
+                <span class="td-muted">—</span>
+                }
+              </td>
+              <td><span class="badge-ns-pill ns-pill-muted">Sin Registro</span></td>
+            </tr>
+            <tr>
+              <td class="td-date"><strong>Objetivos Cumplidos</strong></td>
+              <td class="td-weight">{{ seg.metasCumplidas }} / {{ seg.totalMetas }}</td>
+              <td><span class="badge-chip chip-icc">{{ seg.porcentajeCumplimientoMetas | number: '1.1-1' }}%</span></td>
+              <td>
+                <span class="badge-ns-pill" [class.ns-pill-a]="seg.porcentajeCumplimientoMetas >= 80"
+                  [class.ns-pill-b]="seg.porcentajeCumplimientoMetas >= 50 && seg.porcentajeCumplimientoMetas < 80"
+                  [class.ns-pill-d]="seg.porcentajeCumplimientoMetas < 50">
+                  {{ seg.porcentajeCumplimientoMetas >= 80 ? 'Sobresaliente' : (seg.porcentajeCumplimientoMetas >= 50 ? 'Favorable' : 'Pendiente') }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    }
+
+    } <!-- end @else (selectedPaciente !== null) -->
+
+  </section>
+  }
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- ─── 4. SECCIÓN: OTROS REPORTES EN PREPARACIÓN (ASISTENCIA) ───────────── -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- ─── 4. SECCIÓN: ANÁLISIS DE ASISTENCIA Y DEMANDA DE SERVICIOS ──────────── -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- ─── 4. SECCIÓN: ANÁLISIS DE ASISTENCIA Y DEMANDA DE SERVICIOS ──────────── -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'asistencia') {
+  <section class="report-content-section" aria-label="Reporte de Asistencia y Demanda de Servicios">
+
+    <!-- Encabezado con Toolbar de Acciones y Exportación -->
+    <div class="demografico-top-actions">
+      <div>
+        <h2 class="section-heading-title">Análisis de Asistencia y Demanda de Servicios</h2>
+        <p class="section-heading-sub">
+          Evaluación de la eficiencia de agenda, tasas de ausentismo, cancelaciones y motivos de consulta médica
+          @if (asistenciaResource.value()?.nombreNutriologo) {
+          · <strong class="text-accent">{{ asistenciaResource.value()?.nombreNutriologo }}</strong>
+          } @else if (isAdmin()) {
+          · <strong class="text-accent">Todos los Especialistas (Global)</strong>
+          }
+        </p>
+      </div>
+
+      <div class="header-actions-group">
+        <!-- Selector de Nutriólogo (Solo Administrador) -->
+        @if (isAdmin()) {
+        <div class="admin-nutri-selector">
+          <label for="select-nutriologo-asistencia" class="selector-mini-label">
+            <span class="bx bx-user-pin"></span> Especialista:
+          </label>
+          <select id="select-nutriologo-asistencia" class="form-select-sm" (change)="onNutriologoChange($event)">
+            <option [value]="''">Todos los Nutriólogos (Global)</option>
+            @for (nutri of nutriologosList(); track nutri.id) {
+            <option [value]="nutri.id">{{ nutri.nombre }} {{ nutri.apellido }}</option>
+            }
+          </select>
+        </div>
         }
 
-      }
+        @if (asistenciaResource.value()) {
+        <button type="button" class="btn-export-pdf" [disabled]="isExportingAsistencia()"
+          (click)="descargarPDFAsistencia()">
+          @if (isExportingAsistencia()) {
+          <span class="app-spinner-sm"></span> Generando PDF...
+          } @else {
+          <span class="bx bxs-file-pdf"></span> Exportar Asistencia PDF
+          }
+        </button>
+        }
+      </div>
+    </div>
+
+    <!-- Barra de Filtros de Periodo -->
+    <section class="periodo-toolbar-card" aria-label="Filtro de intervalo de fechas">
+      <div class="periodo-toolbar-left">
+        <span class="bx bx-calendar-check periodo-toolbar-icon"></span>
+        <div>
+          <h3 class="periodo-toolbar-title">Intervalo de Análisis de Agenda</h3>
+          <p class="periodo-toolbar-sub">Selecciona el periodo para calcular asistencia, ausentismo y demanda de servicios</p>
+        </div>
+      </div>
+
+      <div class="periodo-toolbar-controls">
+        <div class="periodo-btn-group" role="group" aria-label="Filtro temporal">
+          <button type="button" class="btn-periodo-option" [class.btn-periodo-option--active]="periodoTipoAsistencia() === 'semana'"
+            (click)="setPeriodoTipoAsistencia('semana')">
+            7 Días
+          </button>
+          <button type="button" class="btn-periodo-option" [class.btn-periodo-option--active]="periodoTipoAsistencia() === 'mes'"
+            (click)="setPeriodoTipoAsistencia('mes')">
+            30 Días
+          </button>
+          <button type="button" class="btn-periodo-option" [class.btn-periodo-option--active]="periodoTipoAsistencia() === 'personalizado'"
+            (click)="setPeriodoTipoAsistencia('personalizado')">
+            Personalizado
+          </button>
+        </div>
+
+        @if (periodoTipoAsistencia() === 'personalizado') {
+        <div class="periodo-custom-dates-wrapper">
+          <div class="periodo-custom-dates">
+            <div class="date-field-box">
+              <label for="fecha-inicio-asist" class="date-field-label">Desde:</label>
+              <input id="fecha-inicio-asist" type="date" [value]="fechaInicioAsistencia()"
+                [max]="fechaFinAsistencia() || hoyIso()"
+                [class.date-input-invalid]="errorFechasAsistencia()"
+                (input)="fechaInicioAsistencia.set($any($event.target).value)" class="date-field-input" />
+            </div>
+            <div class="date-field-box">
+              <label for="fecha-fin-asist" class="date-field-label">Hasta:</label>
+              <input id="fecha-fin-asist" type="date" [value]="fechaFinAsistencia()"
+                [min]="fechaInicioAsistencia()"
+                [max]="hoyIso()"
+                [class.date-input-invalid]="errorFechasAsistencia()"
+                (input)="fechaFinAsistencia.set($any($event.target).value)" class="date-field-input" />
+            </div>
+          </div>
+          @if (errorFechasAsistencia()) {
+            <div class="periodo-date-error" role="alert">
+              <i class="bx bx-error-circle" aria-hidden="true"></i>
+              <span>{{ errorFechasAsistencia() }}</span>
+            </div>
+          }
+        </div>
+        }
+      </div>
     </section>
+
+    <!-- Estados de Carga / Error / Vacío / Contenido -->
+    @if (asistenciaResource.isLoading()) {
+    <div class="state-container loading-state">
+      <div class="app-spinner"></div>
+      <p class="state-text">Analizando registros de citas, asistencia y demanda de consultas...</p>
+    </div>
+    } @else if (asistenciaResource.error()) {
+    <div class="state-container error-state">
+      <div class="state-icon-circle error"><span class="bx bx-error-circle"></span></div>
+      <h3 class="state-title">Error al consultar datos de asistencia</h3>
+      <p class="state-desc">No fue posible cargar las citas para el intervalo seleccionado. Intenta nuevamente.</p>
+    </div>
+    } @else if (!asistenciaResource.value() || asistenciaResource.value()!.totalCitas === 0) {
+    <div class="state-container empty-state">
+      <div class="state-icon-circle neutral"><span class="bx bx-calendar-x"></span></div>
+      <h3 class="state-title">Sin citas registradas en este periodo</h3>
+      <p class="state-desc">No se encontraron citas agendadas o concluidas dentro del rango de fechas seleccionado.</p>
+    </div>
+    } @else {
+    @let asist = asistenciaResource.value()!;
+    @let asistEval = interpretacionAsistenciaCitas(asist.porcentajeAsistencia);
+    @let cancelEval = interpretacionCancelacion(asist.porcentajeCancelacion);
+
+    <!-- ─── CARDS DE KPIS DE ASISTENCIA Y DEMANDA ───────────── -->
+    <section class="kpis-grid" aria-label="Métricas clave de asistencia">
+
+      <!-- Total de Citas -->
+      <div class="kpi-card kpi-ns-green">
+        <div class="kpi-icon-box ns-a">
+          <span class="bx bx-calendar-event"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Total Citas Registradas</span>
+          <span class="kpi-val">{{ asist.totalCitas }} <small>citas</small></span>
+        </div>
+      </div>
+
+      <!-- Tasa de Asistencia -->
+      <div class="kpi-card" [class.kpi-ns-green]="asist.porcentajeAsistencia >= 85"
+        [class.kpi-ns-lime]="asist.porcentajeAsistencia >= 70 && asist.porcentajeAsistencia < 85"
+        [class.kpi-ns-yellow]="asist.porcentajeAsistencia >= 50 && asist.porcentajeAsistencia < 70"
+        [class.kpi-ns-orange]="asist.porcentajeAsistencia >= 30 && asist.porcentajeAsistencia < 50"
+        [class.kpi-ns-red]="asist.porcentajeAsistencia < 30">
+        <div class="kpi-icon-box" [class.ns-a]="asist.porcentajeAsistencia >= 85"
+          [class.ns-b]="asist.porcentajeAsistencia >= 70 && asist.porcentajeAsistencia < 85"
+          [class.ns-c]="asist.porcentajeAsistencia >= 50 && asist.porcentajeAsistencia < 70"
+          [class.ns-d]="asist.porcentajeAsistencia >= 30 && asist.porcentajeAsistencia < 50"
+          [class.ns-e]="asist.porcentajeAsistencia < 30">
+          <span class="bx bx-check-double"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Tasa de Asistencia</span>
+          <span class="kpi-val">{{ asist.porcentajeAsistencia | number: '1.1-1' }} <small>% ({{ asist.citasAsistidas }} asistencias)</small></span>
+        </div>
+      </div>
+
+      <!-- Tasa de Cancelación -->
+      <div class="kpi-card" [class.kpi-ns-green]="asist.porcentajeCancelacion <= 10"
+        [class.kpi-ns-lime]="asist.porcentajeCancelacion > 10 && asist.porcentajeCancelacion <= 20"
+        [class.kpi-ns-yellow]="asist.porcentajeCancelacion > 20 && asist.porcentajeCancelacion <= 35"
+        [class.kpi-ns-red]="asist.porcentajeCancelacion > 35">
+        <div class="kpi-icon-box" [class.ns-a]="asist.porcentajeCancelacion <= 10"
+          [class.ns-b]="asist.porcentajeCancelacion > 10 && asist.porcentajeCancelacion <= 20"
+          [class.ns-c]="asist.porcentajeCancelacion > 20 && asist.porcentajeCancelacion <= 35"
+          [class.ns-e]="asist.porcentajeCancelacion > 35">
+          <span class="bx bx-user-x"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Tasa de Cancelación</span>
+          <span class="kpi-val">{{ asist.porcentajeCancelacion | number: '1.1-1' }} <small>% ({{ asist.citasCanceladas }} canceladas)</small></span>
+        </div>
+      </div>
+
+      <!-- Motivo Más Frecuente -->
+      <div class="kpi-card kpi-ns-lime">
+        <div class="kpi-icon-box ns-b">
+          <span class="bx bx-trending-up"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Mayor Demanda</span>
+          <span class="kpi-val kpi-val-text">{{ etiquetaMotivoCita(asist.motivoMasFrecuente) }}</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ─── GUÍA DE INTERPRETACIÓN CLÍNICA Y DIAGNÓSTICO DE AGENDA ─────── -->
+    <section class="clinical-guide-section" aria-label="Interpretación diagnóstica de agenda y retención">
+      <div class="guide-header-row">
+        <span class="bx bx-info-circle guide-header-icon"></span>
+        <div>
+          <h3 class="guide-title">Interpretación Diagnóstica de Eficiencia & Dinámica de Agenda</h3>
+          <p class="guide-subtitle">Evaluación de efectividad de citas, deserción voluntaria y recomendaciones de optimización.</p>
+        </div>
+      </div>
+
+      <div class="guide-cards-grid">
+        <!-- Tarjeta de Diagnóstico de Asistencia -->
+        <div class="guide-item-card">
+          <div class="guide-item-top">
+            <span class="guide-item-tag">Adherencia a Citas</span>
+            <span class="ns-score-pill" [style.background-color]="asistEval.color">{{ asistEval.score }}</span>
+          </div>
+          <div class="guide-item-status" [style.color]="asistEval.color">{{ asistEval.nivel }}</div>
+          <p class="guide-item-text">{{ asistEval.desc }}</p>
+          <div class="guide-ref-footer">
+            <span>{{ asist.citasAsistidas }} asistencias · {{ asist.citasNoAsistidas }} inasistencias de {{ asist.citasAsistidas + asist.citasNoAsistidas }} concluidas</span>
+          </div>
+        </div>
+
+        <!-- Tarjeta de Diagnóstico de Cancelaciones -->
+        <div class="guide-item-card">
+          <div class="guide-item-top">
+            <span class="guide-item-tag">Control de Cancelaciones</span>
+            <span class="ns-score-pill" [style.background-color]="cancelEval.color">{{ cancelEval.score }}</span>
+          </div>
+          <div class="guide-item-status" [style.color]="cancelEval.color">{{ cancelEval.nivel }}</div>
+          <p class="guide-item-text">{{ cancelEval.desc }}</p>
+          <div class="guide-ref-footer">
+            <span>{{ asist.citasCanceladas }} canceladas · {{ asist.citasProgramadas }} vigentes en calendario</span>
+          </div>
+        </div>
+
+        <!-- Tarjeta de Estrategias y Recomendaciones de Agenda -->
+        <div class="guide-item-card guide-habits-card">
+          <div class="guide-item-top">
+            <span class="guide-item-tag">Pautas para la Agenda</span>
+            <span class="bx bx-bulb water-icon" style="color: var(--ns-green-dark);"></span>
+          </div>
+          <ul class="guide-tips-list">
+            <li><strong>🔔 Recordatorios:</strong> Notificar vía correo o chat 24 horas antes de cada consulta.</li>
+            <li><strong>🔄 Reprogramación:</strong> Ofrecer franjas de ajuste ante cancelaciones tempranas.</li>
+            <li><strong>📊 Demanda:</strong> Habilitar mayor disponibilidad para <em>{{ etiquetaMotivoCita(asist.motivoMasFrecuente) }}</em>.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── GRÁFICOS INTERACTIVOS (CHART.JS) ─────── -->
+    <section class="charts-row" aria-label="Gráficos de asistencia y cancelaciones">
+      <article class="chart-box-card">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-pie-chart-alt-2 icon-green"></span>
+          <div>
+            <h3 class="chart-card-title">Comportamiento de Asistencia</h3>
+            <p class="chart-card-sub">Citas completadas vs. citas perdidas por inasistencia</p>
+          </div>
+        </div>
+        <div class="chart-canvas-box">
+          <canvas id="canvas-asistencia"></canvas>
+        </div>
+      </article>
+
+      <article class="chart-box-card">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-user-x icon-orange"></span>
+          <div>
+            <h3 class="chart-card-title">Tasa de Cancelación</h3>
+            <p class="chart-card-sub">Proporción de cancelaciones sobre el volumen total agendado</p>
+          </div>
+        </div>
+        <div class="chart-canvas-box">
+          <canvas id="canvas-cancelacion"></canvas>
+        </div>
+      </article>
+
+      <article class="chart-box-card chart-box-card--full">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-bar-chart-alt-2 icon-lime"></span>
+          <div>
+            <h3 class="chart-card-title">Demanda de Servicios por Motivo de Consulta</h3>
+            <p class="chart-card-sub">Frecuencia y distribución de consultas médicas nutricionales</p>
+          </div>
+        </div>
+        <div class="chart-canvas-box" style="height: 290px;">
+          <canvas id="canvas-demanda"></canvas>
+        </div>
+      </article>
+    </section>
+
+    <!-- ─── TABLA DE RESUMEN Y DETALLE DE ESTADOS DE CITA ───────────────── -->
+    <section class="history-table-card" aria-label="Resumen de estados de citas">
+      <div class="table-card-header">
+        <h3 class="table-card-title"><span class="bx bx-list-check"></span> Resumen de Agenda y Estados de Citas</h3>
+        <span class="table-records-tag">{{ asist.totalCitas }} citas evaluadas</span>
+      </div>
+      <div class="table-responsive">
+        <table class="clinical-table">
+          <thead>
+            <tr>
+              <th scope="col">Estado de Cita</th>
+              <th scope="col">Cantidad</th>
+              <th scope="col">Porcentaje / Proporción</th>
+              <th scope="col">Impacto en Agenda</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td-date"><strong>Citas Asistidas (Completadas)</strong></td>
+              <td class="td-weight">{{ asist.citasAsistidas }}</td>
+              <td>
+                @if (asist.totalCitas > 0) {
+                <span class="badge-chip chip-icc">{{ ((asist.citasAsistidas / asist.totalCitas) * 100) | number: '1.1-1' }}%</span>
+                } @else {
+                <span class="td-muted">—</span>
+                }
+              </td>
+              <td><span class="badge-ns-pill ns-pill-a">Efectivo (A)</span></td>
+            </tr>
+            <tr>
+              <td class="td-date"><strong>Citas No Asistidas (Perdidas)</strong></td>
+              <td class="td-weight">{{ asist.citasNoAsistidas }}</td>
+              <td>
+                @if (asist.totalCitas > 0) {
+                <span class="badge-chip chip-fat">{{ ((asist.citasNoAsistidas / asist.totalCitas) * 100) | number: '1.1-1' }}%</span>
+                } @else {
+                <span class="td-muted">—</span>
+                }
+              </td>
+              <td><span class="badge-ns-pill ns-pill-e">Inasistencia (E)</span></td>
+            </tr>
+            <tr>
+              <td class="td-date"><strong>Citas Canceladas</strong></td>
+              <td class="td-weight">{{ asist.citasCanceladas }}</td>
+              <td>
+                @if (asist.totalCitas > 0) {
+                <span class="badge-chip chip-ict">{{ asist.porcentajeCancelacion | number: '1.1-1' }}%</span>
+                } @else {
+                <span class="td-muted">—</span>
+                }
+              </td>
+              <td><span class="badge-ns-pill ns-pill-d">Cancelación (D)</span></td>
+            </tr>
+            <tr>
+              <td class="td-date"><strong>Citas Programadas / Vigentes</strong></td>
+              <td class="td-weight">{{ asist.citasProgramadas }}</td>
+              <td>
+                @if (asist.totalCitas > 0) {
+                <span class="badge-chip chip-icc">{{ ((asist.citasProgramadas / asist.totalCitas) * 100) | number: '1.1-1' }}%</span>
+                } @else {
+                <span class="td-muted">—</span>
+                }
+              </td>
+              <td><span class="badge-ns-pill ns-pill-b">En Agenda (B)</span></td>
+            </tr>
+            <tr>
+              <td class="td-date"><strong>Solicitudes de Reprogramación</strong></td>
+              <td class="td-weight">{{ asist.citasReprogramadas }}</td>
+              <td>
+                @if (asist.totalCitas > 0) {
+                <span class="badge-chip chip-ict">{{ ((asist.citasReprogramadas / asist.totalCitas) * 100) | number: '1.1-1' }}%</span>
+                } @else {
+                <span class="td-muted">—</span>
+                }
+              </td>
+              <td><span class="badge-ns-pill ns-pill-c">Ajuste (C)</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ─── TABLA DE DISTRIBUCIÓN DE DEMANDA POR MOTIVO ────────────────── -->
+    @if (entriesDemanda(asist.demandaPorMotivo).length > 0) {
+    <section class="history-table-card" aria-label="Distribución de demanda por motivo de consulta">
+      <div class="table-card-header">
+        <h3 class="table-card-title"><span class="bx bx-pie-chart-alt"></span> Distribución de Demanda por Motivo de Consulta</h3>
+        <span class="table-records-tag">{{ entriesDemanda(asist.demandaPorMotivo).length }} tipos de servicio</span>
+      </div>
+      <div class="table-responsive">
+        <table class="clinical-table">
+          <thead>
+            <tr>
+              <th scope="col">Motivo de Consulta</th>
+              <th scope="col">Frecuencia</th>
+              <th scope="col">Participación Relativa</th>
+              <th scope="col">Prioridad de Oferta</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (dem of entriesDemanda(asist.demandaPorMotivo); track dem.motivo) {
+            <tr>
+              <td class="td-date"><strong>{{ dem.label }}</strong></td>
+              <td class="td-weight">{{ dem.cantidad }} citas</td>
+              <td>
+                <span class="badge-chip chip-icc">{{ dem.porcentaje | number: '1.1-1' }}%</span>
+              </td>
+              <td>
+                <span class="badge-ns-pill"
+                  [class.ns-pill-a]="dem.porcentaje >= 30"
+                  [class.ns-pill-b]="dem.porcentaje >= 15 && dem.porcentaje < 30"
+                  [class.ns-pill-muted]="dem.porcentaje < 15">
+                  {{ dem.porcentaje >= 30 ? 'Principal' : (dem.porcentaje >= 15 ? 'Frecuente' : 'Secundario') }}
+                </span>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    }
+
+    } <!-- end @else (asistenciaResource value exists) -->
+
+  </section>
+  }
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- ─── 5. REPORTE DE DESEMPEÑO Y ATENCIÓN DEL NUTRIÓLOGO ─────────────────── -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'desempeno') {
+  <section class="report-content-section" aria-label="Reporte de Desempeño y Atención del Nutriólogo">
+
+    <!-- CABECERA Y ACCIÓN DE DESCARGA -->
+    <div class="report-banner-card">
+      <div class="banner-icon-circle icon-ns-a">
+        <span class="bx bx-briefcase-alt-2" aria-hidden="true"></span>
+      </div>
+      <div class="banner-text-block">
+        <div class="banner-badge-row">
+          <span class="badge-ns-pill ns-pill-a">Especialista & Gestión</span>
+          <span class="banner-period-tag">{{ periodoFechasDesempeno().etiqueta }}</span>
+        </div>
+        <h2 class="banner-main-title">
+          {{ isAdmin() ? 'Desempeño y Carga de Atención de Especialistas' : 'Mi Desempeño Clínico y Productividad' }}
+        </h2>
+        <p class="banner-sub-desc">
+          Evaluación integral de carga clínica, eficiencia de consultas, ranking de alimentos prescritos y aportación al sistema.
+        </p>
+      </div>
+      <div class="banner-actions-block">
+        <button type="button" class="btn-export-pdf" [disabled]="isExportingDesempeno() || desempenoResource.isLoading()"
+          (click)="descargarPDFDesempeno()" aria-label="Descargar Reporte de Desempeño en PDF">
+          @if (isExportingDesempeno()) {
+          <span class="btn-spinner"></span> Generando PDF A4...
+          } @else {
+          <span class="bx bxs-file-pdf"></span> Descargar Informe PDF
+          }
+        </button>
+      </div>
+    </div>
+
+    <!-- BARRA DE FILTROS (Nutriólogo + Periodo) -->
+    <section class="periodo-toolbar-card" aria-label="Filtro de periodo y especialista">
+      <div class="periodo-toolbar-left">
+        <span class="bx bx-briefcase-alt-2 periodo-toolbar-icon"></span>
+        <div>
+          <h3 class="periodo-toolbar-title">Intervalo de Evaluación de Desempeño</h3>
+          <p class="periodo-toolbar-sub">Selecciona el periodo para calcular carga, citas, alimentos y plantillas</p>
+        </div>
+      </div>
+
+      <div class="periodo-toolbar-controls">
+        @if (isAdmin()) {
+        <div class="date-field-box">
+          <label for="select-nutriologo-desempeno" class="date-field-label">
+            <span class="bx bx-user-pin"></span> Especialista:
+          </label>
+          <select id="select-nutriologo-desempeno" class="date-field-input" style="cursor: pointer; font-weight: 600;" (change)="onNutriologoChangeDesempeno($event)">
+            <option [value]="''">Todos los Nutriólogos (Global)</option>
+            @for (n of nutriologosList(); track n.id) {
+            <option [value]="n.id">{{ n.nombre }} {{ n.apellido }}</option>
+            }
+          </select>
+        </div>
+        }
+
+        <div class="periodo-btn-group" role="group" aria-label="Filtro temporal">
+          <button type="button" class="btn-periodo-option" [class.btn-periodo-option--active]="periodoTipoDesempeno() === 'mes'"
+            (click)="setPeriodoTipoDesempeno('mes')">
+            30 Días
+          </button>
+          <button type="button" class="btn-periodo-option" [class.btn-periodo-option--active]="periodoTipoDesempeno() === 'trimestre'"
+            (click)="setPeriodoTipoDesempeno('trimestre')">
+            Trimestre
+          </button>
+          <button type="button" class="btn-periodo-option" [class.btn-periodo-option--active]="periodoTipoDesempeno() === 'semana'"
+            (click)="setPeriodoTipoDesempeno('semana')">
+            7 Días
+          </button>
+          <button type="button" class="btn-periodo-option" [class.btn-periodo-option--active]="periodoTipoDesempeno() === 'personalizado'"
+            (click)="setPeriodoTipoDesempeno('personalizado')">
+            Personalizado
+          </button>
+        </div>
+
+        @if (periodoTipoDesempeno() === 'personalizado') {
+        <div class="periodo-custom-dates-wrapper">
+          <div class="periodo-custom-dates">
+            <div class="date-field-box">
+              <label for="fecha-ini-desempeno" class="date-field-label">Desde:</label>
+              <input type="date" id="fecha-ini-desempeno" class="date-field-input"
+                [max]="fechaFinDesempeno() || hoyIso()"
+                [class.date-input-invalid]="errorFechasDesempeno()"
+                [value]="fechaInicioDesempeno()" (input)="fechaInicioDesempeno.set($any($event.target).value)" />
+            </div>
+            <div class="date-field-box">
+              <label for="fecha-fin-desempeno" class="date-field-label">Hasta:</label>
+              <input type="date" id="fecha-fin-desempeno" class="date-field-input"
+                [min]="fechaInicioDesempeno()"
+                [max]="hoyIso()"
+                [class.date-input-invalid]="errorFechasDesempeno()"
+                [value]="fechaFinDesempeno()" (input)="fechaFinDesempeno.set($any($event.target).value)" />
+            </div>
+          </div>
+          @if (errorFechasDesempeno()) {
+            <div class="periodo-date-error" role="alert">
+              <i class="bx bx-error-circle" aria-hidden="true"></i>
+              <span>{{ errorFechasDesempeno() }}</span>
+            </div>
+          }
+        </div>
+        }
+      </div>
+    </section>
+
+    <!-- ESTADO DE CARGA / ERROR / DATOS -->
+    @if (desempenoResource.isLoading()) {
+    <div class="state-container loading-state">
+      <div class="app-spinner"></div>
+      <p class="state-text">Analizando datos de desempeño y productividad clínica...</p>
+    </div>
+    } @else if (desempenoResource.error()) {
+    <div class="state-container error-state">
+      <div class="state-icon-circle error"><span class="bx bx-error-circle"></span></div>
+      <h3 class="state-title">Error al consultar el reporte</h3>
+      <p class="state-desc">No se pudieron recuperar las métricas de desempeño.</p>
+    </div>
+    } @else if (desempenoResource.value(); as des) {
+
+    <!-- ─── 1. TARJETAS DE KPIS PRINCIPALES (6 INDICADORES) ────────────────── -->
+    <section class="kpis-grid" aria-label="Indicadores clave de desempeño">
+
+      <!-- 1. Pacientes Activos -->
+      <div class="kpi-card kpi-ns-green">
+        <div class="kpi-icon-box ns-a">
+          <span class="bx bx-user-check"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Pacientes Activos</span>
+          <span class="kpi-val">{{ des.totalPacientesActivos }} <small>expedientes</small></span>
+        </div>
+      </div>
+
+      <!-- 2. Citas Asistidas -->
+      <div class="kpi-card kpi-ns-green">
+        <div class="kpi-icon-box ns-a">
+          <span class="bx bx-calendar-check"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Citas Concretadas</span>
+          <span class="kpi-val">{{ des.citasConcretadas }} <small>/ {{ des.totalCitasPeriodo }} ({{ des.porcentajeAtencion | number: '1.1-1' }}%)</small></span>
+        </div>
+      </div>
+
+      <!-- 3. Tasa de Cancelación -->
+      <div class="kpi-card"
+        [class.kpi-ns-green]="des.porcentajeCancelacion <= 10"
+        [class.kpi-ns-yellow]="des.porcentajeCancelacion > 10 && des.porcentajeCancelacion <= 25"
+        [class.kpi-ns-red]="des.porcentajeCancelacion > 25">
+        <div class="kpi-icon-box"
+          [class.ns-a]="des.porcentajeCancelacion <= 10"
+          [class.ns-c]="des.porcentajeCancelacion > 10 && des.porcentajeCancelacion <= 25"
+          [class.ns-e]="des.porcentajeCancelacion > 25">
+          <span class="bx bx-calendar-x"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Tasa de Cancelación</span>
+          <span class="kpi-val">{{ des.porcentajeCancelacion | number: '1.1-1' }} <small>% ({{ des.citasCanceladas }} citas)</small></span>
+        </div>
+      </div>
+
+      <!-- 4. Nivel de Carga Clínica -->
+      @let cargaEval = interpretacionCargaTrabajo(des.nivelCargaTrabajo);
+      <div class="kpi-card kpi-ns-lime">
+        <div class="kpi-icon-box ns-b">
+          <span class="bx bx-pulse"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Carga Clínica (Score {{ cargaEval.score }})</span>
+          <span class="kpi-val" [style.color]="cargaEval.color">{{ cargaEval.nivel }}</span>
+        </div>
+      </div>
+
+      <!-- 5. Aportación a BD Alimentos -->
+      <div class="kpi-card kpi-ns-yellow">
+        <div class="kpi-icon-box ns-c">
+          <span class="bx bx-data"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Alimentos Registrados</span>
+          <span class="kpi-val">{{ des.totalAlimentosRegistrados }} <small>en BD</small></span>
+        </div>
+      </div>
+
+      <!-- 6. Plantillas Registradas -->
+      <div class="kpi-card kpi-ns-lime">
+        <div class="kpi-icon-box ns-b">
+          <span class="bx bx-food-menu"></span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Plantillas Dietéticas</span>
+          <span class="kpi-val">{{ des.totalPlantillasRegistradas }} <small>creadas</small></span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ─── 2. GUÍA DIAGNÓSTICA DE CARGA Y RECOMENDACIONES OPERATIVAS ─────── -->
+    <section class="clinical-guide-section" aria-label="Diagnóstico de carga de trabajo">
+      <div class="guide-header-row">
+        <span class="bx bx-pulse guide-header-icon" [style.color]="cargaEval.color"></span>
+        <div style="flex: 1;">
+          <h3 class="guide-title">Diagnóstico de Capacidad Clínica: {{ cargaEval.nivel }}</h3>
+          <p class="guide-subtitle">Evaluación automatizada de agenda, volumen de pacientes y productividad.</p>
+        </div>
+        <span class="ns-score-pill" [style.background-color]="cargaEval.color">{{ cargaEval.score }}</span>
+      </div>
+
+      <div class="guide-cards-grid">
+        <!-- Card 1: Evaluación de Volumen -->
+        <div class="guide-item-card">
+          <div class="guide-item-top">
+            <span class="guide-item-tag">Evaluación de Volumen</span>
+            <span class="bx bx-check-circle icon-green" style="font-size: 1.25rem;"></span>
+          </div>
+          <p class="guide-item-text">{{ des.diagnosticoCarga }}</p>
+          <div class="guide-ref-footer">
+            <span>Capacidad: <strong>{{ cargaEval.nivel }}</strong></span>
+          </div>
+        </div>
+
+        <!-- Card 2: Productividad de Agenda -->
+        <div class="guide-item-card">
+          <div class="guide-item-top">
+            <span class="guide-item-tag">Productividad de Agenda</span>
+            <span class="bx bx-calendar-event icon-lime" style="font-size: 1.25rem;"></span>
+          </div>
+          <p class="guide-item-text">
+            Se completaron <strong>{{ des.citasConcretadas }} citas</strong> con una tasa de atención del <strong>{{ des.porcentajeAtencion | number: '1.1-1' }}%</strong>.
+            Promedio de <strong>{{ des.promedioCitasPorPaciente | number: '1.1-2' }} consultas</strong> por cada paciente asignado.
+          </p>
+          <div class="guide-ref-footer">
+            <span>Tasa de Concreción: <strong>{{ des.porcentajeAtencion | number: '1.1-1' }}%</strong></span>
+          </div>
+        </div>
+
+        <!-- Card 3: Recomendación Operativa -->
+        <div class="guide-item-card guide-habits-card">
+          <div class="guide-item-top">
+            <span class="guide-item-tag">Recomendación Operativa</span>
+            <span class="bx bx-bulb icon-orange" style="font-size: 1.25rem;"></span>
+          </div>
+          <p class="guide-item-text">
+            Mantener un ratio balanceado de plantillas alimenticias por tiempo de comida para acelerar la prescripción y dinamizar las consultas de seguimiento.
+          </p>
+          <div class="guide-ref-footer">
+            <span>Especialista: <strong>{{ des.nombreNutriologo || 'Especialista Activo' }}</strong></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── 3. TOP ALIMENTOS MÁS ASIGNADOS EN PLANTILLAS ─────────────────── -->
+    <section class="charts-row" aria-label="Alimentos más asignados">
+      <!-- Gráfico Horizontal -->
+      <article class="chart-box-card">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-trending-up icon-green"></span>
+          <div>
+            <h3 class="chart-card-title">Ranking de Alimentos más Asignados en Plantillas</h3>
+            <p class="chart-card-sub">Frecuencia absoluta de uso en los planes nutricionales</p>
+          </div>
+        </div>
+        <div class="chart-canvas-box" style="height: 330px;">
+          <canvas id="canvas-top-alimentos"></canvas>
+        </div>
+      </article>
+
+      <!-- Tabla / Barras de progreso de ranking -->
+      <article class="chart-box-card">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-medal text-yellow"></span>
+          <div>
+            <h3 class="chart-card-title">Top 10 Alimentos más Frecuentes</h3>
+            <p class="chart-card-sub">Participación relativa respecto al total de alimentos prescritos</p>
+          </div>
+        </div>
+        <div class="table-responsive" style="max-height: 330px; overflow-y: auto;">
+          <table class="clinical-table">
+            <thead>
+              <tr>
+                <th style="width: 10%;">#</th>
+                <th style="width: 45%;">Alimento</th>
+                <th style="width: 25%;">Categoría</th>
+                <th style="width: 20%;">Usos (%)</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (al of des.topAlimentosAsignados; track al.alimentoId) {
+              <tr>
+                <td>
+                  <span class="rank-medal-badge"
+                    [class.rank-medal-1]="$index === 0"
+                    [class.rank-medal-2]="$index === 1"
+                    [class.rank-medal-3]="$index === 2"
+                    [class.rank-medal-other]="$index > 2">
+                    {{ $index + 1 }}
+                  </span>
+                </td>
+                <td class="td-date">
+                  <div class="rank-table-progress-wrap">
+                    <strong>{{ al.nombre }}</strong>
+                    <div class="rank-progress-bg">
+                      <div class="rank-progress-fill" [style.width.%]="al.porcentajeUso"></div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge-chip chip-icc">{{ al.categoria }}</span></td>
+                <td>
+                  <strong class="text-green">{{ al.vecesUtilizado }}</strong>
+                  <small class="td-muted">({{ al.porcentajeUso | number: '1.1-1' }}%)</small>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <!-- ─── 4. CONTENIDO Y PLANEACIÓN (PLANTILLAS Y CATEGORÍAS) ─────────── -->
+    <section class="charts-row" aria-label="Plantillas y categorías">
+      <!-- Plantillas por tiempo de comida -->
+      <article class="chart-box-card">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-food-menu icon-lime"></span>
+          <div>
+            <h3 class="chart-card-title">Plantillas por Tiempo de Comida</h3>
+            <p class="chart-card-sub">Distribución de planes estructurados (Total: <strong>{{ des.totalPlantillasRegistradas }}</strong> plantillas)</p>
+          </div>
+        </div>
+        <div class="chart-canvas-box" style="height: 280px;">
+          <canvas id="canvas-plantillas-tipo"></canvas>
+        </div>
+        <div class="table-responsive" style="margin-top: 0.75rem;">
+          <table class="clinical-table">
+            <thead>
+              <tr>
+                <th>Tiempo de Comida</th>
+                <th>Plantillas Creadas</th>
+                <th>Participación</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of entriesRecord(des.plantillasPorTipoComida); track entry.key) {
+              <tr>
+                <td class="td-date"><strong>{{ entry.label }}</strong></td>
+                <td><strong class="text-green">{{ entry.cantidad }}</strong> plantillas</td>
+                <td><span class="badge-chip chip-icc">{{ entry.porcentaje | number: '1.1-1' }}%</span></td>
+              </tr>
+              }
+              @if (entriesRecord(des.plantillasPorTipoComida).length === 0) {
+              <tr>
+                <td colspan="3" class="td-muted" style="text-align: center; padding: 0.75rem;">
+                  No se han registrado plantillas en este periodo.
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <!-- Categorías de Alimentos en Plantillas -->
+      <article class="chart-box-card">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-pie-chart-alt-2 icon-green"></span>
+          <div>
+            <h3 class="chart-card-title">Distribución de Alimentos Prescritos por Categoría</h3>
+            <p class="chart-card-sub">Proporción de grupos de alimentos en las plantillas creadas</p>
+          </div>
+        </div>
+        <div class="chart-canvas-box" style="height: 280px;">
+          <canvas id="canvas-dist-prescripcion"></canvas>
+        </div>
+        <div class="table-responsive" style="margin-top: 0.75rem;">
+          <table class="clinical-table">
+            <thead>
+              <tr>
+                <th>Grupo de Alimento</th>
+                <th>Prescripciones</th>
+                <th>Proporción</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of entriesRecord(des.distribucionAlimentosPorCategoria); track entry.key) {
+              <tr>
+                <td class="td-date"><strong>{{ entry.label }}</strong></td>
+                <td><strong class="text-green">{{ entry.cantidad }}</strong> veces</td>
+                <td><span class="badge-chip chip-icc">{{ entry.porcentaje | number: '1.1-1' }}%</span></td>
+              </tr>
+              }
+              @if (entriesRecord(des.distribucionAlimentosPorCategoria).length === 0) {
+              <tr>
+                <td colspan="3" class="td-muted" style="text-align: center; padding: 0.75rem;">
+                  Sin alimentos prescritos en plantillas.
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <!-- ─── 5. APORTACIÓN A LA BASE DE DATOS (NUEVOS ALIMENTOS) ─────────── -->
+    <section class="charts-row" aria-label="Aportación a la Base de Datos">
+      <!-- Donut de Alimentos Registrados por Categoría -->
+      <article class="chart-box-card">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-data text-yellow"></span>
+          <div>
+            <h3 class="chart-card-title">Nuevos Alimentos Registrados por Categoría</h3>
+            <p class="chart-card-sub">Aportación y enriquecimiento de la base de datos de alimentos</p>
+          </div>
+        </div>
+        <div class="chart-canvas-box" style="height: 300px;">
+          <canvas id="canvas-alimentos-categoria"></canvas>
+        </div>
+      </article>
+
+      <!-- Tabla resumen de aportación a BD -->
+      <article class="chart-box-card">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-list-plus icon-lime"></span>
+          <div>
+            <h3 class="chart-card-title">Resumen de Catálogo en Base de Datos</h3>
+            <p class="chart-card-sub">Total de registros dados de alta por el especialista (Total: <strong>{{ des.totalAlimentosRegistrados }}</strong> alimentos)</p>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="clinical-table">
+            <thead>
+              <tr>
+                <th>Categoría Nutricional</th>
+                <th>Alimentos en BD</th>
+                <th>Participación en BD</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of entriesRecord(des.alimentosRegistradosPorCategoria); track entry.key) {
+              <tr>
+                <td class="td-date"><strong>{{ entry.label }}</strong></td>
+                <td><strong class="text-green">{{ entry.cantidad }}</strong> alimentos</td>
+                <td><span class="badge-chip chip-icc">{{ entry.porcentaje | number: '1.1-1' }}%</span></td>
+              </tr>
+              }
+              @if (entriesRecord(des.alimentosRegistradosPorCategoria).length === 0) {
+              <tr>
+                <td colspan="3" class="td-muted" style="text-align: center; padding: 1rem;">
+                  No se han registrado alimentos nuevos en la base de datos.
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    } <!-- end @else (desempenoResource value exists) -->
+
+  </section>
+  }
+
+  <!-- ════════════════════════════════════════════════════════════════════════════ -->
+  <!-- ─── 6. REPORTE DE PROPUESTA DE PLAN (RECEPTIVIDAD Y COMUNICACIÓN PROACTIVA) ─── -->
+  <!-- ════════════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'propuesta') {
+  <section class="report-content-section" aria-labelledby="heading-propuesta">
+
+    <!-- BANNER DE ENCABEZADO -->
+    <div class="report-header-banner banner-gradient-propuesta">
+      <div class="banner-icon-badge">
+        <span class="bx bx-conversation" aria-hidden="true"></span>
+      </div>
+      <div class="banner-text-block">
+        <div class="banner-badge-row">
+          <span class="badge-ns-pill ns-pill-a">Receptividad & Comunicación</span>
+          <span class="banner-period-tag">{{ periodoFechasPropuesta().etiqueta }}</span>
+        </div>
+        <h2 id="heading-propuesta" class="banner-main-title">
+          Reporte de Receptividad y Propuestas de Plan
+        </h2>
+        <p class="banner-sub-desc">
+          Analiza la comunicación proactiva del paciente sobre su plan alimenticio, mide la receptividad y detecta alimentos que generan fricción para optimizar la adherencia a largo plazo.
+        </p>
+      </div>
+      <div class="banner-actions-block">
+        <button type="button" class="btn-export-pdf" [disabled]="isExportingPropuesta() || propuestaPlanResource.isLoading()"
+          (click)="descargarPDFPropuesta()" aria-label="Descargar Reporte de Propuesta de Plan en PDF">
+          @if (isExportingPropuesta()) {
+          <span class="app-spinner-sm"></span> Generando PDF A4...
+          } @else {
+          <span class="bx bxs-file-pdf"></span> Descargar Informe PDF
+          }
+        </button>
+      </div>
+    </div>
+
+    <!-- BARRA DE FILTROS (Nutriólogo + Periodo) -->
+    <section class="periodo-toolbar-card" aria-label="Filtro de periodo y especialista">
+      <div class="periodo-toolbar-left">
+        <span class="bx bx-calendar-event periodo-toolbar-icon"></span>
+        <div>
+          <h3 class="periodo-toolbar-title">Intervalo de Análisis de Receptividad</h3>
+          <p class="periodo-toolbar-sub">Selecciona el periodo para calcular tasas de cambio, razones y alimentos conflictivos</p>
+        </div>
+      </div>
+
+      <div class="periodo-toolbar-controls">
+        @if (isAdmin()) {
+        <div class="date-field-box">
+          <label for="select-nutriologo-propuesta" class="date-field-label">
+            <span class="bx bx-user-pin"></span> Especialista:
+          </label>
+          <select id="select-nutriologo-propuesta" class="date-field-input" style="cursor: pointer; font-weight: 600;" (change)="onNutriologoChangePropuesta($event)">
+            <option [value]="''">Todos los Nutriólogos (Global)</option>
+            @for (n of nutriologosList(); track n.id) {
+            <option [value]="n.id">{{ n.nombre }} {{ n.apellido }}</option>
+            }
+          </select>
+        </div>
+        }
+
+        <div class="periodo-btn-group" role="group" aria-label="Filtro temporal">
+          <button type="button" class="btn-periodo-option" [class.btn-periodo-option--active]="periodoTipoPropuesta() === 'mes'"
+            (click)="setPeriodoTipoPropuesta('mes')">
+            30 Días
+          </button>
+          <button type="button" class="btn-periodo-option" [class.btn-periodo-option--active]="periodoTipoPropuesta() === 'trimestre'"
+            (click)="setPeriodoTipoPropuesta('trimestre')">
+            Trimestre
+          </button>
+          <button type="button" class="btn-periodo-option" [class.btn-periodo-option--active]="periodoTipoPropuesta() === 'semana'"
+            (click)="setPeriodoTipoPropuesta('semana')">
+            7 Días
+          </button>
+          <button type="button" class="btn-periodo-option" [class.btn-periodo-option--active]="periodoTipoPropuesta() === 'personalizado'"
+            (click)="setPeriodoTipoPropuesta('personalizado')">
+            Personalizado
+          </button>
+        </div>
+
+        @if (periodoTipoPropuesta() === 'personalizado') {
+        <div class="periodo-custom-dates-wrapper">
+          <div class="periodo-custom-dates">
+            <div class="date-field-box">
+              <label for="fecha-ini-propuesta" class="date-field-label">Desde:</label>
+              <input type="date" id="fecha-ini-propuesta" class="date-field-input"
+                [max]="fechaFinPropuesta() || hoyIso()"
+                [class.date-input-invalid]="errorFechasPropuesta()"
+                [value]="fechaInicioPropuesta()" (input)="fechaInicioPropuesta.set($any($event.target).value)" />
+            </div>
+            <div class="date-field-box">
+              <label for="fecha-fin-propuesta" class="date-field-label">Hasta:</label>
+              <input type="date" id="fecha-fin-propuesta" class="date-field-input"
+                [min]="fechaInicioPropuesta()"
+                [max]="hoyIso()"
+                [class.date-input-invalid]="errorFechasPropuesta()"
+                [value]="fechaFinPropuesta()" (input)="fechaFinPropuesta.set($any($event.target).value)" />
+            </div>
+          </div>
+          @if (errorFechasPropuesta()) {
+            <div class="periodo-date-error" role="alert">
+              <i class="bx bx-error-circle" aria-hidden="true"></i>
+              <span>{{ errorFechasPropuesta() }}</span>
+            </div>
+          }
+        </div>
+        }
+      </div>
+    </section>
+
+    <!-- ESTADO DE CARGA / ERROR / DATOS -->
+    @if (propuestaPlanResource.isLoading()) {
+    <div class="state-container loading-state">
+      <div class="app-spinner"></div>
+      <p class="state-text">Analizando comunicación proactiva y propuestas de ajuste de pacientes...</p>
+    </div>
+    } @else if (propuestaPlanResource.error()) {
+    <div class="state-container error-state">
+      <div class="state-icon-circle error"><span class="bx bx-error-circle"></span></div>
+      <h3 class="state-title">Error al consultar el reporte</h3>
+      <p class="state-desc">No se pudieron recuperar las métricas de receptividad y sugerencias.</p>
+    </div>
+    } @else if (propuestaPlanResource.value(); as prop) {
+
+    <!-- ─── 1. TARJETAS DE KPIS PRINCIPALES (6 INDICADORES CON DESCRIPCIÓN) ── -->
+    <section class="kpis-grid-detailed" aria-label="Indicadores clave de receptividad y propuestas">
+
+      <!-- 1. Tasa de Solicitud de Cambio -->
+      <article class="kpi-card-detailed kpi-ns-blue">
+        <div class="kpi-top-row">
+          <div class="kpi-icon-box-sm ns-c">
+            <span class="bx bx-transfer-alt"></span>
+          </div>
+          <span class="kpi-category-badge ns-pill-c">Receptividad</span>
+        </div>
+        <div class="kpi-main-group">
+          <span class="kpi-title-text">Tasa de Solicitud de Cambio</span>
+          <div class="kpi-val-hero">{{ prop.tasaSolicitudCambio | number: '1.1-1' }}%</div>
+          <p class="kpi-desc">
+            Porcentaje de pacientes en tratamiento que han solicitado al menos una sustitución o ajuste de platillos en su plan.
+          </p>
+        </div>
+        <div class="kpi-footer-sub">
+          <span class="bx bx-user-check"></span>
+          <span>{{ prop.pacientesConSolicitud }} de {{ prop.totalPacientes }} pacientes activos</span>
+        </div>
+      </article>
+
+      <!-- 2. Total de Solicitudes Enviadas -->
+      <article class="kpi-card-detailed kpi-ns-green">
+        <div class="kpi-top-row">
+          <div class="kpi-icon-box-sm ns-a">
+            <span class="bx bx-message-square-edit"></span>
+          </div>
+          <span class="kpi-category-badge ns-pill-a">Volumen</span>
+        </div>
+        <div class="kpi-main-group">
+          <span class="kpi-title-text">Propuestas Recibidas</span>
+          <div class="kpi-val-hero">{{ prop.totalSolicitudes }} <small>ajustes</small></div>
+          <p class="kpi-desc">
+            Volumen acumulado de solicitudes de sustitución enviadas por los pacientes dentro del periodo seleccionado.
+          </p>
+        </div>
+        <div class="kpi-footer-sub">
+          <span class="bx bx-calculator"></span>
+          <span>Promedio: {{ prop.promedioSolicitudesPorPaciente | number: '1.2-2' }} por paciente</span>
+        </div>
+      </article>
+
+      <!-- 3. Tasa de Aprobación Clínica -->
+      <article class="kpi-card-detailed kpi-ns-lime">
+        <div class="kpi-top-row">
+          <div class="kpi-icon-box-sm ns-b">
+            <span class="bx bx-check-double"></span>
+          </div>
+          <span class="kpi-category-badge ns-pill-b">Aceptación</span>
+        </div>
+        <div class="kpi-main-group">
+          <span class="kpi-title-text">Tasa de Aprobación</span>
+          <div class="kpi-val-hero">{{ prop.tasaAprobacion | number: '1.1-1' }}%</div>
+          <p class="kpi-desc">
+            Proporción de modificaciones propuestas que fueron autorizadas y adaptadas exitosamente por el especialista.
+          </p>
+        </div>
+        <div class="kpi-footer-sub">
+          <span class="bx bx-check-circle text-green"></span>
+          <span>{{ prop.solicitudesAprobadas }} aprobadas · {{ prop.solicitudesRechazadas }} rechazadas</span>
+        </div>
+      </article>
+
+      <!-- 4. Razón Principal Predominante -->
+      <article class="kpi-card-detailed kpi-ns-orange">
+        <div class="kpi-top-row">
+          <div class="kpi-icon-box-sm ns-d">
+            <span class="bx bx-help-circle"></span>
+          </div>
+          <span class="kpi-category-badge ns-pill-d">Fricción</span>
+        </div>
+        <div class="kpi-main-group">
+          <span class="kpi-title-text">Razón Principal ("Por Qué")</span>
+          <div class="kpi-val-hero" style="font-size: 1.25rem; word-break: break-word;">
+            {{ etiquetaCategoriaMotivo(prop.razonMasFrecuente) }}
+          </div>
+          <p class="kpi-desc">
+            Causa dominante expresada por los pacientes (como intolerancia, sabor, costo o practicidad) al pedir cambios.
+          </p>
+        </div>
+        <div class="kpi-footer-sub">
+          <span class="bx bx-trending-up"></span>
+          <span>Categoría más seleccionada en el censo</span>
+        </div>
+      </article>
+
+      <!-- 5. Pacientes Nuevos vs Seguimiento -->
+      <article class="kpi-card-detailed kpi-ns-blue">
+        <div class="kpi-top-row">
+          <div class="kpi-icon-box-sm ns-c">
+            <span class="bx bx-user-pin"></span>
+          </div>
+          <span class="kpi-category-badge ns-pill-c">Cohorte</span>
+        </div>
+        <div class="kpi-main-group">
+          <span class="kpi-title-text">Perfil Predominante</span>
+          <div class="kpi-val-hero" style="font-size: 1.3rem;">
+            {{ prop.porcentajePacientesNuevos >= prop.porcentajePacientesSeguimiento ? 'Pacientes Nuevos' : 'Seguimiento' }}
+          </div>
+          <p class="kpi-desc">
+            Segmento con mayor necesidad de ajustes: fase de adaptación temprana (≤4 semanas) vs seguimiento regular.
+          </p>
+        </div>
+        <div class="kpi-footer-sub">
+          <span class="bx bx-group"></span>
+          <span>{{ prop.porcentajePacientesNuevos | number: '1.1-1' }}% nuevos (≤ 4 sem)</span>
+        </div>
+      </article>
+
+      <!-- 6. Pendientes de Revisión -->
+      <article class="kpi-card-detailed" [class.kpi-ns-orange]="prop.solicitudesPendientes > 0" [class.kpi-ns-green]="prop.solicitudesPendientes === 0">
+        <div class="kpi-top-row">
+          <div class="kpi-icon-box-sm" [class.ns-d]="prop.solicitudesPendientes > 0" [class.ns-a]="prop.solicitudesPendientes === 0">
+            <span class="bx bx-time-five"></span>
+          </div>
+          <span class="kpi-category-badge" [class.ns-pill-d]="prop.solicitudesPendientes > 0" [class.ns-pill-a]="prop.solicitudesPendientes === 0">
+            {{ prop.solicitudesPendientes > 0 ? 'Pendiente' : 'Al Día' }}
+          </span>
+        </div>
+        <div class="kpi-main-group">
+          <span class="kpi-title-text">Bandeja de Revisión</span>
+          <div class="kpi-val-hero">{{ prop.solicitudesPendientes }} <small>pendientes</small></div>
+          <p class="kpi-desc">
+            Peticiones de ajuste activas que requieren respuesta, aprobación o contrapropuesta por parte del nutriólogo.
+          </p>
+        </div>
+        <div class="kpi-footer-sub">
+          <span class="bx bx-bell"></span>
+          <span>{{ prop.solicitudesPendientes > 0 ? 'Requiere atención del especialista' : 'Sin solicitudes pendientes' }}</span>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- ─── 2. SEMÁFORO CLÍNICO Y DIAGNÓSTICO AUTOMATIZADO ────────────────── -->
+    <section class="diagnostic-panel" aria-label="Diagnósticos clínicos de receptividad y perfil">
+      
+      <!-- Diagnóstico de Receptividad -->
+      <article class="diagnostic-card diagnostic-card-accent-a">
+        <div class="diagnostic-header">
+          <div class="diagnostic-score-badge" [style.background-color]="interpretacionTasaCambio(prop.tasaSolicitudCambio).color">
+            {{ interpretacionTasaCambio(prop.tasaSolicitudCambio).score }}
+          </div>
+          <div class="diagnostic-header-text">
+            <div class="diagnostic-badge-row">
+              <span class="diagnostic-category-tag">Diagnóstico Clínico Automatizado</span>
+              <span class="diagnostic-status-tag" [style.color]="interpretacionTasaCambio(prop.tasaSolicitudCambio).color">
+                ● {{ interpretacionTasaCambio(prop.tasaSolicitudCambio).nivel }}
+              </span>
+            </div>
+            <h3 class="diagnostic-title">Diagnóstico de Receptividad Dietética</h3>
+            <p class="diagnostic-desc-lead">
+              Evaluación cuantitativa del grado de tolerancia y aceptación de los planes alimenticios prescritos según la frecuencia de sustituciones solicitadas.
+            </p>
+          </div>
+        </div>
+
+        <div class="diagnostic-callout callout-green">
+          <span class="bx bx-clipboard diagnostic-callout-icon" aria-hidden="true"></span>
+          <p class="diagnostic-body">{{ prop.diagnosticoReceptividad }}</p>
+        </div>
+
+        <div class="diagnostic-footer-meta">
+          <span>Escala Nutri-Score: <strong>{{ interpretacionTasaCambio(prop.tasaSolicitudCambio).score }} ({{ interpretacionTasaCambio(prop.tasaSolicitudCambio).desc }})</strong></span>
+          <span><i class="bx bx-check-shield"></i> Algoritmo Clínico Activo</span>
+        </div>
+      </article>
+
+      <!-- Diagnóstico del Perfil de Pacientes -->
+      <article class="diagnostic-card diagnostic-card-accent-b">
+        <div class="diagnostic-header">
+          <div class="diagnostic-score-badge" [style.background-color]="prop.porcentajePacientesNuevos > 50 ? '#0284c7' : '#85bb2f'">
+            <span class="bx bx-bulb"></span>
+          </div>
+          <div class="diagnostic-header-text">
+            <div class="diagnostic-badge-row">
+              <span class="diagnostic-category-tag">Análisis de Cohorte y Etapas</span>
+              <span class="diagnostic-status-tag" [style.color]="prop.porcentajePacientesNuevos > 50 ? '#0284c7' : '#85bb2f'">
+                ● {{ prop.porcentajePacientesNuevos > 50 ? 'Fase Temprana (Primeras 4 Semanas)' : 'Fase de Mantenimiento' }}
+              </span>
+            </div>
+            <h3 class="diagnostic-title">Análisis de Inducción vs Seguimiento</h3>
+            <p class="diagnostic-desc-lead">
+              Segmentación de peticiones para distinguir si las barreras de apego ocurren en el proceso de inducción inicial o durante el control a largo plazo.
+            </p>
+          </div>
+        </div>
+
+        <div class="diagnostic-callout callout-blue">
+          <span class="bx bx-user-voice diagnostic-callout-icon" aria-hidden="true"></span>
+          <p class="diagnostic-body">{{ prop.diagnosticoPerfil }}</p>
+        </div>
+
+        <div class="diagnostic-footer-meta">
+          <span>Distribución: <strong>{{ prop.porcentajePacientesNuevos | number: '1.1-1' }}% Nuevos vs {{ prop.porcentajePacientesSeguimiento | number: '1.1-1' }}% Seguimiento</strong></span>
+          <span><i class="bx bx-pulse"></i> Monitoreo Continuo</span>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- ─── 3. GRÁFICAS: RAZONES PRINCIPALES Y ALIMENTOS PROBLEMÁTICOS ──── -->
+    <section class="charts-row" aria-label="Razones y alimentos problemáticos">
+
+      <!-- Donut: Razones Principales ("Por Qué") -->
+      <article class="chart-box-card">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-pie-chart-alt-2 icon-green"></span>
+          <div>
+            <h3 class="chart-card-title">Gráfica de Razones Principales ("Por Qué")</h3>
+            <p class="chart-card-sub">Desglose de motivos reportados por los pacientes al pedir modificaciones</p>
+          </div>
+        </div>
+        <div class="chart-desc-banner">
+          <i class="bx bx-info-circle" aria-hidden="true"></i>
+          <span>Muestra los motivos seleccionados por el paciente (intolerancia, sabor, costo, practicidad) para orientar intervenciones nutricionales.</span>
+        </div>
+        <div class="chart-canvas-box" style="height: 280px;">
+          <canvas id="canvas-razones-propuesta"></canvas>
+        </div>
+        <div class="table-responsive" style="margin-top: 0.75rem;">
+          <table class="clinical-table">
+            <thead>
+              <tr>
+                <th>Categoría de Motivo</th>
+                <th>Solicitudes</th>
+                <th>Distribución Relativa</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of entriesRazones(prop.razonesPrincipales); track entry.key) {
+              <tr>
+                <td class="td-date"><strong>{{ entry.label }}</strong></td>
+                <td><strong class="text-green">{{ entry.cantidad }}</strong> peticiones</td>
+                <td>
+                  <span class="badge-chip chip-icc">{{ entry.porcentaje | number: '1.1-1' }}%</span>
+                  <div class="progress-mini-bar">
+                    <div class="progress-mini-fill fill-green" [style.width.%]="entry.porcentaje"></div>
+                  </div>
+                </td>
+              </tr>
+              }
+              @if (entriesRazones(prop.razonesPrincipales).length === 0) {
+              <tr>
+                <td colspan="3" class="td-muted" style="text-align: center; padding: 0.75rem;">
+                  Sin motivos registrados en este periodo.
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <!-- Bar Horizontal: Alimentos Problemáticos -->
+      <article class="chart-box-card">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-dish text-orange"></span>
+          <div>
+            <h3 class="chart-card-title">Alimentos Problemáticos con Más Sustituciones</h3>
+            <p class="chart-card-sub">Ingredientes específicos que generan más peticiones de sustitución</p>
+          </div>
+        </div>
+        <div class="chart-desc-banner">
+          <i class="bx bx-info-circle" aria-hidden="true"></i>
+          <span>Identifica alimentos concretos que causan fricción o rechazo para reemplazarlos preventivamente en futuras prescripciones.</span>
+        </div>
+        <div class="chart-canvas-box" style="height: 280px;">
+          <canvas id="canvas-alimentos-problematicos"></canvas>
+        </div>
+        <div class="table-responsive" style="margin-top: 0.75rem;">
+          <table class="clinical-table">
+            <thead>
+              <tr>
+                <th>Alimento Problemático</th>
+                <th>Categoría</th>
+                <th>Peticiones</th>
+                <th>Impacto</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (alim of prop.alimentosProblematicos; track alim.alimentoId; let idx = $index) {
+              <tr>
+                <td class="td-date">
+                  <span class="rank-badge" [class.rank-1]="idx === 0" [class.rank-2]="idx === 1" [class.rank-3]="idx === 2" [class.rank-other]="idx > 2">
+                    #{{ idx + 1 }}
+                  </span>
+                  <strong>{{ alim.nombre }}</strong>
+                </td>
+                <td><span class="badge-chip chip-ict">{{ alim.categoria }}</span></td>
+                <td><strong class="text-orange">{{ alim.vecesSolicitado }}</strong> veces</td>
+                <td>
+                  <span class="badge-chip chip-icc">{{ alim.porcentajeTotal | number: '1.1-1' }}%</span>
+                  <div class="progress-mini-bar">
+                    <div class="progress-mini-fill fill-orange" [style.width.%]="alim.porcentajeTotal"></div>
+                  </div>
+                </td>
+              </tr>
+              }
+              @if (prop.alimentosProblematicos.length === 0) {
+              <tr>
+                <td colspan="4" class="td-muted" style="text-align: center; padding: 0.75rem;">
+                  No se han registrado sustituciones de alimentos en este periodo.
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- ─── 4. GRÁFICAS: PERFIL DE PACIENTES Y PLANTILLAS MODIFICADAS ─────── -->
+    <section class="charts-row" aria-label="Perfil de pacientes y plantillas modificadas">
+
+      <!-- Donut: Perfil de Pacientes (Nuevos vs Seguimiento) -->
+      <article class="chart-box-card">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-user-pin icon-blue"></span>
+          <div>
+            <h3 class="chart-card-title">Perfil de los Pacientes que más Solicitan Cambios</h3>
+            <p class="chart-card-sub">Compara solicitudes de pacientes nuevos (≤ 4 sem) vs seguimiento</p>
+          </div>
+        </div>
+        <div class="chart-desc-banner">
+          <i class="bx bx-info-circle" aria-hidden="true"></i>
+          <span>Permite evaluar si la demanda de ajustes proviene de la fase inicial de adaptación o de fatiga en pacientes de mantenimiento.</span>
+        </div>
+        <div class="chart-canvas-box" style="height: 280px;">
+          <canvas id="canvas-perfil-pacientes"></canvas>
+        </div>
+        <div class="table-responsive" style="margin-top: 0.75rem;">
+          <table class="clinical-table">
+            <thead>
+              <tr>
+                <th>Grupo de Pacientes</th>
+                <th>Solicitudes</th>
+                <th>% Peticiones</th>
+                <th>Total en Censo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="td-date">
+                  <span class="badge-chip chip-ict" style="margin-right: 0.35rem;">≤ 4 sem</span>
+                  <strong>Nuevos (Inducción)</strong>
+                </td>
+                <td><strong class="text-blue">{{ prop.solicitudesPacientesNuevos }}</strong></td>
+                <td>
+                  <span class="badge-chip chip-ict">{{ prop.porcentajePacientesNuevos | number: '1.1-1' }}%</span>
+                  <div class="progress-mini-bar">
+                    <div class="progress-mini-fill fill-blue" [style.width.%]="prop.porcentajePacientesNuevos"></div>
+                  </div>
+                </td>
+                <td>{{ prop.totalPacientesNuevos }} pacientes</td>
+              </tr>
+              <tr>
+                <td class="td-date">
+                  <span class="badge-chip chip-icc" style="margin-right: 0.35rem;">&gt; 4 sem</span>
+                  <strong>Seguimiento Regular</strong>
+                </td>
+                <td><strong class="text-green">{{ prop.solicitudesPacientesSeguimiento }}</strong></td>
+                <td>
+                  <span class="badge-chip chip-icc">{{ prop.porcentajePacientesSeguimiento | number: '1.1-1' }}%</span>
+                  <div class="progress-mini-bar">
+                    <div class="progress-mini-fill fill-green" [style.width.%]="prop.porcentajePacientesSeguimiento"></div>
+                  </div>
+                </td>
+                <td>{{ prop.totalPacientesSeguimiento }} pacientes</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <!-- Bar Vertical: Plantillas y Tiempos de Comida con más Cambios -->
+      <article class="chart-box-card">
+        <div class="chart-card-header">
+          <span class="chart-header-icon bx bx-food-menu icon-lime"></span>
+          <div>
+            <h3 class="chart-card-title">Plantillas y Tiempos de Comida más Modificados</h3>
+            <p class="chart-card-sub">Menús y tiempos que presentan mayor tasa de sugerencias de ajuste</p>
+          </div>
+        </div>
+        <div class="chart-desc-banner">
+          <i class="bx bx-info-circle" aria-hidden="true"></i>
+          <span>Detecta qué tiempos de comida (desayunos, comidas, cenas, colaciones) concentran mayor dificultad de cumplimiento.</span>
+        </div>
+        <div class="chart-canvas-box" style="height: 280px;">
+          <canvas id="canvas-plantillas-propuesta"></canvas>
+        </div>
+        <div class="table-responsive" style="margin-top: 0.75rem;">
+          <table class="clinical-table">
+            <thead>
+              <tr>
+                <th>Plantilla / Tiempo de Comida</th>
+                <th>Peticiones de Cambio</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of entriesRecord(prop.plantillasMasModificadas); track entry.key) {
+              <tr>
+                <td class="td-date">
+                  <span class="bx bx-dish" style="color: var(--ns-green-dark); margin-right: 0.3rem;"></span>
+                  <strong>{{ entry.label }}</strong>
+                </td>
+                <td><strong class="text-green">{{ entry.cantidad }}</strong> solicitudes</td>
+              </tr>
+              }
+              @if (entriesRecord(prop.plantillasMasModificadas).length === 0) {
+              <tr>
+                <td colspan="2" class="td-muted" style="text-align: center; padding: 0.75rem;">
+                  Sin plantillas modificadas en el periodo.
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+    </section>
+
+    } <!-- end @else (propuestaPlanResource value exists) -->
+
+  </section>
+  }
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════════ -->
+<!-- ─── PLANTILLAS DEDICADAS DE IMPRESIÓN PROFESIONAL (ALTA RESOLUCIÓN Y FORMATO) ─ -->
+<!-- ══════════════════════════════════════════════════════════════════════════════ -->
+
+<!-- ══════════════════════════════════════════════════════════════════════════════ -->
+<!-- ─── PLANTILLAS DEDICADAS DE IMPRESIÓN PROFESIONAL (ALTA RESOLUCIÓN Y FORMATO) ─ -->
+<!-- ══════════════════════════════════════════════════════════════════════════════ -->
+
+<!-- A. PLANTILLA OFICIAL DE PROGRESO DE PACIENTE -->
+<div class="clinical-pdf-wrapper" [class.cpdf-visible]="isExportingProgreso()">
+
+  <div id="clinical-pdf-progreso" class="clinical-pdf-document">
+
+    <!-- Membrete Institucional con Logo Verde -->
+    <header class="cpdf-header">
+      <div class="cpdf-brand">
+        <div class="cpdf-logo-box">
+          <svg viewBox="0 0 32 32" class="cpdf-svg-logo" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="8" fill="#047857" />
+            <path d="M16 6C10.477 6 6 10.477 6 16C6 21.523 10.477 26 16 26C21.523 26 26 21.523 26 16C26 10.477 21.523 6 16 6Z" fill="#10b981" opacity="0.3"/>
+            <path d="M16 8V24M8 16H24" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="cpdf-brand-text">
+          <h1 class="cpdf-clinic-title">BIENESTAR NUTRICIONAL</h1>
+          <p class="cpdf-clinic-subtitle">SISTEMA CLÍNICO DE NUTRICIÓN Y METABOLISMO</p>
+        </div>
+      </div>
+      <div class="cpdf-folio-box">
+        <div class="cpdf-folio-title">INFORME DE EVOLUCIÓN</div>
+        <div class="cpdf-folio-meta"><strong>Fecha:</strong> {{ fechaActual | date: 'dd/MM/yyyy' }}</div>
+        <div class="cpdf-folio-meta"><strong>Expediente:</strong> #{{ selectedPaciente()?.id }}</div>
+      </div>
+    </header>
+
+    <!-- Barra Cromática de Acento -->
+    <div class="cpdf-accent-bar"></div>
+
+    <!-- 1. Ficha de Datos del Paciente -->
+    <section class="cpdf-patient-card cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">1. FICHA DEL PACIENTE</h2>
+      <div class="cpdf-patient-grid">
+        <div class="cpdf-patient-col">
+          <p class="cpdf-info-row"><span class="cpdf-lbl">Paciente:</span> <strong class="cpdf-val">{{ selectedPaciente()?.nombre }} {{ selectedPaciente()?.apellidoPaterno }} {{ selectedPaciente()?.apellidoMaterno ?? '' }}</strong></p>
+          <p class="cpdf-info-row"><span class="cpdf-lbl">ID Expediente:</span> <span class="cpdf-val">#{{ selectedPaciente()?.id }}</span></p>
+          <p class="cpdf-info-row"><span class="cpdf-lbl">Género:</span> <span class="cpdf-val">{{ selectedPaciente()?.genero === 'MASCULINO' ? 'Masculino' : (selectedPaciente()?.genero === 'FEMENINO' ? 'Femenino' : 'No especificado') }}</span></p>
+        </div>
+        <div class="cpdf-patient-col">
+          <p class="cpdf-info-row"><span class="cpdf-lbl">Correo:</span> <span class="cpdf-val">{{ selectedPaciente()?.correo }}</span></p>
+          <p class="cpdf-info-row"><span class="cpdf-lbl">Teléfono:</span> <span class="cpdf-val">{{ selectedPaciente()?.telefono || 'No registrado' }}</span></p>
+          <p class="cpdf-info-row"><span class="cpdf-lbl">Consultas:</span> <strong class="cpdf-val">{{ pacienteStats()?.totalRegistros }} evaluaciones</strong></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Resumen de Composición Corporal y KPIs -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">2. HITOS Y RESUMEN DE COMPOSICIÓN CORPORAL</h2>
+      <div class="cpdf-kpis-grid">
+        <div class="cpdf-kpi-item cpdf-kpi-border-orange">
+          <span class="cpdf-kpi-lbl">PESO INICIAL</span>
+          <span class="cpdf-kpi-num">{{ pacienteStats()?.pesoInicial | number: '1.1-1' }} <small>kg</small></span>
+          <span class="cpdf-kpi-sub">Primera consulta</span>
+        </div>
+        <div class="cpdf-kpi-item cpdf-kpi-border-lime">
+          <span class="cpdf-kpi-lbl">PESO ACTUAL</span>
+          <span class="cpdf-kpi-num">{{ pacienteStats()?.pesoActual | number: '1.1-1' }} <small>kg</small></span>
+          <span class="cpdf-kpi-sub">Última medición</span>
+        </div>
+        <div class="cpdf-kpi-item" [class.cpdf-kpi-border-green]="(pacienteStats()?.pesoDiferencia ?? 0) <= 0"
+          [class.cpdf-kpi-border-red]="(pacienteStats()?.pesoDiferencia ?? 0) > 0">
+          <span class="cpdf-kpi-lbl">VARIACIÓN TOTAL</span>
+          <span class="cpdf-kpi-num">
+            {{ (pacienteStats()?.pesoDiferencia ?? 0) > 0 ? '+' : '' }}{{ pacienteStats()?.pesoDiferencia | number: '1.1-1' }} <small>kg</small>
+          </span>
+          <span class="cpdf-kpi-sub">Diferencia neta</span>
+        </div>
+        <div class="cpdf-kpi-item cpdf-kpi-border-yellow">
+          <span class="cpdf-kpi-lbl">GRASA CORPORAL</span>
+          <span class="cpdf-kpi-num">{{ pacienteStats()?.grasaActual | number: '1.1-1' }} <small>%</small></span>
+          <span class="cpdf-kpi-sub">Nivel actual</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Guía Diagnóstica y Semáforo en PDF -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">3. INTERPRETACIÓN DIAGNÓSTICA & PAUTAS SALUDABLES</h2>
+      <div class="cpdf-guide-grid">
+        @let pdfFat = interpretacionGrasa(pacienteStats()?.grasaActual, selectedPaciente()?.genero);
+        <div class="cpdf-guide-box">
+          <div class="cpdf-guide-header">
+            <span class="cpdf-guide-title">Grasa Corporal</span>
+            <span class="cpdf-badge-pill" [style.background-color]="pdfFat.color">{{ pdfFat.score }}</span>
+          </div>
+          <div class="cpdf-guide-status" [style.color]="pdfFat.color">{{ pdfFat.nivel }}</div>
+          <p class="cpdf-guide-desc">{{ pdfFat.desc }}</p>
+        </div>
+
+        @let pdfIct = interpretacionICT(pacienteStats()?.ultimoICT);
+        <div class="cpdf-guide-box">
+          <div class="cpdf-guide-header">
+            <span class="cpdf-guide-title">Riesgo Cardiovascular</span>
+            <span class="cpdf-badge-pill" [style.background-color]="pdfIct.color">{{ pdfIct.score }}</span>
+          </div>
+          <div class="cpdf-guide-status" [style.color]="pdfIct.color">{{ pdfIct.nivel }}</div>
+          <p class="cpdf-guide-desc">{{ pdfIct.desc }}</p>
+        </div>
+
+        <div class="cpdf-guide-box">
+          <div class="cpdf-guide-header">
+            <span class="cpdf-guide-title">Pautas Saludables</span>
+            <span class="cpdf-badge-pill" style="background-color: #047857;">H2O</span>
+          </div>
+          <div class="cpdf-guide-status" style="color: #047857;">Hidratación Sugerida</div>
+          <p class="cpdf-guide-desc">Ingesta recomendada de <strong>{{ aguaSugeridaLitros(pacienteStats()?.pesoActual) }} L/día</strong> y 150 min de actividad semanal.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Gráficos de Alta Fidelidad (Insertados en Base64) -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">4. TENDENCIAS GRÁFICAS DE EVOLUCIÓN</h2>
+      <div class="cpdf-charts-dual">
+        <div class="cpdf-chart-frame">
+          <div class="cpdf-chart-title">Historial de Peso Corporal (kg)</div>
+          @if (pesoChartImg()) {
+          <img [src]="pesoChartImg()" class="cpdf-render-img" alt="Gráfico de Evolución de Peso" />
+          }
+        </div>
+        <div class="cpdf-chart-frame">
+          <div class="cpdf-chart-title">Porcentaje de Grasa Corporal (%)</div>
+          @if (grasaChartImg()) {
+          <img [src]="grasaChartImg()" class="cpdf-render-img" alt="Gráfico de Evolución de Grasa" />
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Tabla Histórica de Mediciones -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">5. HISTORIAL DE MEDICIONES</h2>
+      <table class="cpdf-table-fixed">
+        <thead>
+          <tr>
+            <th style="width: 22%;">Fecha de Medición</th>
+            <th style="width: 18%;">Peso (kg)</th>
+            <th style="width: 20%;">% Grasa Corporal</th>
+            <th style="width: 20%;">Cintura / Talla (ICT)</th>
+            <th style="width: 20%;">Cintura / Cadera (ICC)</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (fecha of progresoResource.value()?.fechas; track $index) {
+          <tr>
+            <td><strong>{{ fecha }}</strong></td>
+            <td><strong class="cpdf-text-green">{{ progresoResource.value()?.pesos?.[$index] | number: '1.1-1' }} kg</strong></td>
+            <td>{{ progresoResource.value()?.porcentajesGrasa?.[$index] ? (progresoResource.value()?.porcentajesGrasa?.[$index] | number: '1.1-1') + '%' : '—' }}</td>
+            <td>{{ progresoResource.value()?.indicesCinturaTalla?.[$index] ? (progresoResource.value()?.indicesCinturaTalla?.[$index] | number: '1.2-2') : '—' }}</td>
+            <td>{{ progresoResource.value()?.indicesCinturaCadera?.[$index] ? (progresoResource.value()?.indicesCinturaCadera?.[$index] | number: '1.2-2') : '—' }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Pie Institucional -->
+    <footer class="cpdf-footer">
+      <p>Documento oficial emitido por el Departamento de Nutrición y Dietética · Sistema Bienestar Clínico</p>
+    </footer>
+
+  </div>
+</div>
+
+<!-- B. PLANTILLA OFICIAL DE CENSO DEMOGRÁFICO (ADMINISTRADOR) -->
+<div class="clinical-pdf-wrapper" [class.cpdf-visible]="isExportingDemografico()">
+  <div id="clinical-pdf-demografico" class="clinical-pdf-document">
+
+    <!-- Membrete Institucional Demográfico -->
+    <header class="cpdf-header">
+      <div class="cpdf-brand">
+        <div class="cpdf-logo-box">
+          <svg viewBox="0 0 32 32" class="cpdf-svg-logo" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="8" fill="#047857" />
+            <path d="M16 6C10.477 6 6 10.477 6 16C6 21.523 10.477 26 16 26C21.523 26 26 21.523 26 16C26 10.477 21.523 6 16 6Z" fill="#10b981" opacity="0.3"/>
+            <path d="M16 8V24M8 16H24" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="cpdf-brand-text">
+          <h1 class="cpdf-clinic-title">BIENESTAR NUTRICIONAL</h1>
+          <p class="cpdf-clinic-subtitle">SISTEMA INTEGRAL DE ADMINISTRACIÓN Y CENSO CLÍNICO</p>
+        </div>
+      </div>
+      <div class="cpdf-folio-box">
+        <div class="cpdf-folio-title">REPORTE DEMOGRÁFICO</div>
+        <div class="cpdf-folio-meta"><strong>Fecha:</strong> {{ fechaActual | date: 'dd/MM/yyyy' }}</div>
+        <div class="cpdf-folio-meta"><strong>Tipo:</strong> Censo Poblacional</div>
+      </div>
+    </header>
+
+    <div class="cpdf-accent-bar"></div>
+
+    <!-- 1. Métricas Generales del Censo -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">1. RESUMEN EJECUTIVO DE PACIENTES</h2>
+      <div class="cpdf-kpis-grid cpdf-kpis-3col">
+        <div class="cpdf-kpi-item cpdf-kpi-border-green">
+          <span class="cpdf-kpi-lbl">TOTAL PACIENTES</span>
+          <span class="cpdf-kpi-num">{{ demograficoResource.value()?.totalPacientes || 0 }}</span>
+          <span class="cpdf-kpi-sub">Población activa</span>
+        </div>
+        <div class="cpdf-kpi-item cpdf-kpi-border-lime">
+          <span class="cpdf-kpi-lbl">GÉNEROS REGISTRADOS</span>
+          <span class="cpdf-kpi-num">{{ totalGeneros() }}</span>
+          <span class="cpdf-kpi-sub">Segmentos</span>
+        </div>
+        <div class="cpdf-kpi-item cpdf-kpi-border-orange">
+          <span class="cpdf-kpi-lbl">GRUPOS ETARIOS</span>
+          <span class="cpdf-kpi-num">{{ totalRangosEdad() }}</span>
+          <span class="cpdf-kpi-sub">Rangos de edad</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Gráficos Demográficos en Alta Calidad -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">2. DISTRIBUCIÓN POBLACIONAL Y GÉNERO</h2>
+      <div class="cpdf-charts-dual">
+        <div class="cpdf-chart-frame">
+          <div class="cpdf-chart-title">Distribución por Género</div>
+          @if (generoChartImg()) {
+          <img [src]="generoChartImg()" class="cpdf-render-img" alt="Distribución por Género" />
+          }
+        </div>
+        <div class="cpdf-chart-frame">
+          <div class="cpdf-chart-title">Grupos de Edad</div>
+          @if (edadChartImg()) {
+          <img [src]="edadChartImg()" class="cpdf-render-img" alt="Grupos de Edad" />
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Carga de Pacientes -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">3. CARGA DE PACIENTES POR NUTRIÓLOGO</h2>
+      <div class="cpdf-chart-frame cpdf-chart-frame-full">
+        @if (nutriologoChartImg()) {
+        <img [src]="nutriologoChartImg()" class="cpdf-render-img" alt="Distribución por Nutriólogo" />
+        }
+      </div>
+    </section>
+
+    <!-- Pie Institucional -->
+    <footer class="cpdf-footer">
+      <p>Documento de Control y Censo Poblacional · Sistema Bienestar Clínico Nutricional</p>
+    </footer>
+
+  </div>
+</div>
+
+<!-- C. PLANTILLA OFICIAL DE SEGUIMIENTO DEL PLAN ALIMENTICIO -->
+<div class="clinical-pdf-wrapper" [class.cpdf-visible]="isExportingSeguimiento()">
+  <div id="clinical-pdf-seguimiento" class="clinical-pdf-document">
+
+    <!-- Membrete Institucional con Logo Verde -->
+    <header class="cpdf-header">
+      <div class="cpdf-brand">
+        <div class="cpdf-logo-box">
+          <svg viewBox="0 0 32 32" class="cpdf-svg-logo" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="8" fill="#047857" />
+            <path d="M16 6C10.477 6 6 10.477 6 16C6 21.523 10.477 26 16 26C21.523 26 26 21.523 26 16C26 10.477 21.523 6 16 6Z" fill="#10b981" opacity="0.3"/>
+            <path d="M16 8V24M8 16H24" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="cpdf-brand-text">
+          <h1 class="cpdf-clinic-title">BIENESTAR NUTRICIONAL</h1>
+          <p class="cpdf-clinic-subtitle">SISTEMA CLÍNICO DE NUTRICIÓN · APEGO Y SEGUIMIENTO DIETÉTICO</p>
+        </div>
+      </div>
+      <div class="cpdf-folio-box">
+        <div class="cpdf-folio-title">SEGUIMIENTO DEL PLAN</div>
+        <div class="cpdf-folio-meta"><strong>Fecha:</strong> {{ fechaActual | date: 'dd/MM/yyyy' }}</div>
+        <div class="cpdf-folio-meta"><strong>Expediente:</strong> #{{ selectedPaciente()?.id }}</div>
+      </div>
+    </header>
+
+    <div class="cpdf-accent-bar"></div>
+
+    @let segPdf = seguimientoPlanResource.value();
+    @if (segPdf) {
+    @let pdfApego = interpretacionApego(segPdf.porcentajeApego);
+    @let pdfMetas = interpretacionMetas(segPdf.metasCumplidas, segPdf.totalMetas);
+
+    <!-- 1. Ficha del Paciente y Periodo -->
+    <section class="cpdf-patient-card cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">1. FICHA DEL PACIENTE & PERIODO EVALUADO</h2>
+      <div class="cpdf-patient-grid">
+        <div class="cpdf-patient-col">
+          <p class="cpdf-info-row"><span class="cpdf-lbl">Paciente:</span> <strong class="cpdf-val">{{ selectedPaciente()?.nombre }} {{ selectedPaciente()?.apellidoPaterno }} {{ selectedPaciente()?.apellidoMaterno ?? '' }}</strong></p>
+          <p class="cpdf-info-row"><span class="cpdf-lbl">ID Expediente:</span> <span class="cpdf-val">#{{ selectedPaciente()?.id }}</span></p>
+          <p class="cpdf-info-row"><span class="cpdf-lbl">Periodo Analizado:</span> <strong class="cpdf-val">{{ segPdf.periodoInicio }} al {{ segPdf.periodoFin }}</strong></p>
+        </div>
+        <div class="cpdf-patient-col">
+          <p class="cpdf-info-row"><span class="cpdf-lbl">Correo:</span> <span class="cpdf-val">{{ selectedPaciente()?.correo }}</span></p>
+          <p class="cpdf-info-row"><span class="cpdf-lbl">Teléfono:</span> <span class="cpdf-val">{{ selectedPaciente()?.telefono || 'No registrado' }}</span></p>
+          <p class="cpdf-info-row"><span class="cpdf-lbl">Comidas Evaluadas:</span> <strong class="cpdf-val">{{ segPdf.totalRegistros }} registros oficiales</strong></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. KPIs de Seguimiento -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">2. RESUMEN EJECUTIVO DE APEGO Y OBJETIVOS</h2>
+      <div class="cpdf-kpis-grid">
+        <div class="cpdf-kpi-item" [class.cpdf-kpi-border-green]="segPdf.porcentajeApego >= 85"
+          [class.cpdf-kpi-border-lime]="segPdf.porcentajeApego >= 70 && segPdf.porcentajeApego < 85"
+          [class.cpdf-kpi-border-yellow]="segPdf.porcentajeApego >= 50 && segPdf.porcentajeApego < 70"
+          [class.cpdf-kpi-border-orange]="segPdf.porcentajeApego >= 35 && segPdf.porcentajeApego < 50"
+          [class.cpdf-kpi-border-red]="segPdf.porcentajeApego < 35">
+          <span class="cpdf-kpi-lbl">APEGO AL PLAN</span>
+          <span class="cpdf-kpi-num">{{ segPdf.porcentajeApego | number: '1.1-1' }} <small>%</small></span>
+          <span class="cpdf-kpi-sub">Adherencia dietética</span>
+        </div>
+        <div class="cpdf-kpi-item cpdf-kpi-border-green">
+          <span class="cpdf-kpi-lbl">OBJETIVOS CUMPLIDOS</span>
+          <span class="cpdf-kpi-num">{{ segPdf.metasCumplidas }} <small>/ {{ segPdf.totalMetas }} ({{ segPdf.porcentajeCumplimientoMetas | number: '1.0-0' }}%)</small></span>
+          <span class="cpdf-kpi-sub">Efectividad de metas</span>
+        </div>
+        <div class="cpdf-kpi-item cpdf-kpi-border-lime">
+          <span class="cpdf-kpi-lbl">COMIDAS CUMPLIDAS</span>
+          <span class="cpdf-kpi-num">{{ segPdf.registrosCumplidos }} <small>/ {{ segPdf.totalRegistros }}</small></span>
+          <span class="cpdf-kpi-sub">Según lo prescrito</span>
+        </div>
+        <div class="cpdf-kpi-item cpdf-kpi-border-orange">
+          <span class="cpdf-kpi-lbl">DESVIACIONES</span>
+          <span class="cpdf-kpi-num">{{ totalDesviaciones() }} <small>variaciones</small></span>
+          <span class="cpdf-kpi-sub">Modificadas o saltadas</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Interpretación Diagnóstica en PDF -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">3. INTERPRETACIÓN CLÍNICA & RECOMENDACIONES</h2>
+      <div class="cpdf-guide-grid">
+        <div class="cpdf-guide-box">
+          <div class="cpdf-guide-header">
+            <span class="cpdf-guide-title">Apego Nutricional</span>
+            <span class="cpdf-badge-pill" style="background-color: #047857;">{{ pdfApego.nivel }}</span>
+          </div>
+          <p class="cpdf-guide-desc">{{ pdfApego.desc }}</p>
+        </div>
+
+        <div class="cpdf-guide-box">
+          <div class="cpdf-guide-header">
+            <span class="cpdf-guide-title">Cumplimiento de Objetivos</span>
+            <span class="cpdf-badge-pill" style="background-color: #10b981;">{{ pdfMetas.nivel }}</span>
+          </div>
+          <p class="cpdf-guide-desc">{{ pdfMetas.desc }}</p>
+        </div>
+
+        <div class="cpdf-guide-box">
+          <div class="cpdf-guide-header">
+            <span class="cpdf-guide-title">Patrón Semanal</span>
+            <span class="cpdf-badge-pill" style="background-color: #d97706;">Día Clave</span>
+          </div>
+          <p class="cpdf-guide-desc">Mayor recurrencia de comidas modificadas/saltadas: <strong>{{ diaMayorDesviacion().dia }}</strong> ({{ diaMayorDesviacion().cantidad }} eventos).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Gráficos de Alta Fidelidad en PDF -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">4. VISUALIZACIONES GRÁFICAS DE SEGUIMIENTO</h2>
+      <div class="cpdf-charts-dual">
+        <div class="cpdf-chart-frame">
+          <div class="cpdf-chart-title">Cumplimiento de Objetivos</div>
+          @if (metasChartImg()) {
+          <img [src]="metasChartImg()" class="cpdf-render-img" alt="Gráfico de Cumplimiento de Objetivos" />
+          }
+        </div>
+        <div class="cpdf-chart-frame">
+          <div class="cpdf-chart-title">Desglose de Comidas del Diario</div>
+          @if (apegoChartImg()) {
+          <img [src]="apegoChartImg()" class="cpdf-render-img" alt="Gráfico de Desglose de Comidas" />
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">5. FRECUENCIA DE DESVIACIONES POR DÍA DE LA SEMANA</h2>
+      <div class="cpdf-chart-frame cpdf-chart-frame-full">
+        @if (desviacionChartImg()) {
+        <img [src]="desviacionChartImg()" class="cpdf-render-img" alt="Gráfico de Días de Desviación" />
+        }
+      </div>
+    </section>
+
+    <!-- 6. Tabla Resumen en PDF -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">6. DESGLOSE ESTADÍSTICO DE CUMPLIMIENTO</h2>
+      <table class="cpdf-table-fixed">
+        <thead>
+          <tr>
+            <th style="width: 35%;">Concepto Evaluado</th>
+            <th style="width: 20%;">Cantidad</th>
+            <th style="width: 25%;">Porcentaje / Proporción</th>
+            <th style="width: 20%;">Categoría</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Comidas Cumplidas según Plan</strong></td>
+            <td><strong class="cpdf-text-green">{{ segPdf.registrosCumplidos }}</strong></td>
+            <td>{{ segPdf.totalRegistros > 0 ? (((segPdf.registrosCumplidos / segPdf.totalRegistros) * 100) | number: '1.1-1') + '%' : '—' }}</td>
+            <td><span class="cpdf-pill cpdf-pill-green">Óptimo (A)</span></td>
+          </tr>
+          <tr>
+            <td><strong>Comidas con Modificaciones</strong></td>
+            <td>{{ segPdf.registrosModificados }}</td>
+            <td>{{ segPdf.totalRegistros > 0 ? (((segPdf.registrosModificados / segPdf.totalRegistros) * 100) | number: '1.1-1') + '%' : '—' }}</td>
+            <td><span class="cpdf-pill cpdf-pill-yellow">Moderado (C)</span></td>
+          </tr>
+          <tr>
+            <td><strong>Comidas Saltadas / Omitidas</strong></td>
+            <td>{{ segPdf.registrosSaltados }}</td>
+            <td>{{ segPdf.totalRegistros > 0 ? (((segPdf.registrosSaltados / segPdf.totalRegistros) * 100) | number: '1.1-1') + '%' : '—' }}</td>
+            <td><span class="cpdf-pill cpdf-pill-orange">Atención (D)</span></td>
+          </tr>
+          <tr>
+            <td><strong>Comidas No Registradas</strong></td>
+            <td>{{ segPdf.registrosNoRegistrados }}</td>
+            <td>{{ segPdf.totalRegistros > 0 ? (((segPdf.registrosNoRegistrados / segPdf.totalRegistros) * 100) | number: '1.1-1') + '%' : '—' }}</td>
+            <td><span class="cpdf-pill cpdf-pill-red">Sin Registro</span></td>
+          </tr>
+          <tr>
+            <td><strong>Objetivos Alcanzados</strong></td>
+            <td><strong class="cpdf-text-green">{{ segPdf.metasCumplidas }} / {{ segPdf.totalMetas }}</strong></td>
+            <td>{{ segPdf.porcentajeCumplimientoMetas | number: '1.1-1' }}%</td>
+            <td><span class="cpdf-pill cpdf-pill-green">{{ segPdf.porcentajeCumplimientoMetas >= 80 ? 'Sobresaliente' : (segPdf.porcentajeCumplimientoMetas >= 50 ? 'Favorable' : 'En Curso') }}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    }
+
+    <!-- Pie Institucional -->
+    <footer class="cpdf-footer">
+      <p>Documento oficial de seguimiento clínico y nutricional · Sistema Bienestar Clínico</p>
+    </footer>
+
+  </div>
+</div>
+
+<!-- D. PLANTILLA OFICIAL DE ASISTENCIA Y DEMANDA DE SERVICIOS -->
+<div class="clinical-pdf-wrapper" [class.cpdf-visible]="isExportingAsistencia()">
+
+  <div id="clinical-pdf-asistencia" class="clinical-pdf-document">
+
+    <!-- Membrete Institucional con Logo Verde -->
+    <header class="cpdf-header">
+      <div class="cpdf-brand">
+        <div class="cpdf-logo-box">
+          <svg viewBox="0 0 32 32" class="cpdf-svg-logo" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="8" fill="#047857" />
+            <path d="M16 6C10.477 6 6 10.477 6 16C6 21.523 10.477 26 16 26C21.523 26 26 21.523 26 16C26 10.477 21.523 6 16 6Z" fill="#10b981" opacity="0.3"/>
+            <path d="M16 8V24M8 16H24" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="cpdf-brand-text">
+          <h1 class="cpdf-clinic-title">BIENESTAR NUTRICIONAL</h1>
+          <p class="cpdf-clinic-subtitle">SISTEMA CLÍNICO NUTRICIONAL · EFICIENCIA DE AGENDA Y SERVICIOS</p>
+        </div>
+      </div>
+      <div class="cpdf-folio-box">
+        <div class="cpdf-folio-title">INFORME DE ASISTENCIA</div>
+        <div class="cpdf-folio-meta"><strong>Fecha:</strong> {{ fechaActual | date: 'dd/MM/yyyy' }}</div>
+        <div class="cpdf-folio-meta"><strong>Especialista:</strong> {{ asistenciaResource.value()?.nombreNutriologo || 'Global' }}</div>
+      </div>
+    </header>
+
+    <div class="cpdf-accent-bar"></div>
+
+    @if (asistenciaResource.value()) {
+    @let asistPdf = asistenciaResource.value()!;
+    @let asistEvalPdf = interpretacionAsistenciaCitas(asistPdf.porcentajeAsistencia);
+    @let cancelEvalPdf = interpretacionCancelacion(asistPdf.porcentajeCancelacion);
+
+    <!-- 1. Resumen Ejecutivo de Operación de Agenda -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">1. RESUMEN EJECUTIVO DE OPERACIÓN DE AGENDA ({{ asistPdf.periodoInicio }} al {{ asistPdf.periodoFin }})</h2>
+      <div class="cpdf-kpis-grid">
+
+        <div class="cpdf-kpi-item cpdf-kpi-border-green">
+          <span class="cpdf-kpi-lbl">TOTAL CITAS</span>
+          <span class="cpdf-kpi-num">{{ asistPdf.totalCitas }}</span>
+          <span class="cpdf-kpi-sub">Citas agendadas</span>
+        </div>
+
+        <div class="cpdf-kpi-item" [class.cpdf-kpi-border-green]="asistPdf.porcentajeAsistencia >= 85"
+          [class.cpdf-kpi-border-lime]="asistPdf.porcentajeAsistencia >= 70 && asistPdf.porcentajeAsistencia < 85"
+          [class.cpdf-kpi-border-yellow]="asistPdf.porcentajeAsistencia >= 50 && asistPdf.porcentajeAsistencia < 70"
+          [class.cpdf-kpi-border-orange]="asistPdf.porcentajeAsistencia >= 30 && asistPdf.porcentajeAsistencia < 50"
+          [class.cpdf-kpi-border-red]="asistPdf.porcentajeAsistencia < 30">
+          <span class="cpdf-kpi-lbl">TASA ASISTENCIA</span>
+          <span class="cpdf-kpi-num">{{ asistPdf.porcentajeAsistencia | number: '1.1-1' }} <small>%</small></span>
+          <span class="cpdf-kpi-sub">{{ asistPdf.citasAsistidas }} completadas</span>
+        </div>
+
+        <div class="cpdf-kpi-item" [class.cpdf-kpi-border-green]="asistPdf.porcentajeCancelacion <= 10"
+          [class.cpdf-kpi-border-lime]="asistPdf.porcentajeCancelacion > 10 && asistPdf.porcentajeCancelacion <= 20"
+          [class.cpdf-kpi-border-yellow]="asistPdf.porcentajeCancelacion > 20 && asistPdf.porcentajeCancelacion <= 35"
+          [class.cpdf-kpi-border-red]="asistPdf.porcentajeCancelacion > 35">
+          <span class="cpdf-kpi-lbl">TASA CANCELACIÓN</span>
+          <span class="cpdf-kpi-num">{{ asistPdf.porcentajeCancelacion | number: '1.1-1' }} <small>%</small></span>
+          <span class="cpdf-kpi-sub">{{ asistPdf.citasCanceladas }} canceladas</span>
+        </div>
+
+        <div class="cpdf-kpi-item cpdf-kpi-border-lime">
+          <span class="cpdf-kpi-lbl">MAYOR DEMANDA</span>
+          <span class="cpdf-kpi-num" style="font-size: 13px; line-height: 1.2;">{{ etiquetaMotivoCita(asistPdf.motivoMasFrecuente) }}</span>
+          <span class="cpdf-kpi-sub">Servicio principal</span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 2. Evaluación Operacional y Diagnóstico Clínico -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">2. EVALUACIÓN OPERACIONAL Y ADHERENCIA A CONSULTAS</h2>
+      <div class="cpdf-guide-grid">
+
+        <div class="cpdf-guide-box">
+          <div class="cpdf-guide-header">
+            <span class="cpdf-guide-title">Adherencia y Asistencia</span>
+            <span class="cpdf-badge-pill" [style.background-color]="asistEvalPdf.color">{{ asistEvalPdf.score }}</span>
+          </div>
+          <div class="cpdf-guide-status" [style.color]="asistEvalPdf.color">{{ asistEvalPdf.nivel }}</div>
+          <p class="cpdf-guide-desc">{{ asistEvalPdf.desc }}</p>
+        </div>
+
+        <div class="cpdf-guide-box">
+          <div class="cpdf-guide-header">
+            <span class="cpdf-guide-title">Control de Cancelaciones</span>
+            <span class="cpdf-badge-pill" [style.background-color]="cancelEvalPdf.color">{{ cancelEvalPdf.score }}</span>
+          </div>
+          <div class="cpdf-guide-status" [style.color]="cancelEvalPdf.color">{{ cancelEvalPdf.nivel }}</div>
+          <p class="cpdf-guide-desc">{{ cancelEvalPdf.desc }}</p>
+        </div>
+
+        <div class="cpdf-guide-box">
+          <div class="cpdf-guide-header">
+            <span class="cpdf-guide-title">Pautas para la Agenda</span>
+            <span class="cpdf-badge-pill" style="background-color: #047857;">TIPS</span>
+          </div>
+          <p class="cpdf-guide-desc">Recordatorios activos 24h previas, franjas dinámicas de reprogramación y mayor disponibilidad para <strong>{{ etiquetaMotivoCita(asistPdf.motivoMasFrecuente) }}</strong>.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 3. Visualizaciones Gráficas en PDF -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">3. VISUALIZACIONES GRÁFICAS DE ASISTENCIA Y CANCELACIÓN</h2>
+      <div class="cpdf-charts-dual">
+        <div class="cpdf-chart-frame cpdf-donut-frame">
+          <div class="cpdf-chart-title">Comportamiento de Asistencia</div>
+          @if (asistenciaChartImg()) {
+          <img [src]="asistenciaChartImg()" class="cpdf-donut-img" alt="Gráfico de Asistencia" />
+          }
+        </div>
+        <div class="cpdf-chart-frame cpdf-donut-frame">
+          <div class="cpdf-chart-title">Tasa de Cancelación</div>
+          @if (cancelacionChartImg()) {
+          <img [src]="cancelacionChartImg()" class="cpdf-donut-img" alt="Gráfico de Cancelación" />
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Demanda de Servicios por Motivo -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">4. DEMANDA DE SERVICIOS POR MOTIVO DE CONSULTA</h2>
+      <div class="cpdf-chart-frame cpdf-chart-frame-full">
+        @if (demandaChartImg()) {
+        <img [src]="demandaChartImg()" class="cpdf-render-img" alt="Gráfico de Demanda por Motivo" />
+        }
+      </div>
+    </section>
+
+    <!-- 5. Desglose Estadístico en PDF -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">5. DESGLOSE ESTADÍSTICO DE ESTADOS DE CITA</h2>
+      <table class="cpdf-table-fixed">
+        <thead>
+          <tr>
+            <th style="width: 35%;">Estado de Cita</th>
+            <th style="width: 20%;">Cantidad</th>
+            <th style="width: 25%;">Porcentaje sobre Total</th>
+            <th style="width: 20%;">Impacto en Agenda</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Citas Completadas (Asistencias)</strong></td>
+            <td><strong class="cpdf-text-green">{{ asistPdf.citasAsistidas }}</strong></td>
+            <td>{{ asistPdf.totalCitas > 0 ? (((asistPdf.citasAsistidas / asistPdf.totalCitas) * 100) | number: '1.1-1') + '%' : '—' }}</td>
+            <td><span class="cpdf-pill cpdf-pill-green">Efectivo (A)</span></td>
+          </tr>
+          <tr>
+            <td><strong>Citas Perdidas (Inasistencias)</strong></td>
+            <td>{{ asistPdf.citasNoAsistidas }}</td>
+            <td>{{ asistPdf.totalCitas > 0 ? (((asistPdf.citasNoAsistidas / asistPdf.totalCitas) * 100) | number: '1.1-1') + '%' : '—' }}</td>
+            <td><span class="cpdf-pill cpdf-pill-red">Inasistencia (E)</span></td>
+          </tr>
+          <tr>
+            <td><strong>Citas Canceladas</strong></td>
+            <td>{{ asistPdf.citasCanceladas }}</td>
+            <td>{{ asistPdf.porcentajeCancelacion | number: '1.1-1' }}%</td>
+            <td><span class="cpdf-pill cpdf-pill-orange">Cancelación (D)</span></td>
+          </tr>
+          <tr>
+            <td><strong>Citas Programadas / Pendientes</strong></td>
+            <td>{{ asistPdf.citasProgramadas }}</td>
+            <td>{{ asistPdf.totalCitas > 0 ? (((asistPdf.citasProgramadas / asistPdf.totalCitas) * 100) | number: '1.1-1') + '%' : '—' }}</td>
+            <td><span class="cpdf-pill cpdf-pill-lime">En Agenda (B)</span></td>
+          </tr>
+          <tr>
+            <td><strong>Solicitudes de Reprogramación</strong></td>
+            <td>{{ asistPdf.citasReprogramadas }}</td>
+            <td>{{ asistPdf.totalCitas > 0 ? (((asistPdf.citasReprogramadas / asistPdf.totalCitas) * 100) | number: '1.1-1') + '%' : '—' }}</td>
+            <td><span class="cpdf-pill cpdf-pill-yellow">Ajuste (C)</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    @if (entriesDemanda(asistPdf.demandaPorMotivo).length > 0) {
+    <!-- 6. Desglose de Motivos de Demanda en PDF -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">6. DESGLOSE DE MOTIVOS DE CONSULTA</h2>
+      <table class="cpdf-table-fixed">
+        <thead>
+          <tr>
+            <th style="width: 50%;">Motivo de Atención</th>
+            <th style="width: 25%;">Número de Consultas</th>
+            <th style="width: 25%;">Participación Relativa</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (d of entriesDemanda(asistPdf.demandaPorMotivo); track d.motivo) {
+          <tr>
+            <td><strong>{{ d.label }}</strong></td>
+            <td>{{ d.cantidad }}</td>
+            <td>{{ d.porcentaje | number: '1.1-1' }}%</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+    }
+
+    }
+
+    <!-- Pie Institucional -->
+    <footer class="cpdf-footer">
+      <p>Documento oficial de control de agenda y demanda nutricional · Sistema Bienestar Clínico</p>
+    </footer>
+
+  </div>
+</div>
+
+<!-- E. PLANTILLA OFICIAL DE DESEMPEÑO DEL NUTRIÓLOGO -->
+<div class="clinical-pdf-wrapper" [class.cpdf-visible]="isExportingDesempeno()">
+
+  <div id="clinical-pdf-desempeno" class="clinical-pdf-document">
+
+    @if (desempenoResource.value(); as desPdf) {
+
+    <!-- Membrete Institucional con Logo Verde -->
+    <header class="cpdf-header">
+      <div class="cpdf-brand">
+        <div class="cpdf-logo-box">
+          <svg viewBox="0 0 32 32" class="cpdf-svg-logo" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="8" fill="#047857" />
+            <path d="M16 6C10.477 6 6 10.477 6 16C6 21.523 10.477 26 16 26C21.523 26 26 21.523 26 16C26 10.477 21.523 6 16 6Z" fill="#10b981" opacity="0.3"/>
+            <path d="M16 8V24M8 16H24" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="cpdf-brand-text">
+          <h1 class="cpdf-clinic-title">BIENESTAR NUTRICIONAL</h1>
+          <p class="cpdf-clinic-subtitle">SISTEMA CLÍNICO DE NUTRICIÓN Y METABOLISMO</p>
+        </div>
+      </div>
+      <div class="cpdf-folio-box">
+        <div class="cpdf-folio-title">INFORME DE DESEMPEÑO Y ATENCIÓN</div>
+        <div class="cpdf-folio-meta"><strong>Fecha:</strong> {{ fechaActual | date: 'dd/MM/yyyy' }}</div>
+        <div class="cpdf-folio-meta"><strong>Especialista:</strong> {{ desPdf.nombreNutriologo || 'Global' }}</div>
+      </div>
+    </header>
+
+    <!-- Barra Cromática de Acento -->
+    <div class="cpdf-accent-bar"></div>
+
+    <!-- 1. Ficha del Profesional y Periodo -->
+    <section class="cpdf-patient-card cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">1. FICHA DEL PROFESIONAL & PERIODO DE EVALUACIÓN</h2>
+      <div class="cpdf-patient-grid">
+        <div class="cpdf-patient-col">
+          <p class="cpdf-info-row"><span class="cpdf-lbl">Especialista:</span> <strong class="cpdf-val">{{ desPdf.nombreNutriologo || 'Todos los Nutriólogos' }}</strong></p>
+          <p class="cpdf-info-row"><span class="cpdf-lbl">Correo:</span> <span class="cpdf-val">{{ desPdf.correoNutriologo || 'Administración Central' }}</span></p>
+          <p class="cpdf-info-row"><span class="cpdf-lbl">ID Especialista:</span> <span class="cpdf-val">#{{ desPdf.nutriologoId || 'GLOBAL' }}</span></p>
+        </div>
+        <div class="cpdf-patient-col">
+          <p class="cpdf-info-row"><span class="cpdf-lbl">Periodo Inicio:</span> <strong class="cpdf-val">{{ desPdf.periodoInicio | date: 'dd/MM/yyyy' }}</strong></p>
+          <p class="cpdf-info-row"><span class="cpdf-lbl">Periodo Fin:</span> <strong class="cpdf-val">{{ desPdf.periodoFin | date: 'dd/MM/yyyy' }}</strong></p>
+          <p class="cpdf-info-row"><span class="cpdf-lbl">Pacientes Activos:</span> <strong class="cpdf-val">{{ desPdf.totalPacientesActivos }} activos</strong></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. KPIs de Carga y Eficiencia -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">2. INDICADORES DE GESTIÓN Y CARGA CLÍNICA</h2>
+      <div class="cpdf-kpis-grid">
+        <div class="cpdf-kpi-item cpdf-kpi-border-lime">
+          <span class="cpdf-kpi-lbl">PACIENTES ACTIVOS</span>
+          <span class="cpdf-kpi-num">{{ desPdf.totalPacientesActivos }} <small>expedientes</small></span>
+          <span class="cpdf-kpi-sub">Bajo seguimiento</span>
+        </div>
+
+        <div class="cpdf-kpi-item cpdf-kpi-border-green">
+          <span class="cpdf-kpi-lbl">CITAS ASISTIDAS</span>
+          <span class="cpdf-kpi-num">{{ desPdf.citasConcretadas }} <small>/ {{ desPdf.totalCitasPeriodo }}</small></span>
+          <span class="cpdf-kpi-sub">{{ desPdf.porcentajeAtencion | number: '1.1-1' }}% atención</span>
+        </div>
+
+        <div class="cpdf-kpi-item" [class.cpdf-kpi-border-green]="desPdf.porcentajeCancelacion <= 10"
+          [class.cpdf-kpi-border-lime]="desPdf.porcentajeCancelacion > 10 && desPdf.porcentajeCancelacion <= 20"
+          [class.cpdf-kpi-border-yellow]="desPdf.porcentajeCancelacion > 20 && desPdf.porcentajeCancelacion <= 35"
+          [class.cpdf-kpi-border-red]="desPdf.porcentajeCancelacion > 35">
+          <span class="cpdf-kpi-lbl">TASA CANCELACIÓN</span>
+          <span class="cpdf-kpi-num">{{ desPdf.porcentajeCancelacion | number: '1.1-1' }} <small>%</small></span>
+          <span class="cpdf-kpi-sub">{{ desPdf.citasCanceladas }} canceladas</span>
+        </div>
+
+        <div class="cpdf-kpi-item cpdf-kpi-border-yellow">
+          <span class="cpdf-kpi-lbl">PLANTILLAS Y BD</span>
+          <span class="cpdf-kpi-num">{{ desPdf.totalPlantillasRegistradas }} <small>plantillas</small></span>
+          <span class="cpdf-kpi-sub">{{ desPdf.totalAlimentosRegistrados }} alimentos BD</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Diagnóstico de Carga y Recomendaciones -->
+    @let desEvalPdf = interpretacionCargaTrabajo(desPdf.nivelCargaTrabajo);
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">3. DIAGNÓSTICO DE CARGA Y RECOMENDACIONES CLÍNICAS</h2>
+      <div class="cpdf-guide-grid">
+        <div class="cpdf-guide-box">
+          <div class="cpdf-guide-header">
+            <span class="cpdf-guide-title">Nivel de Carga Clínica</span>
+            <span class="cpdf-badge-pill" [style.background-color]="desEvalPdf.color">{{ desEvalPdf.score }}</span>
+          </div>
+          <div class="cpdf-guide-status" [style.color]="desEvalPdf.color">{{ desEvalPdf.nivel }}</div>
+          <p class="cpdf-guide-desc">{{ desEvalPdf.desc }}</p>
+        </div>
+
+        <div class="cpdf-guide-box">
+          <div class="cpdf-guide-header">
+            <span class="cpdf-guide-title">Diagnóstico Operativo</span>
+            <span class="cpdf-badge-pill" style="background-color: #047857;">INFO</span>
+          </div>
+          <p class="cpdf-guide-desc">{{ desPdf.diagnosticoCarga }}</p>
+        </div>
+
+        <div class="cpdf-guide-box">
+          <div class="cpdf-guide-header">
+            <span class="cpdf-guide-title">Ratio de Atención</span>
+            <span class="cpdf-badge-pill" style="background-color: #85bb2f;">RATIO</span>
+          </div>
+          <div class="cpdf-guide-status" style="color: #047857;">{{ desPdf.promedioCitasPorPaciente | number: '1.1-2' }} citas / paciente</div>
+          <p class="cpdf-guide-desc">Tasa de concreción asistencial de {{ desPdf.porcentajeAtencion | number: '1.1-1' }}% sobre la demanda total.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Visualizaciones Gráficas en PDF -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">4. ALIMENTOS MÁS ASIGNADOS & PLANTILLAS POR COMIDA</h2>
+      <div class="cpdf-charts-dual">
+        <div class="cpdf-chart-frame">
+          <div class="cpdf-chart-title">Ranking de Alimentos más Asignados</div>
+          @if (topAlimentosChartImg()) {
+          <img [src]="topAlimentosChartImg()" class="cpdf-render-img" alt="Gráfico de Top Alimentos" />
+          }
+        </div>
+        <div class="cpdf-chart-frame">
+          <div class="cpdf-chart-title">Plantillas por Tiempo de Comida</div>
+          @if (plantillasTipoChartImg()) {
+          <img [src]="plantillasTipoChartImg()" class="cpdf-render-img" alt="Gráfico de Plantillas por Tipo" />
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Gráficos de Categorías y Aportación a BD -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">5. DISTRIBUCIÓN DE ALIMENTOS & APORTACIÓN A BD</h2>
+      <div class="cpdf-charts-dual">
+        <div class="cpdf-chart-frame cpdf-donut-frame">
+          <div class="cpdf-chart-title">Categorías Prescritas en Plantillas</div>
+          @if (distPrescripcionChartImg()) {
+          <img [src]="distPrescripcionChartImg()" class="cpdf-donut-img" alt="Gráfico de Categorías en Plantillas" />
+          }
+        </div>
+        <div class="cpdf-chart-frame cpdf-donut-frame">
+          <div class="cpdf-chart-title">Alimentos Registrados en BD por Categoría</div>
+          @if (alimentosCategoriaChartImg()) {
+          <img [src]="alimentosCategoriaChartImg()" class="cpdf-donut-img" alt="Gráfico de Alimentos en BD" />
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Desglose de Top Alimentos en Tabla -->
+    @if (desPdf.topAlimentosAsignados.length > 0) {
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">6. DETALLE DE ALIMENTOS MÁS FRECUENTES EN PLANTILLAS</h2>
+      <table class="cpdf-table-fixed">
+        <thead>
+          <tr>
+            <th style="width: 10%;">Rank</th>
+            <th style="width: 45%;">Nombre del Alimento</th>
+            <th style="width: 25%;">Categoría Nutricional</th>
+            <th style="width: 20%;">Veces Asignado (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (al of desPdf.topAlimentosAsignados; track al.alimentoId) {
+          <tr>
+            <td><strong>#{{ $index + 1 }}</strong></td>
+            <td><strong>{{ al.nombre }}</strong></td>
+            <td><span class="cpdf-pill cpdf-pill-green">{{ al.categoria }}</span></td>
+            <td><strong class="cpdf-text-green">{{ al.vecesUtilizado }}</strong> ({{ al.porcentajeUso | number: '1.1-1' }}%)</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+    }
+
+    <!-- 7. Resumen de Plantillas y Aportación a BD -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">7. RESUMEN DE PLANTILLAS Y APORTACIÓN A BD</h2>
+      <div class="cpdf-charts-dual">
+        <div class="cpdf-chart-frame">
+          <div class="cpdf-chart-title">Plantillas Creadas (Total: {{ desPdf.totalPlantillasRegistradas }})</div>
+          <table class="cpdf-table-fixed" style="margin-top: 4px;">
+            <thead>
+              <tr>
+                <th>Tiempo de Comida</th>
+                <th>Plantillas</th>
+                <th>%</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of entriesRecord(desPdf.plantillasPorTipoComida); track entry.key) {
+              <tr>
+                <td><strong>{{ entry.label }}</strong></td>
+                <td><strong class="cpdf-text-green">{{ entry.cantidad }}</strong></td>
+                <td>{{ entry.porcentaje | number: '1.1-1' }}%</td>
+              </tr>
+              }
+              @if (entriesRecord(desPdf.plantillasPorTipoComida).length === 0) {
+              <tr>
+                <td colspan="3" style="text-align: center; color: #64748b; padding: 4px;">Sin registros</td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="cpdf-chart-frame">
+          <div class="cpdf-chart-title">Alimentos Registrados en BD (Total: {{ desPdf.totalAlimentosRegistrados }})</div>
+          <table class="cpdf-table-fixed" style="margin-top: 4px;">
+            <thead>
+              <tr>
+                <th>Categoría</th>
+                <th>Alimentos</th>
+                <th>%</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of entriesRecord(desPdf.alimentosRegistradosPorCategoria); track entry.key) {
+              <tr>
+                <td><strong>{{ entry.label }}</strong></td>
+                <td><strong class="cpdf-text-green">{{ entry.cantidad }}</strong></td>
+                <td>{{ entry.porcentaje | number: '1.1-1' }}%</td>
+              </tr>
+              }
+              @if (entriesRecord(desPdf.alimentosRegistradosPorCategoria).length === 0) {
+              <tr>
+                <td colspan="3" style="text-align: center; color: #64748b; padding: 4px;">Sin registros</td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    }
+
+    <!-- Pie Institucional -->
+    <footer class="cpdf-footer">
+      <p>Documento oficial de evaluación de desempeño y productividad · Sistema Bienestar Clínico</p>
+    </footer>
+
+  </div>
+</div>
+
+<!-- F. PLANTILLA OFICIAL DE PROPUESTA DE PLAN Y RECEPTIVIDAD -->
+<div class="clinical-pdf-wrapper" [class.cpdf-visible]="isExportingPropuesta()">
+
+  <div id="clinical-pdf-propuesta" class="clinical-pdf-document">
+
+    <!-- Membrete Institucional -->
+    <header class="cpdf-header">
+      <div class="cpdf-brand">
+        <div class="cpdf-logo-box">
+          <svg viewBox="0 0 32 32" class="cpdf-svg-logo" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="8" fill="#047857" />
+            <path d="M16 6C10.477 6 6 10.477 6 16C6 21.523 10.477 26 16 26C21.523 26 26 21.523 26 16C26 10.477 21.523 6 16 6Z" fill="#10b981" opacity="0.3"/>
+            <path d="M16 8V24M8 16H24" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="cpdf-brand-text">
+          <h1 class="cpdf-clinic-title">BIENESTAR NUTRICIONAL</h1>
+          <p class="cpdf-clinic-subtitle">SISTEMA CLÍNICO DE NUTRICIÓN Y METABOLISMO</p>
+        </div>
+      </div>
+      <div class="cpdf-folio-box">
+        <div class="cpdf-folio-title">RECEPTIVIDAD Y PROPUESTAS</div>
+        <div class="cpdf-folio-meta"><strong>Emisión:</strong> {{ fechaActual | date: 'dd/MM/yyyy' }}</div>
+        <div class="cpdf-folio-meta"><strong>Periodo:</strong> {{ periodoFechasPropuesta().etiqueta }}</div>
+      </div>
+    </header>
+
+    <!-- Barra Cromática de Acento -->
+    <div class="cpdf-accent-bar"></div>
+
+    @if (propuestaPlanResource.value(); as propPdf) {
+
+    <!-- 1. Ficha de Especialista y Ámbito -->
+    <section class="cpdf-patient-card cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">1. METADATOS DEL INFORME</h2>
+      <div class="cpdf-patient-grid">
+        <div class="cpdf-patient-col">
+          <p class="cpdf-info-row">
+            <span class="cpdf-lbl">Ámbito:</span>
+            <strong class="cpdf-val">
+              {{ propPdf.nombreNutriologo ? ('Especialista: ' + propPdf.nombreNutriologo) : 'Censo Institucional Global' }}
+            </strong>
+          </p>
+          <p class="cpdf-info-row">
+            <span class="cpdf-lbl">Pacientes Activos:</span>
+            <span class="cpdf-val">{{ propPdf.totalPacientes }} pacientes</span>
+          </p>
+        </div>
+        <div class="cpdf-patient-col">
+          <p class="cpdf-info-row">
+            <span class="cpdf-lbl">Periodo Analizado:</span>
+            <span class="cpdf-val">{{ propPdf.periodoInicio }} al {{ propPdf.periodoFin }}</span>
+          </p>
+          <p class="cpdf-info-row">
+            <span class="cpdf-lbl">Total Solicitudes:</span>
+            <strong class="cpdf-val cpdf-text-green">{{ propPdf.totalSolicitudes }} propuestas</strong>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Diagnóstico Clínico Automatizado -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">2. EVALUACIÓN Y DIAGNÓSTICO CLÍNICO</h2>
+      <div class="cpdf-kpis-box" style="margin-bottom: 8px;">
+        <div class="cpdf-kpi-item">
+          <div class="cpdf-kpi-lbl">Nivel de Receptividad</div>
+          <div class="cpdf-kpi-num" [style.color]="interpretacionTasaCambio(propPdf.tasaSolicitudCambio).color">
+            {{ interpretacionTasaCambio(propPdf.tasaSolicitudCambio).nivel }}
+          </div>
+          <div class="cpdf-kpi-desc">Tasa de cambio: {{ propPdf.tasaSolicitudCambio | number: '1.1-1' }}%</div>
+        </div>
+        <div class="cpdf-kpi-item">
+          <div class="cpdf-kpi-lbl">Alineación de Criterios</div>
+          <div class="cpdf-kpi-num cpdf-text-green">
+            {{ propPdf.tasaAprobacion | number: '1.1-1' }}%
+          </div>
+          <div class="cpdf-kpi-desc">{{ propPdf.solicitudesAprobadas }} aprobadas / {{ propPdf.solicitudesAprobadas + propPdf.solicitudesRechazadas }} resueltas</div>
+        </div>
+      </div>
+      <div class="cpdf-eval-box" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; margin-bottom: 6px;">
+        <p style="margin: 0 0 4px 0; font-size: 8pt; line-height: 1.35; color: #1e293b;">
+          <strong>Receptividad Dietética:</strong> {{ propPdf.diagnosticoReceptividad }}
+        </p>
+        <p style="margin: 0; font-size: 8pt; line-height: 1.35; color: #1e293b;">
+          <strong>Perfil de Inducción:</strong> {{ propPdf.diagnosticoPerfil }}
+        </p>
+      </div>
+    </section>
+
+    <!-- 3. Indicadores Clave de Receptividad -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">3. INDICADORES CLAVE DE RECEPTIVIDAD</h2>
+      <div class="cpdf-kpis-box">
+        <div class="cpdf-kpi-item">
+          <div class="cpdf-kpi-lbl">Tasa de Solicitud de Cambio</div>
+          <div class="cpdf-kpi-num cpdf-text-blue">{{ propPdf.tasaSolicitudCambio | number: '1.1-1' }}%</div>
+          <div class="cpdf-kpi-desc">{{ propPdf.pacientesConSolicitud }} de {{ propPdf.totalPacientes }} pacientes</div>
+        </div>
+        <div class="cpdf-kpi-item">
+          <div class="cpdf-kpi-lbl">Total Propuestas</div>
+          <div class="cpdf-kpi-num cpdf-text-green">{{ propPdf.totalSolicitudes }}</div>
+          <div class="cpdf-kpi-desc">Promedio: {{ propPdf.promedioSolicitudesPorPaciente | number: '1.2-2' }} / pac</div>
+        </div>
+        <div class="cpdf-kpi-item">
+          <div class="cpdf-kpi-lbl">Tasa de Aprobación</div>
+          <div class="cpdf-kpi-num cpdf-text-green">{{ propPdf.tasaAprobacion | number: '1.1-1' }}%</div>
+          <div class="cpdf-kpi-desc">{{ propPdf.solicitudesAprobadas }} aprobadas</div>
+        </div>
+        <div class="cpdf-kpi-item">
+          <div class="cpdf-kpi-lbl">Motivo Más Frecuente</div>
+          <div class="cpdf-kpi-num" style="font-size: 10pt; color: #b45309;">
+            {{ etiquetaCategoriaMotivo(propPdf.razonMasFrecuente) }}
+          </div>
+          <div class="cpdf-kpi-desc">Mayor volumen de cambio</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Razones Principales ("Por Qué") y Alimentos Problemáticos -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">4. MOTIVOS DE CAMBIO Y ALIMENTOS PROBLEMÁTICOS</h2>
+      <div class="cpdf-charts-dual">
+        <div class="cpdf-chart-frame">
+          <div class="cpdf-chart-title">Razones Principales de Solicitud</div>
+          @if (razonesPropuestaChartImg()) {
+          <img [src]="razonesPropuestaChartImg()" alt="Gráfico de Razones de Cambio" class="cpdf-chart-render" />
+          }
+        </div>
+        <div class="cpdf-chart-frame">
+          <div class="cpdf-chart-title">Top Alimentos Sustituidos</div>
+          @if (alimentosProblematicosChartImg()) {
+          <img [src]="alimentosProblematicosChartImg()" alt="Gráfico de Alimentos Problemáticos" class="cpdf-chart-render" />
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Tabla de Alimentos Problemáticos -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">5. DETALLE DE ALIMENTOS CON MÁS PETICIONES DE SUSTITUCIÓN</h2>
+      <table class="cpdf-table-fixed">
+        <thead>
+          <tr>
+            <th>Alimento Problemático</th>
+            <th>Categoría</th>
+            <th>Peticiones de Cambio</th>
+            <th>% del Total Sustituido</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (alim of propPdf.alimentosProblematicos; track alim.alimentoId) {
+          <tr>
+            <td><strong>{{ alim.nombre }}</strong></td>
+            <td>{{ alim.categoria }}</td>
+            <td><strong class="cpdf-text-green">{{ alim.vecesSolicitado }}</strong> veces</td>
+            <td>{{ alim.porcentajeTotal | number: '1.1-1' }}%</td>
+          </tr>
+          }
+          @if (propPdf.alimentosProblematicos.length === 0) {
+          <tr>
+            <td colspan="4" style="text-align: center; color: #64748b; padding: 6px;">
+              No se han registrado peticiones de sustitución en el periodo.
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 6. Perfil de Pacientes (Nuevos vs Seguimiento) y Plantillas -->
+    <section class="cpdf-section cpdf-page-break-avoid">
+      <h2 class="cpdf-sec-title">6. PERFIL DE PACIENTES (INDUCCIÓN VS SEGUIMIENTO)</h2>
+      <div class="cpdf-charts-dual">
+        <div class="cpdf-chart-frame">
+          <div class="cpdf-chart-title">Distribución por Etapa del Paciente</div>
+          @if (perfilPacientesChartImg()) {
+          <img [src]="perfilPacientesChartImg()" alt="Gráfico de Perfil de Pacientes" class="cpdf-chart-render" />
+          }
+        </div>
+        <div class="cpdf-chart-frame">
+          <div class="cpdf-chart-title">Plantillas más Modificadas</div>
+          @if (plantillasPropuestaChartImg()) {
+          <img [src]="plantillasPropuestaChartImg()" alt="Gráfico de Plantillas Modificadas" class="cpdf-chart-render" />
+          }
+        </div>
+      </div>
+    </section>
+
+
+
+    }
+
+    <!-- Pie Institucional -->
+    <footer class="cpdf-footer">
+      <p>Documento oficial de receptividad y propuesta de plan alimenticio · Sistema Bienestar Clínico</p>
+    </footer>
 
   </div>
 </div>

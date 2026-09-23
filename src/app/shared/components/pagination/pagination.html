@@ -16,7 +16,8 @@
 
   @if (totalPages() > 1) {
     <nav class="pagination" aria-label="Paginación">
-      <button class="page-btn nav-btn prev-btn"
+      <button type="button"
+              class="page-btn nav-btn prev-btn"
               [disabled]="currentPage() === 0"
               (click)="goToPage(currentPage() - 1)"
               aria-label="Página anterior">
@@ -25,9 +26,10 @@
 
       @for (page of pages(); track $index) {
         @if (page === '...') {
-          <button class="page-btn dots" disabled aria-hidden="true">...</button>
+          <button type="button" class="page-btn dots" disabled aria-hidden="true">...</button>
         } @else {
-          <button class="page-btn"
+          <button type="button"
+                  class="page-btn"
                   [class.active]="page === currentPage()"
                   [attr.aria-current]="page === currentPage() ? 'page' : null"
                   (click)="goToPage(+page)">
@@ -36,7 +38,8 @@
         }
       }
 
-      <button class="page-btn nav-btn next-btn"
+      <button type="button"
+              class="page-btn nav-btn next-btn"
               [disabled]="currentPage() === totalPages() - 1"
               (click)="goToPage(currentPage() + 1)"
               aria-label="Página siguiente">

@@ -1,271 +1,371 @@
-<div class="main-content">
+<div class="bienestar-nutri-container">
 
-    <!-- CABECERA -->
-    <header class="page-header">
-        <div>
-            <h1>Panel de Bienestar Clínico</h1>
-            <p>Monitoreo de adherencia y programación de sugerencias.</p>
+  <!-- ─── MODO BÚSQUEDA / SELECCIÓN DE PACIENTE ──────────────────────────── -->
+  @if (!pacienteId()) {
+    <section class="patient-picker-section" aria-label="Selección de paciente">
+      <div class="picker-hero-banner">
+        <div class="picker-hero-content">
+          <div class="picker-icon-badge" aria-hidden="true">
+            <span class="bx bx-pulse"></span>
+          </div>
+          <div>
+            <h1 class="picker-hero-title">Monitoreo de Bienestar Clínico</h1>
+            <p class="picker-hero-subtitle">
+              Supervisa el estado emocional, calidad de descanso, síntomas reportados e hidratación de tus pacientes, y programa actividades físicas sugeridas.
+            </p>
+          </div>
         </div>
-        @if (pacienteResource.value(); as paciente) {
-        <div class="patient-badge">
-            <div class="avatar">{{ pacienteInitials() }}</div>
-            <div>
-                <div class="patient-name">{{ paciente.nombre }} {{ paciente.apellidoPaterno }}</div>
-                <div class="patient-id">ID: #{{ paciente.id }}</div>
+
+        <!-- Buscador en tiempo real -->
+        <div class="search-input-wrapper">
+          <span class="bx bx-search search-icon" aria-hidden="true"></span>
+          <input
+            type="search"
+            [value]="searchTerm()"
+            (input)="searchTerm.set($any($event.target).value)"
+            class="patient-search-input"
+            placeholder="Buscar por nombre, apellido o correo..."
+            aria-label="Buscar paciente"
+          />
+          @if (searchTerm()) {
+            <button type="button" class="btn-clear-search" (click)="searchTerm.set('')" aria-label="Limpiar búsqueda">
+              <span class="bx bx-x"></span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Lista de Pacientes -->
+      @if (pacientesListResource.isLoading()) {
+        <div class="state-container loading-state" role="status" aria-live="polite">
+          <div class="app-spinner"></div>
+          <p class="state-text">Cargando lista de pacientes...</p>
+        </div>
+      } @else if (filteredPacientes().length === 0) {
+        <div class="state-container empty-state">
+          <div class="state-icon-circle neutral">
+            <span class="bx bx-user-x"></span>
+          </div>
+          <h3 class="state-title">No se encontraron pacientes</h3>
+          <p class="state-desc">
+            {{ searchTerm() ? 'No hay coincidencias con "' + searchTerm() + '"' : 'Aún no tienes pacientes registrados.' }}
+          </p>
+        </div>
+      } @else {
+        <div class="patients-grid">
+          @for (p of filteredPacientes(); track p.id) {
+            <div class="patient-picker-card" (click)="p.id && selectPaciente(p.id)">
+              <div class="picker-card-header">
+                <div class="patient-avatar-circle">
+                  {{ (p.nombre ? p.nombre[0] : '') + (p.apellidoPaterno ? p.apellidoPaterno[0] : '') }}
+                </div>
+                <div class="patient-card-info">
+                  <h3 class="patient-card-name">
+                    {{ p.nombre }} {{ p.apellidoPaterno }} {{ p.apellidoMaterno ?? '' }}
+                  </h3>
+                  <span class="patient-card-email">{{ p.correo }}</span>
+                </div>
+              </div>
+
+              <div class="picker-card-footer">
+                <span class="patient-id-tag">ID: #{{ p.id }}</span>
+                <span class="btn-view-diary-text">
+                  Ver Bienestar <span class="bx bx-chevron-right"></span>
+                </span>
+              </div>
             </div>
+          }
         </div>
+      }
+    </section>
+
+  } @else {
+
+    <!-- ─── MODO DETALLE DE PACIENTE ───────────────────────────────────────── -->
+    <header class="patient-header-bar">
+      <div class="header-left-group">
+        <button type="button" class="btn-back-link" (click)="pacienteId.set(null)" title="Volver a la lista de pacientes">
+          <span class="bx bx-arrow-back"></span>
+        </button>
+        <div class="patient-avatar-badge" aria-hidden="true">
+          {{ pacienteInitials() }}
+        </div>
+        <div class="header-patient-info">
+          <div class="header-pre-title">Expediente de Bienestar y Hábitos</div>
+          <h1 class="header-patient-name">
+            @if (pacienteResource.value(); as paciente) {
+              {{ paciente.nombre }} {{ paciente.apellidoPaterno }} {{ paciente.apellidoMaterno ?? '' }}
+            } @else {
+              Paciente #{{ pacienteId() }}
+            }
+          </h1>
+        </div>
+      </div>
+
+      <div class="header-actions-group">
+        @if (pacienteId()) {
+          <a [routerLink]="['/main/pacientes', pacienteId()]" class="btn-header-secondary">
+            <span class="bx bx-user"></span> Ver Expediente
+          </a>
         }
-        @if (!pacienteId()) {
-        <a routerLink="/main/pacientes" class="btn-select-patient">
-            <span class="bx bx-group" aria-hidden="true"></span>
-            Seleccionar Paciente
-        </a>
-        }
+      </div>
     </header>
 
-    @if (!pacienteId()) {
-    <!-- NO PATIENT SELECTED -->
-    <div class="empty-state" role="status">
-        <div class="empty-icon" aria-hidden="true">🧑‍⚕️</div>
-        <h2>Selecciona un paciente</h2>
-        <p>Elige un paciente desde tu lista para ver su historial de bienestar y programar sugerencias.</p>
-        <a routerLink="/main/pacientes" class="btn-primary">Ir a Mis Pacientes</a>
-    </div>
-    } @else {
-
-    <!-- STATS SECTION -->
-    <div class="stats-grid" role="region" aria-label="Estadísticas del paciente">
-
-        <div class="metric-card" style="border-left-color: #6366f1">
-            <div class="metric-info">
-                <h3>Bienestar Emocional</h3>
-                <p>{{ animoStats().label }}</p>
-            </div>
-            <div class="metric-score" style="color: #6366f1">{{ animoStats().score }}</div>
+    <!-- ─── 4 TARJETAS DE MÉTRICAS CLÍNICAS ────────────────────────────────── -->
+    <section class="stats-metrics-grid" aria-label="Métricas clínicas de bienestar">
+      <!-- 1. Bienestar Emocional -->
+      <div class="metric-card metric-card--animo">
+        <div class="metric-top">
+          <div class="metric-icon-wrap animo">
+            <span class="bx bx-smile"></span>
+          </div>
+          <span class="metric-badge animo">{{ animoStats().score }}</span>
         </div>
+        <h3 class="metric-title">Bienestar Emocional</h3>
+        <p class="metric-desc">{{ animoStats().label }}</p>
+      </div>
 
-        <div class="metric-card" style="border-left-color: #10b981">
-            <div class="metric-info">
-                <h3>Adherencia a Actividades</h3>
-                <p>{{ adherenciaStats().label }}</p>
-            </div>
-            <div class="adherencia-bar-wrapper">
-                <div class="adherencia-bar">
-                    <div class="adherencia-bar-fill" [style.width.%]="adherenciaStats().porcentaje" role="progressbar"
-                        [attr.aria-valuenow]="adherenciaStats().porcentaje" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-            </div>
+      <!-- 2. Adherencia a Actividades -->
+      <div class="metric-card metric-card--adherencia">
+        <div class="metric-top">
+          <div class="metric-icon-wrap adherencia">
+            <span class="bx bx-run"></span>
+          </div>
+          <span class="metric-badge adherencia">{{ adherenciaStats().porcentaje }}%</span>
         </div>
-
-        <div class="metric-card" style="border-left-color: #f59e0b">
-            <div class="metric-info">
-                <h3>Análisis de Descanso</h3>
-                <p>{{ suenoStats().label }}</p>
-            </div>
-            <div class="metric-score" style="color: #92400e">{{ suenoStats().horas }} hrs</div>
+        <h3 class="metric-title">Adherencia Física</h3>
+        <p class="metric-desc">{{ adherenciaStats().label }}</p>
+        <div class="adherencia-progress-bar">
+          <div
+            class="progress-fill"
+            [style.width.%]="adherenciaStats().porcentaje"
+            role="progressbar"
+            [attr.aria-valuenow]="adherenciaStats().porcentaje"
+            aria-valuemin="0"
+            aria-valuemax="100"
+          ></div>
         </div>
+      </div>
 
-        <div class="metric-card" style="border-left-color: #ef4444">
-            <div class="metric-info">
-                <h3>Alertas de Síntomas</h3>
-                <p>{{ sintomaStats().alerta }}</p>
-            </div>
-            <div class="metric-freq">{{ sintomaStats().frecuencia }}</div>
+      <!-- 3. Descanso y Sueño -->
+      <div class="metric-card metric-card--sueno">
+        <div class="metric-top">
+          <div class="metric-icon-wrap sueno">
+            <span class="bx bx-moon"></span>
+          </div>
+          <span class="metric-badge sueno">{{ suenoStats().horas }} hrs</span>
         </div>
+        <h3 class="metric-title">Análisis de Sueño</h3>
+        <p class="metric-desc">{{ suenoStats().label }}</p>
+      </div>
 
-    </div>
-
-    <!-- WEEKLY PLANNER -->
-    <section class="planner-section" aria-labelledby="planner-title">
-        <div class="planner-header">
-            <h2 id="planner-title">Programador de Sugerencias</h2>
-            <span class="selected-date-label" aria-live="polite">{{ selectedDateLabel() }}</span>
+      <!-- 4. Alertas de Síntomas -->
+      <div class="metric-card metric-card--sintomas">
+        <div class="metric-top">
+          <div class="metric-icon-wrap sintomas">
+            <span class="bx bx-pulse"></span>
+          </div>
         </div>
+        <h3 class="metric-title">Reporte de Síntomas</h3>
+        <p class="metric-desc">{{ sintomaStats().alerta }}</p>
+        <span class="metric-subinfo">{{ sintomaStats().frecuencia }}</span>
+      </div>
+    </section>
 
-        <div class="week-selector" role="group" aria-label="Seleccionar día">
-            @for (day of weekDays(); track day.iso) {
-            <button type="button" class="day-btn" [class.active]="day.iso === selectedDateIso()"
-                (click)="onDateSelect(day.iso)" [attr.aria-pressed]="day.iso === selectedDateIso()"
-                [attr.aria-label]="day.dayName + ' ' + day.dayNum">
-                <span class="day-name">{{ day.dayName }}</span>
-                <span class="day-num">{{ day.dayNum }}</span>
-                @if (hasEntryForDate(day.iso)) {
-                <span class="has-entry-dot" title="Tiene registro" aria-hidden="true"></span>
-                }
-            </button>
+    <!-- ─── PROGRAMADOR SEMANAL DE SUGERENCIAS ─────────────────────────────── -->
+    <section class="planner-card-section" aria-labelledby="planner-card-title">
+      <div class="planner-header-row">
+        <div class="planner-title-group">
+          <span class="bx bx-calendar-edit planner-icon"></span>
+          <div>
+            <h2 id="planner-card-title" class="planner-title">Programador de Actividades y Sugerencias</h2>
+            <p class="planner-subtitle">Asigna ejercicios y notas clínicas para los días de la semana.</p>
+          </div>
+        </div>
+        <span class="selected-date-chip">{{ selectedDateLabel() }}</span>
+      </div>
+
+      <!-- Selector Semanal de 7 Días -->
+      <div class="week-pills-strip" role="group" aria-label="Seleccionar día a programar">
+        @for (day of weekDays(); track day.iso) {
+          <button
+            type="button"
+            class="week-pill-btn"
+            [class.week-pill-btn--active]="day.iso === selectedDateIso()"
+            (click)="onDateSelect(day.iso)"
+            [attr.aria-pressed]="day.iso === selectedDateIso()"
+          >
+            <span class="week-pill-dayname">{{ day.dayName }}</span>
+            <span class="week-pill-daynum">{{ day.dayNum }}</span>
+            @if (hasEntryForDate(day.iso)) {
+              <span class="pill-has-entry-tag" title="El paciente tiene registro este día">Registrado</span>
             }
+          </button>
+        }
+      </div>
+
+      <!-- Formulario de Sugerencia -->
+      <form [formGroup]="suggestionForm" (ngSubmit)="onSuggestionSubmit()" class="suggestion-form" novalidate>
+        <div class="form-row-grid">
+          <div class="form-group-item">
+            <label for="select-tipo-actividad" class="form-item-label">
+              Tipo de Actividad Física Sugerida
+            </label>
+            <select id="select-tipo-actividad" formControlName="tipoActividadSugerida" class="form-control-select">
+              @for (tipo of tiposActividad; track tipo) {
+                <option [value]="tipo">{{ TIPO_ACTIVIDAD_LABEL[tipo] }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group-item">
+            <label for="input-actividad-detalle" class="form-item-label">
+              Detalles / Duración de la Actividad
+            </label>
+            <input
+              id="input-actividad-detalle"
+              type="text"
+              formControlName="actividadDetalle"
+              class="form-control-input"
+              placeholder="Ej: 30 min caminata moderada antes del desayuno..."
+            />
+          </div>
         </div>
 
-        <!-- SUGGESTION FORM -->
-        <form class="suggestion-form" [formGroup]="suggestionForm" (ngSubmit)="onSuggestionSubmit()" novalidate>
-            <div class="form-group">
-                <label class="form-label" for="tipoActividad">Tipo de Actividad Sugerida</label>
-                <select id="tipoActividad" formControlName="tipoActividadSugerida" class="form-select">
-                    @for (tipo of tiposActividad; track tipo) {
-                    <option [value]="tipo">{{ TIPO_ACTIVIDAD_LABEL[tipo] }}</option>
-                    }
-                </select>
-            </div>
+        <div class="form-group-item">
+          <label for="textarea-obs-clinicas" class="form-item-label">
+            Observaciones y Recomendaciones Clínicas
+          </label>
+          <textarea
+            id="textarea-obs-clinicas"
+            formControlName="observacionesNutriologo"
+            class="form-control-textarea"
+            rows="3"
+            placeholder="Escribe indicaciones sobre descanso, hidratación o precauciones según los síntomas reportados..."
+          ></textarea>
+        </div>
 
-            <div class="form-group">
-                <label class="form-label" for="actividadDetalle">Detalles de la Actividad</label>
-                <textarea id="actividadDetalle" formControlName="actividadDetalle" class="form-textarea"
-                    placeholder="Ej: 20 min a paso suave antes de cenar." rows="3"></textarea>
-            </div>
-
-            <div class="form-group form-group-full">
-                <label class="form-label" for="obsClinicas">Observaciones Clínicas</label>
-                <textarea id="obsClinicas" formControlName="observacionesNutriologo" class="form-textarea"
-                    placeholder="Notas sobre el progreso, ajustes en el plan nutricional o síntomas reportados..."
-                    rows="3"></textarea>
-            </div>
-
-            <div class="form-group form-group-full form-actions">
-                <button type="submit" class="btn-primary" [disabled]="isSaving()">
-                    @if (isSaving()) {
-                    Guardando...
-                    } @else {
-                    Guardar Sugerencia
-                    }
-                </button>
-            </div>
-        </form>
+        <div class="form-actions-row">
+          <button type="submit" class="btn-save-suggestion" [disabled]="isSaving()">
+            @if (isSaving()) {
+              <span class="bx bx-loader-alt bx-spin"></span> Guardando Sugerencia...
+            } @else {
+              <span class="bx bx-check"></span> Guardar Sugerencia para {{ selectedDateLabel() }}
+            }
+          </button>
+        </div>
+      </form>
     </section>
 
-    <!-- HISTORY TABLE -->
-    <section class="history-section" aria-labelledby="history-title">
-        <div class="history-header">
-            <div>
-                <h2 id="history-title">Historial de Bienestar</h2>
-                <p>Registros del paciente ordenados por fecha.</p>
-            </div>
+    <!-- ─── HISTORIAL DETALLADO DE BIENESTAR ───────────────────────────────── -->
+    <section class="history-table-section" aria-labelledby="history-table-title">
+      <div class="history-table-header">
+        <div class="table-header-left">
+          <span class="section-dot"></span>
+          <h2 id="history-table-title" class="history-table-title">Historial Clínico de Bienestar</h2>
         </div>
+        <span class="history-entries-count">
+          {{ historyResource.value()?.totalElements || 0 }} registros en total
+        </span>
+      </div>
 
-        @if (historyResource.isLoading()) {
-        <div class="loading-state" aria-live="polite" aria-busy="true">
-            <span class="spinner" aria-hidden="true"></span>
-            <p>Cargando historial...</p>
+      @if (historyResource.isLoading()) {
+        <div class="state-container loading-state" role="status" aria-live="polite">
+          <div class="app-spinner"></div>
+          <p class="state-text">Cargando historial de bienestar...</p>
         </div>
-        } @else if (historyContent().length === 0) {
-        <div class="empty-table-state">
-            <p>El paciente aún no tiene registros de bienestar.</p>
+      } @else if (historyContent().length === 0) {
+        <div class="state-container empty-state">
+          <div class="state-icon-circle neutral">
+            <span class="bx bx-calendar-x"></span>
+          </div>
+          <h3 class="state-title">Sin registros de bienestar</h3>
+          <p class="state-desc">El paciente aún no ha completado registros en su diario de bienestar.</p>
         </div>
-        } @else {
-        <div class="table-wrapper">
-            <table aria-label="Historial de bienestar del paciente">
-                <thead>
-                    <tr>
-                        <th scope="col">Fecha</th>
-                        <th scope="col">Ánimo</th>
-                        <th scope="col">Sueño</th>
-                        <th scope="col">Síntoma Principal</th>
-                        <th scope="col">Hidratación</th>
-                        <th scope="col">Actividad</th>
-                        <th scope="col"><span class="sr-only">Acciones</span></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (entry of historyContent(); track entry.id) {
-                    <tr>
-                        <td class="td-fecha" data-label="Fecha">{{ formatFecha(entry.fecha) }}</td>
-                        <!-- <td data-label="Ánimo">
-                    <span class="emoji-cell" [attr.aria-label]="ESTADO_ANIMO_MAP[entry.estadoAnimo].label">
-                      {{ ESTADO_ANIMO_MAP[entry.estadoAnimo].emoji }}
+      } @else {
+        <div class="history-cards-list">
+          @for (entry of historyContent(); track entry.id) {
+            <article class="nutri-history-row-card">
+              <div class="row-card-top">
+                <div class="row-date-group">
+                  <span class="bx bx-calendar-event date-icon"></span>
+                  <strong class="row-date-text">{{ formatFecha(entry.fecha) }}</strong>
+                </div>
+
+                <div class="row-badges-group">
+                  <!-- Ánimo -->
+                  @if (entry.estadoAnimo) {
+                    <span class="row-badge animo">
+                      {{ ESTADO_ANIMO_MAP[entry.estadoAnimo]?.emoji }} {{ ESTADO_ANIMO_MAP[entry.estadoAnimo]?.label }}
                     </span>
-                  </td> -->
-                        <td data-label="Ánimo">
-                            @if (entry.estadoAnimo) {
-                            <span class="emoji-cell" [attr.aria-label]="ESTADO_ANIMO_MAP[entry.estadoAnimo].label">
-                                {{ ESTADO_ANIMO_MAP[entry.estadoAnimo].emoji }}
-                            </span>
-                            } @else {
-                            <span class="td-secondary td-italic">Pendiente</span>
-                            }
-                        </td>
-                        <!-- <td data-label="Sueño">
-                            <span class="td-primary">{{ CALIDAD_SUENO_MAP[entry.calidadSueno].label }}</span>
-                            <span class="td-secondary">~{{ CALIDAD_SUENO_MAP[entry.calidadSueno].horas }}h est.</span>
-                        </td> -->
-                        <td data-label="Sueño">
-                            @if (entry.calidadSueno) {
-                            <span class="td-primary">{{ CALIDAD_SUENO_MAP[entry.calidadSueno].label }}</span>
-                            <span class="td-secondary">~{{ CALIDAD_SUENO_MAP[entry.calidadSueno].horas }}h est.</span>
-                            } @else {
-                            <span class="td-secondary td-italic">Sin registro</span>
-                            }
-                        </td>
-                        <td data-label="Síntoma">
-                            <span class="td-primary">{{ SINTOMA_LABEL[entry.sintomaPrincipal] }}</span>
-                            @if (entry.sintomaDetalle) {
-                            <span class="td-secondary td-italic">"{{ entry.sintomaDetalle }}"</span>
-                            }
-                        </td>
-                        <td data-label="Hidratación">
-                            <span class="td-hydration">{{ formatBebidas(entry) }}</span>
-                        </td>
-                        <td data-label="Actividad">
-                            @if (entry.tipoActividadSugerida && entry.tipoActividadSugerida !== 'NINGUNA') {
-                            <span class="badge" [class.badge-success]="entry.actividadRealizada"
-                                [class.badge-pending]="!entry.actividadRealizada">
-                                {{ entry.actividadRealizada ? 'Realizada' : 'Sin Realizar' }}
-                            </span>
-                            } @else {
-                            <span class="td-secondary">Sin actividad</span>
-                            }
-                        </td>
-                        <td>
-                            <button type="button" class="btn-revisar" (click)="toggleRow(entry.id)"
-                                [attr.aria-expanded]="expandedRowId() === entry.id"
-                                [attr.aria-controls]="'detail-' + entry.id">
-                                {{ expandedRowId() === entry.id ? 'CERRAR' : 'DETALLE' }}
-                            </button>
-                        </td>
-                    </tr>
-                    @if (expandedRowId() === entry.id) {
-                    <tr [id]="'detail-' + entry.id" class="detail-row">
-                        <td colspan="7">
-                            <div class="detail-panel">
-                                @if (entry.tipoActividadSugerida && entry.tipoActividadSugerida !== 'NINGUNA') {
-                                <div class="detail-item">
-                                    <span class="detail-label">Actividad sugerida</span>
-                                    <span>{{ TIPO_ACTIVIDAD_LABEL[entry.tipoActividadSugerida] }}
-                                        @if (entry.actividadDetalle) {
-                                        — {{ entry.actividadDetalle }}
-                                        }
-                                    </span>
-                                </div>
-                                }
-                                @if (entry.observacionesNutriologo) {
-                                <div class="detail-item">
-                                    <span class="detail-label">Observaciones clínicas</span>
-                                    <span>{{ entry.observacionesNutriologo }}</span>
-                                </div>
-                                }
-                                @if (entry.bebidas && entry.bebidas.length > 0) {
-                                <div class="detail-item">
-                                    <span class="detail-label">Bebidas consumidas</span>
-                                    <span>{{ formatBebidas(entry) }}</span>
-                                </div>
-                                }
-                                @if (!entry.observacionesNutriologo && (!entry.bebidas || entry.bebidas.length === 0)) {
-                                <p class="detail-empty">No hay observaciones adicionales para este registro.</p>
-                                }
-                            </div>
-                        </td>
-                    </tr>
+                  }
+                  <!-- Sueño -->
+                  @if (entry.calidadSueno) {
+                    <span class="row-badge sueno">
+                      🌙 {{ CALIDAD_SUENO_MAP[entry.calidadSueno]?.label }}
+                    </span>
+                  }
+                  <!-- Actividad -->
+                  <span class="row-badge" [class.row-badge--done]="entry.actividadRealizada" [class.row-badge--pending]="!entry.actividadRealizada">
+                    {{ entry.actividadRealizada ? '🏃 Actividad Hecha' : '⏸️ Sin Actividad' }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="row-card-body">
+                <!-- Síntoma -->
+                <div class="detail-cell">
+                  <span class="detail-cell-label">Síntoma:</span>
+                  <span class="detail-cell-val">
+                    {{ SINTOMA_LABEL[entry.sintomaPrincipal] || 'Ninguno' }}
+                    @if (entry.sintomaDetalle) {
+                      <em>({{ entry.sintomaDetalle }})</em>
                     }
-                    }
-                </tbody>
-            </table>
+                  </span>
+                </div>
+
+                <!-- Hidratación -->
+                <div class="detail-cell">
+                  <span class="detail-cell-label">Líquidos:</span>
+                  <span class="detail-cell-val">{{ formatBebidas(entry) }}</span>
+                </div>
+
+                <!-- Sugerencia y Observaciones -->
+                @if (entry.tipoActividadSugerida && entry.tipoActividadSugerida !== 'NINGUNA') {
+                  <div class="detail-cell detail-cell--full">
+                    <span class="detail-cell-label">Actividad Sugerida:</span>
+                    <span class="detail-cell-val">
+                      {{ TIPO_ACTIVIDAD_LABEL[entry.tipoActividadSugerida] }}
+                      @if (entry.actividadDetalle) { - {{ entry.actividadDetalle }} }
+                    </span>
+                  </div>
+                }
+
+                @if (entry.observacionesNutriologo) {
+                  <div class="detail-cell detail-cell--full obs-highlight">
+                    <span class="detail-cell-label">Nota Nutriólogo:</span>
+                    <span class="detail-cell-val">"{{ entry.observacionesNutriologo }}"</span>
+                  </div>
+                }
+              </div>
+            </article>
+          }
         </div>
 
-        @if ((historyResource.value()?.totalPages ?? 0) > 0) {
-        <app-pagination [currentPage]="currentPage()" [totalPages]="historyResource.value()?.totalPages ?? 0"
-            [totalElements]="historyResource.value()?.totalElements ?? 0" [pageSize]="pageSize()"
-            (pageChange)="onPageChange($event)" />
+        @if (historyResource.value() && historyResource.value()!.totalPages > 1) {
+          <div class="history-pagination-wrap">
+            <app-pagination
+              [currentPage]="currentPage()"
+              [totalPages]="historyResource.value()!.totalPages"
+              [totalElements]="historyResource.value()!.totalElements"
+              [pageSize]="pageSize()"
+              (pageChange)="onPageChange($event)"
+            />
+          </div>
         }
-        }
+      }
     </section>
 
-    }
+  } <!-- end @else (pacienteId !== null) -->
+
 </div>

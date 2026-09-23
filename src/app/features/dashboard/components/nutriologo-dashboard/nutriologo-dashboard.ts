@@ -8,6 +8,8 @@ import {
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { DashboardService } from '../../service/dashboard.service';
 import { AuthService } from '../../../../core/services/auth-service';
 import { CitaResponse } from '../../../citas/interfaces/cita.interface';
@@ -64,19 +66,18 @@ export class NutriologoDashboardComponent implements OnInit {
   cargarDatos(): void {
     this.loading.set(true);
     const id = this.nutriologoId();
-    if (!id) return;
+    if (!id) {
+      this.loading.set(false);
+      return;
+    }
 
-    // Citas del nutriólogo
-    this.dashboardService.getCitasNutriologo(id).subscribe({
-      next: (res) => {
-        this.citas.set(res.datos ?? []);
-      },
-    });
-
-    // Pacientes del nutriólogo
-    this.dashboardService.getPacientesNutriologo(0, 5).subscribe({
-      next: (res) => {
-        this.totalPacientes.set(res.datos?.totalElements ?? 0);
+    forkJoin({
+      citas: this.dashboardService.getCitasNutriologo(id).pipe(catchError(() => of(null))),
+      pacientes: this.dashboardService.getPacientesNutriologo(0, 5).pipe(catchError(() => of(null))),
+    }).subscribe({
+      next: ({ citas, pacientes }) => {
+        this.citas.set(citas?.datos ?? []);
+        this.totalPacientes.set(pacientes?.datos?.totalElements ?? pacientes?.totalElements ?? 0);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),

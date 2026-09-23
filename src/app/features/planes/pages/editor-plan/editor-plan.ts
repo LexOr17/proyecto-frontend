@@ -11,6 +11,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
+import { LowerCasePipe } from '@angular/common';
 import { PlanAlimenticioService } from '../../service/plan-service';
 import { PlantillaService } from '../../../plantillas/service/plantilla-service';
 import { PacienteService } from '../../../pacientes/service/paciente-service';
@@ -26,7 +27,7 @@ import {
 
 @Component({
   selector: 'app-editor-plan',
-  imports: [],
+  imports: [LowerCasePipe],
   templateUrl: './editor-plan.html',
   styleUrl: './editor-plan.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -133,6 +134,14 @@ export class EditorPlan {
     stream: () => this.plantillaService.obtenerPlantillas(0, 100),
   });
 
+  protected readonly plantillasMap = computed(() => {
+    const m = new Map<number, Plantilla>();
+    for (const p of (this.plantillasResource.value()?.content ?? [])) {
+      m.set(p.id, p);
+    }
+    return m;
+  });
+
   protected readonly plantillasFiltradas = computed(() => {
     const todas = this.plantillasResource.value()?.content ?? [];
     const term = this.buscadorTermino().toLowerCase().trim();
@@ -148,6 +157,49 @@ export class EditorPlan {
       m.set(p.id, p.totalCalorias);
     }
     return m;
+  });
+
+  /** Suma de calorías por cada día del plan */
+  protected readonly kcalPorDia = computed(() => {
+    const m = new Map<number, number>();
+    const plantillas = this.plantillasMap();
+    for (const c of this.comidas()) {
+      const p = plantillas.get(c.plantillaId);
+      const kcal = p ? p.totalCalorias : 0;
+      m.set(c.diaPlan, (m.get(c.diaPlan) ?? 0) + kcal);
+    }
+    return m;
+  });
+
+  /** Resumen nutricional global del plan en tiempo real */
+  protected readonly resumenNutricional = computed(() => {
+    const duracion = Math.max(1, this.planDuracionDias());
+    const comidasList = this.comidas();
+    const plantillas = this.plantillasMap();
+
+    let totalKcal = 0;
+    let totalPro = 0;
+    let totalCarb = 0;
+    let totalFat = 0;
+
+    for (const c of comidasList) {
+      const p = plantillas.get(c.plantillaId);
+      if (p) {
+        totalKcal += p.totalCalorias ?? 0;
+        totalPro += p.totalProteinas ?? 0;
+        totalCarb += p.totalCarbohidratos ?? 0;
+        totalFat += p.totalGrasas ?? 0;
+      }
+    }
+
+    return {
+      totalComidas: comidasList.length,
+      totalKcal,
+      avgKcalDia: Math.round(totalKcal / duracion),
+      avgProDia: Math.round(totalPro / duracion),
+      avgCarbDia: Math.round(totalCarb / duracion),
+      avgFatDia: Math.round(totalFat / duracion),
+    };
   });
 
   // ─── Plan resource (edit mode) ────────────────────────────────────────
@@ -210,6 +262,14 @@ export class EditorPlan {
 
   protected getKcal(plantillaId: number): number {
     return this.kcalById().get(plantillaId) ?? 0;
+  }
+
+  protected getPlantilla(plantillaId: number): Plantilla | undefined {
+    return this.plantillasMap().get(plantillaId);
+  }
+
+  protected getKcalDia(diaNum: number): number {
+    return this.kcalPorDia().get(diaNum) ?? 0;
   }
 
   protected getLabelHorario(horario: TipoComida): string {
@@ -346,11 +406,12 @@ export class EditorPlan {
     );
   }
 
-  // ─── Copy / Paste ─────────────────────────────────────────────────────
+  // ─── Copy / Paste & Bulk Actions ──────────────────────────────────────────
   protected copiarDia(dia: number, event: Event): void {
     event.stopPropagation();
     this.diaCopiado.set(dia);
     this.comidaIndividualCopiada.set(null);
+    this.notificationService.success(`Día ${dia} copiado al portapapeles`);
   }
 
   protected pegarDia(diaDestino: number, event: Event): void {
@@ -362,12 +423,45 @@ export class EditorPlan {
       ...comidas.filter(c => c.diaPlan !== diaDestino),
       ...comidasOrigen.map(c => ({ ...c, diaPlan: diaDestino, id: undefined })),
     ]);
+    this.notificationService.success(`Comidas pegadas en Día ${diaDestino}`);
+  }
+
+  /** Duplicar un día a todos los demás días del plan */
+  protected duplicarDiaATodos(diaOrigen: number, event: Event): void {
+    event.stopPropagation();
+    const comidasOrigen = this.comidas().filter(c => c.diaPlan === diaOrigen);
+    if (comidasOrigen.length === 0) {
+      this.notificationService.info(`El Día ${diaOrigen} no tiene comidas para duplicar`);
+      return;
+    }
+
+    const duracion = this.planDuracionDias();
+    const nuevasComidas: ComidaLocal[] = [];
+
+    for (let targetDia = 1; targetDia <= duracion; targetDia++) {
+      for (const c of comidasOrigen) {
+        nuevasComidas.push({ ...c, diaPlan: targetDia, id: undefined });
+      }
+    }
+
+    this.comidas.set(nuevasComidas);
+    this.notificationService.success(`Estructura del Día ${diaOrigen} duplicada a todos los días`);
+  }
+
+  /** Limpiar todas las comidas de un día */
+  protected limpiarDia(dia: number, event: Event): void {
+    event.stopPropagation();
+    this.comidas.update(comidas => comidas.filter(c => c.diaPlan !== dia));
+    if (this.diaCopiado() === dia) {
+      this.diaCopiado.set(null);
+    }
   }
 
   protected copiarComida(comida: ComidaLocal, event: Event): void {
     event.stopPropagation();
     this.comidaIndividualCopiada.set({ ...comida });
     this.diaCopiado.set(null);
+    this.notificationService.success(`${comida.plantillaNombre} copiado`);
   }
 
   protected pegarComidaEnCelda(diaPlan: number, horario: TipoComida, event: Event): void {
@@ -447,3 +541,4 @@ export class EditorPlan {
     this.router.navigate(['/main/planes']);
   }
 }
+

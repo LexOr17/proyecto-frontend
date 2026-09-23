@@ -1,322 +1,572 @@
-<div class="main-content">
+<div class="bienestar-paciente-container">
 
-  <!-- CABECERA -->
-  <header class="header">
-    <div>
-      <h1>Mi Bienestar</h1>
-      <p>Hola, {{ userName() }}. 👋</p>
+  <!-- ─── HERO HEADER ──────────────────────────────────────────────────────── -->
+  <header class="bienestar-hero-header">
+    <div class="hero-text-group">
+      <div class="hero-badge-tag">
+        <span class="bx bx-heart-circle"></span> Registro Diario de Hábitos
+      </div>
+      <h1 class="hero-title">Mi Bienestar y Hábitos</h1>
+      <p class="hero-subtitle">Hola, {{ userName() }}. Registra tu estado físico, descanso y líquidos consumidos.</p>
     </div>
-    <div class="day-selector" role="group" aria-label="Seleccionar día">
-      <button
-        type="button"
-        class="day-btn"
-        [class.active]="selectedDay() === 'hoy'"
-        (click)="selectDay('hoy')"
-        [attr.aria-pressed]="selectedDay() === 'hoy'"
-      >Hoy</button>
-      <button
-        type="button"
-        class="day-btn"
-        [class.active]="selectedDay() === 'ayer'"
-        (click)="selectDay('ayer')"
-        [attr.aria-pressed]="selectedDay() === 'ayer'"
-      >Ayer</button>
+
+    <!-- Selector de Día: Hoy vs Ayer -->
+    <div class="day-toggle-card">
+      <div class="day-buttons-group" role="group" aria-label="Seleccionar día de registro">
+        <button
+          type="button"
+          class="day-toggle-btn"
+          [class.day-toggle-btn--active]="selectedDay() === 'hoy'"
+          (click)="selectDay('hoy')"
+          [attr.aria-pressed]="selectedDay() === 'hoy'"
+        >
+          <span class="bx bx-calendar"></span> Hoy
+        </button>
+        <button
+          type="button"
+          class="day-toggle-btn"
+          [class.day-toggle-btn--active]="selectedDay() === 'ayer'"
+          (click)="selectDay('ayer')"
+          [attr.aria-pressed]="selectedDay() === 'ayer'"
+        >
+          <span class="bx bx-history"></span> Ayer
+        </button>
+      </div>
+
+      <!-- Badge de Estado de Registro -->
+      <div class="day-status-pill" [class.day-status-pill--locked]="isLocked()">
+        @if (isLocked()) {
+          <span class="bx bx-lock-alt"></span> Plazo vencido (Mediodía)
+        } @else {
+          <span class="bx bx-check-circle"></span> Abierto para registrar
+        }
+      </div>
     </div>
   </header>
 
+  <!-- ─── ESTADOS DE CARGA / ERROR ─────────────────────────────────────────── -->
   @if (isLoading()) {
-    <div class="loading-state" aria-live="polite" aria-busy="true">
-      <span class="spinner" aria-hidden="true"></span>
-      <p>Cargando tu registro...</p>
+    <div class="state-container loading-state" role="status" aria-live="polite">
+      <div class="app-spinner"></div>
+      <p class="state-text">Consultando tu registro de bienestar...</p>
     </div>
   } @else if (diaryResource.error()) {
-    <div class="error-state" role="alert">
-      <p>No se pudo cargar el registro del día.</p>
-      <button type="button" class="btn-retry" (click)="diaryResource.reload()">Reintentar</button>
+    <div class="state-container error-state" role="alert">
+      <div class="state-icon-circle error">
+        <span class="bx bx-error-circle"></span>
+      </div>
+      <h3 class="state-title">No se pudo cargar el registro</h3>
+      <p class="state-desc">Hubo un problema al consultar la información de este día.</p>
+      <button type="button" class="btn-primary" (click)="diaryResource.reload()">
+        <span class="bx bx-refresh"></span> Reintentar
+      </button>
     </div>
   } @else {
+
     @let diario = diarioActual();
+
+    <!-- ─── VISTA: REGISTRO YA COMPLETADO (MODO LECTURA) ───────────────────── -->
     @if (diarioExiste() && diario && !isEditing()) {
-      <div class="registered-card" role="status" aria-live="polite">
-        <div class="registered-icon" aria-hidden="true">✅</div>
-        <h2 class="registered-title">¡Registro completado!</h2>
-        <p class="registered-subtitle">Ya registraste tu bienestar del {{ selectedDateFormattedLC() }}</p>
-        <div class="registered-summary">
-          <div class="summary-item">
-            <span class="summary-icon" aria-hidden="true">{{ ESTADO_ANIMO_MAP[diario.estadoAnimo].emoji }}</span>
-            <span class="summary-label">{{ ESTADO_ANIMO_MAP[diario.estadoAnimo].label }}</span>
+      <section class="completed-summary-card" role="status" aria-live="polite">
+        <div class="completed-top-row">
+          <div class="completed-icon-box">
+            <span class="bx bx-check-double"></span>
           </div>
-          <div class="summary-item">
-            <span class="summary-icon" aria-hidden="true">🌙</span>
-            <span class="summary-label">{{ CALIDAD_SUENO_MAP[diario.calidadSueno].label }}</span>
+          <div class="completed-titles">
+            <span class="completed-date-tag">{{ selectedDateFormatted() }}</span>
+            <h2 class="completed-title">¡Registro de bienestar completado!</h2>
+            <p class="completed-subtitle">Has guardado exitosamente tus hábitos del {{ selectedDateFormattedLC() }}.</p>
           </div>
-          <div class="summary-item">
-            <span class="summary-icon" aria-hidden="true">{{ diario.actividadRealizada ? '✅' : '❌' }}</span>
-            <span class="summary-label">Actividad {{ diario.actividadRealizada ? 'realizada' : 'pendiente' }}</span>
-          </div>
-        </div>
-        @if (!isLocked()) {
-          <p class="registered-hint">Para editar, usa el botón <strong>"Editar registro"</strong> en el historial de abajo.</p>
-        }
-      </div>
-    } @else {
-    <form (ngSubmit)="onSubmit()" [formGroup]="form" novalidate>
-      <div class="dashboard-grid">
 
-        <!-- ESTADO DEL REGISTRO -->
-        <div class="card card-full status-card" role="status" aria-live="polite">
-          @if (isLocked()) {
-            <span class="lock-overlay status-locked">🔒 Bloqueado (Plazo vencido)</span>
-          } @else {
-            <span class="lock-overlay status-open">🟢 Abierto</span>
-          }
-          <h3 class="display-date">{{ selectedDateFormatted() }}</h3>
-        </div>
-
-        <!-- SUGERENCIA DEL NUTRIÓLOGO -->
-        @if (sugerenciaTexto()) {
-          <div class="card card-full suggestion-card" role="region" aria-label="Sugerencia de tu nutriólogo">
-            <div class="suggestion-header">
-              <span aria-hidden="true" style="font-size: 20px;">🏃‍♂️</span>
-              <h3>Sugerencia del día</h3>
-            </div>
-            <div class="suggestion-content">{{ sugerenciaTexto() }}</div>
-            <div class="activity-options" role="group" aria-label="¿Realizaste la actividad?">
-              <label class="activity-option">
-                <input
-                  type="radio"
-                  formControlName="actividadRealizada"
-                  [value]="true"
-                  aria-label="Realizado"
-                />
-                <div class="activity-box">✅ Realizado</div>
-              </label>
-              <label class="activity-option">
-                <input
-                  type="radio"
-                  formControlName="actividadRealizada"
-                  [value]="false"
-                  aria-label="No realizado"
-                />
-                <div class="activity-box">❌ No realizado</div>
-              </label>
-            </div>
-          </div>
-        }
-
-        <!-- ÁNIMO -->
-        <div class="card card-full" role="region" aria-labelledby="animo-title">
-          <div class="card-header">
-            <div class="icon-bg" aria-hidden="true">🎭</div>
-            <h3 id="animo-title">¿Cómo te sientes hoy?</h3>
-          </div>
-          <div class="mood-row" role="group" aria-labelledby="animo-title">
-            @for (mood of estadosAnimo; track mood) {
-              <label class="mood-item">
-                <input
-                  type="radio"
-                  formControlName="estadoAnimo"
-                  [value]="mood"
-                  [attr.aria-label]="ESTADO_ANIMO_MAP[mood].label"
-                />
-                <div class="mood-box">
-                  <span class="emoji" aria-hidden="true">{{ ESTADO_ANIMO_MAP[mood].emoji }}</span>
-                  <span class="label">{{ ESTADO_ANIMO_MAP[mood].label }}</span>
-                </div>
-              </label>
-            }
-          </div>
-        </div>
-
-        <!-- SUEÑO -->
-        <div class="card" role="region" aria-labelledby="sueno-title">
-          <div class="card-header">
-            <div class="icon-bg" aria-hidden="true">🌙</div>
-            <h3 id="sueno-title">Descanso</h3>
-          </div>
-          <label class="sr-only" for="calidadSueno">Calidad de sueño</label>
-          <select id="calidadSueno" formControlName="calidadSueno">
-            @for (entry of calidadesOptions; track entry[0]) {
-              <option [value]="entry[0]">{{ entry[1].label }}</option>
-            }
-          </select>
-        </div>
-
-        <!-- SÍNTOMAS -->
-        <div class="card" role="region" aria-labelledby="sintomas-title">
-          <div class="card-header">
-            <div class="icon-bg" aria-hidden="true">🩺</div>
-            <h3 id="sintomas-title">Síntomas</h3>
-          </div>
-          <label class="sr-only" for="sintomaPrincipal">Síntoma principal</label>
-          <select id="sintomaPrincipal" formControlName="sintomaPrincipal">
-            @for (entry of sintomasOptions; track entry[0]) {
-              <option [value]="entry[0]">{{ entry[1] }}</option>
-            }
-          </select>
-          @if (showSintomaDetalle()) {
-            <div style="margin-top: 10px;">
-              <label class="sr-only" for="sintomaDetalle">Describe el síntoma</label>
-              <textarea
-                id="sintomaDetalle"
-                formControlName="sintomaDetalle"
-                placeholder="Describe brevemente..."
-                aria-required="true"
-              ></textarea>
-            </div>
-          }
-        </div>
-
-        <!-- HIDRATACIÓN -->
-        <div class="card card-full" role="region" aria-labelledby="hidratacion-title">
-          <div class="card-header">
-            <div class="icon-bg" aria-hidden="true">🥤</div>
-            <h3 id="hidratacion-title">Hidratación</h3>
-          </div>
-          <div class="beverage-group">
-            <label class="sr-only" for="drink-name">Nombre de la bebida</label>
-            <input
-              type="text"
-              id="drink-name"
-              class="input-field"
-              placeholder="Agua, Café, Té..."
-              formControlName="bebidasNombre"
-              (keyup.enter)="addBebida()"
-              style="flex: 2"
-            />
-            <label class="sr-only" for="drink-amount">Cantidad en ml</label>
-            <input
-              type="number"
-              id="drink-amount"
-              class="input-field"
-              placeholder="ml"
-              formControlName="bebidasCantidad"
-              min="1"
-              step="50"
-              (keyup.enter)="addBebida()"
-              style="flex: 1"
-            />
+          @if (canEditHistoryEntry(selectedDateISO())) {
             <button
               type="button"
-              class="btn-add-drink"
-              (click)="addBebida()"
-              aria-label="Añadir bebida"
-            >Añadir</button>
-          </div>
-          @if (bebidas().length > 0) {
-            <ul class="chip-container" aria-label="Bebidas registradas">
-              @for (bebida of bebidas(); track $index) {
-                <li class="chip">
-                  {{ bebida.nombre }} ({{ bebida.cantidad }}ml)
-                  <button
-                    type="button"
-                    class="chip-close"
-                    (click)="removeBebida($index)"
-                    [attr.aria-label]="'Eliminar ' + bebida.nombre"
-                  >&times;</button>
-                </li>
-              }
-            </ul>
-          }
-        </div>
-
-        <!-- SUBMIT -->
-        <div class="card card-full" style="background: transparent; border: none; box-shadow: none; padding: 0;">
-          @if (isEditing()) {
-            <div class="submit-group">
-              <button
-                type="button"
-                class="btn-cancel"
-                (click)="cancelEditing()"
-                [disabled]="isSaving()"
-              >Cancelar edición</button>
-              <button
-                type="submit"
-                class="btn-submit"
-                [disabled]="isSaving()"
-                [attr.aria-busy]="isSaving()"
-              >{{ isSaving() ? 'Guardando...' : 'Guardar Cambios' }}</button>
-            </div>
-          } @else {
-            <button
-              type="submit"
-              class="btn-submit"
-              [disabled]="isSaving() || isLocked()"
-              [attr.aria-busy]="isSaving()"
+              class="btn-edit-mode"
+              (click)="triggerEdit(selectedDateISO())"
             >
-              @if (isSaving()) {
-                Guardando...
-              } @else if (isLocked()) {
-                🔒 Registro bloqueado
-              } @else {
-                Guardar Registro del Día
-              }
+              <span class="bx bx-edit-alt"></span> Editar este registro
             </button>
           }
         </div>
 
-      </div>
-    </form>
-    }
-  }
-
-  <!-- PANEL DE HISTORIAL -->
-  <aside class="history-panel" aria-label="Historial reciente">
-    <h3 class="history-title">
-      <span aria-hidden="true" style="font-size: 20px;">📅</span> Historial Reciente
-    </h3>
-
-    @if (historyResource.isLoading()) {
-      <div class="loading-state" aria-live="polite" aria-busy="true">
-        <span class="spinner" aria-hidden="true"></span>
-        <p>Cargando historial...</p>
-      </div>
-    } @else if (historyResource.error()) {
-      <p class="empty-text" role="alert">No se pudo cargar el historial.</p>
-    } @else {
-      @let historyPage = historyResource.value();
-      @if (!historyPage || historyPage.content.length === 0) {
-        <p class="empty-text">Aún no tienes registros en tu historial.</p>
-      } @else {
-        @for (entry of historyPage.content; track entry.id) {
-          <div class="history-item">
-            <div class="history-top">
-              <span class="history-date">{{ formatHistoryDate(entry.fecha) }}</span>
-              @if (canEditHistoryEntry(entry.fecha)) {
-                <button
-                  type="button"
-                  class="btn-edit-history"
-                  (click)="triggerEdit(entry.fecha)"
-                  [attr.aria-label]="'Editar registro de ' + formatHistoryDate(entry.fecha)"
-                >Editar registro</button>
-              } @else {
-                <span class="tag-no-edit">🔒 No editable</span>
-              }
+        <!-- Grid Resumen del Día -->
+        <div class="summary-metrics-grid">
+          <!-- Ánimo -->
+          <div class="metric-pill-card">
+            <div class="metric-emoji">{{ ESTADO_ANIMO_MAP[diario.estadoAnimo].emoji }}</div>
+            <div class="metric-info">
+              <span class="metric-lbl">Estado de Ánimo</span>
+              <strong class="metric-val">{{ ESTADO_ANIMO_MAP[diario.estadoAnimo].label }}</strong>
             </div>
-            <div class="history-stats">
-              <span><b>Ánimo</b> {{ ESTADO_ANIMO_MAP[entry.estadoAnimo].emoji }} {{ ESTADO_ANIMO_MAP[entry.estadoAnimo].label }}</span>
-              <span><b>Sueño</b> {{ CALIDAD_SUENO_MAP[entry.calidadSueno].label }}</span>
-              <span><b>Actividad</b> {{ entry.actividadRealizada ? 'realizada' : 'pendiente' }}</span>
+          </div>
+
+          <!-- Descanso -->
+          <div class="metric-pill-card">
+            <div class="metric-emoji">🌙</div>
+            <div class="metric-info">
+              <span class="metric-lbl">Descanso / Sueño</span>
+              <strong class="metric-val">{{ CALIDAD_SUENO_MAP[diario.calidadSueno].label }} ({{ CALIDAD_SUENO_MAP[diario.calidadSueno].horas }}h)</strong>
             </div>
-            <div class="history-drinks">
-              @if (entry.bebidas && entry.bebidas.length > 0) {
-                @for (b of entry.bebidas; track $index) {
-                  <span class="history-drink-tag">{{ b.nombre }} ({{ b.cantidad }}ml)</span>
+          </div>
+
+          <!-- Síntoma -->
+          <div class="metric-pill-card">
+            <div class="metric-emoji">🩺</div>
+            <div class="metric-info">
+              <span class="metric-lbl">Síntoma reportado</span>
+              <strong class="metric-val">
+                {{ SINTOMA_LABEL[diario.sintomaPrincipal] }}
+                @if (diario.sintomaDetalle) {
+                  <span class="metric-subdetail">({{ diario.sintomaDetalle }})</span>
                 }
-              } @else {
-                <span style="font-size: 11px; color: var(--text-muted); font-style: italic;">Sin líquidos registrados</span>
+              </strong>
+            </div>
+          </div>
+
+          <!-- Actividad -->
+          <div class="metric-pill-card">
+            <div class="metric-emoji">{{ diario.actividadRealizada ? '🏃' : '⏸️' }}</div>
+            <div class="metric-info">
+              <span class="metric-lbl">Actividad física</span>
+              <strong class="metric-val" [class.text-success]="diario.actividadRealizada">
+                {{ diario.actividadRealizada ? 'Completada' : 'No realizada / Descanso' }}
+              </strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bebidas consumidas en el resumen -->
+        @if (diario.bebidas && diario.bebidas.length > 0) {
+          <div class="summary-drinks-box">
+            <div class="drinks-header-label">
+              <span class="bx bx-water"></span> Líquidos registrados:
+            </div>
+            <div class="drinks-chips-wrap">
+              @for (b of diario.bebidas; track $index) {
+                <span class="drink-summary-badge">
+                  🥤 {{ b.nombre }} · <strong>{{ b.cantidad }} ml</strong>
+                </span>
               }
             </div>
           </div>
         }
+      </section>
+
+    } @else {
+
+      <!-- ─── FORMULARIO: REGISTRO / EDICIÓN (SIN SELECCIONES AUTOMÁTICAS) ─── -->
+      <form (ngSubmit)="onSubmit()" [formGroup]="form" class="bienestar-form" novalidate>
+        
+        <div class="form-sections-layout">
+
+          <!-- 1. SECCIÓN: ESTADO DE ÁNIMO -->
+          <article class="form-card" [class.form-card--invalid]="form.controls.estadoAnimo.invalid && form.controls.estadoAnimo.touched">
+            <div class="form-card-header">
+              <div class="header-icon-circle green">
+                <span class="bx bx-smile"></span>
+              </div>
+              <div>
+                <h2 class="form-card-title">1. ¿Cómo te has sentido hoy? <span class="required-asterisk">*</span></h2>
+                <p class="form-card-subtitle">Selecciona la opción que mejor represente tu estado de ánimo general.</p>
+              </div>
+            </div>
+
+            <!-- Grid de selección de 5 estados de ánimo -->
+            <div class="mood-cards-grid" role="radiogroup" aria-label="Estado de ánimo">
+              @for (mood of estadosAnimo; track mood) {
+                <button
+                  type="button"
+                  class="mood-card-item"
+                  [class.mood-card-item--active]="form.controls.estadoAnimo.value === mood"
+                  (click)="setAnimo(mood)"
+                  role="radio"
+                  [attr.aria-checked]="form.controls.estadoAnimo.value === mood"
+                >
+                  <span class="mood-card-emoji">{{ ESTADO_ANIMO_MAP[mood].emoji }}</span>
+                  <strong class="mood-card-label">{{ ESTADO_ANIMO_MAP[mood].label }}</strong>
+                </button>
+              }
+            </div>
+
+            @if (form.controls.estadoAnimo.invalid && form.controls.estadoAnimo.touched) {
+              <p class="inline-error-msg" role="alert">
+                <span class="bx bx-error-circle"></span> Debes seleccionar cómo te has sentido hoy.
+              </p>
+            }
+          </article>
+
+          <!-- 2. SECCIÓN: CALIDAD DE DESCANSO -->
+          <article class="form-card" [class.form-card--invalid]="form.controls.calidadSueno.invalid && form.controls.calidadSueno.touched">
+            <div class="form-card-header">
+              <div class="header-icon-circle blue">
+                <span class="bx bx-moon"></span>
+              </div>
+              <div>
+                <h2 class="form-card-title">2. Calidad del Descanso / Sueño <span class="required-asterisk">*</span></h2>
+                <p class="form-card-subtitle">¿Cómo evaluas tus horas y profundidad de sueño de anoche?</p>
+              </div>
+            </div>
+
+            <!-- Grid de 4 opciones de sueño -->
+            <div class="sleep-cards-grid" role="radiogroup" aria-label="Calidad de descanso">
+              @for (sueno of calidadesOptions; track sueno[0]) {
+                <button
+                  type="button"
+                  class="sleep-card-item"
+                  [class.sleep-card-item--active]="form.controls.calidadSueno.value === sueno[0]"
+                  (click)="setSueno(sueno[0])"
+                  role="radio"
+                  [attr.aria-checked]="form.controls.calidadSueno.value === sueno[0]"
+                >
+                  <span class="sleep-card-icon bx bx-bed"></span>
+                  <div class="sleep-card-info">
+                    <strong class="sleep-card-title">{{ sueno[1].label }}</strong>
+                    <span class="sleep-card-hours">Aprox. {{ sueno[1].horas }} hrs</span>
+                  </div>
+                </button>
+              }
+            </div>
+
+            @if (form.controls.calidadSueno.invalid && form.controls.calidadSueno.touched) {
+              <p class="inline-error-msg" role="alert">
+                <span class="bx bx-error-circle"></span> Debes seleccionar cómo descansaste anoche.
+              </p>
+            }
+          </article>
+
+          <!-- 3. SECCIÓN: SÍNTOMAS Y MALESTARES -->
+          <article class="form-card" [class.form-card--invalid]="form.controls.sintomaPrincipal.invalid && form.controls.sintomaPrincipal.touched">
+            <div class="form-card-header">
+              <div class="header-icon-circle amber">
+                <span class="bx bx-pulse"></span>
+              </div>
+              <div>
+                <h2 class="form-card-title">3. Síntomas y Malestares Físicos <span class="required-asterisk">*</span></h2>
+                <p class="form-card-subtitle">Reporta si experimentaste alguna molestia digestiva o corporal.</p>
+              </div>
+            </div>
+
+            <div class="symptom-field-wrap">
+              <label for="select-sintoma-principal" class="sr-only">Selecciona síntoma principal</label>
+              <select
+                id="select-sintoma-principal"
+                class="form-select-custom"
+                [value]="form.controls.sintomaPrincipal.value || ''"
+                (change)="onSintomaChange($event)"
+              >
+                <option value="" disabled selected>-- Selecciona si presentas algún síntoma o ninguno --</option>
+                @for (entry of sintomasOptions; track entry[0]) {
+                  <option [value]="entry[0]">{{ entry[1] }}</option>
+                }
+              </select>
+
+              <!-- Detalle si es OTRO -->
+              @if (showSintomaDetalle()) {
+                <div class="symptom-detail-box">
+                  <div class="detail-label-row">
+                    <label for="input-sintoma-detalle" class="detail-input-label">
+                      Describe brevemente tu síntoma <span class="required-asterisk">*</span>
+                    </label>
+                    <span class="char-count-pill">{{ form.controls.sintomaDetalle.value.length || 0 }}/255</span>
+                  </div>
+                  <textarea
+                    id="input-sintoma-detalle"
+                    formControlName="sintomaDetalle"
+                    class="form-textarea-custom"
+                    rows="2"
+                    placeholder="Ej: Dolor punzante después de comer, fatiga a media tarde..."
+                    maxlength="255"
+                  ></textarea>
+                  @if (form.controls.sintomaDetalle.invalid && form.controls.sintomaDetalle.touched) {
+                    <p class="inline-error-msg" role="alert">
+                      <span class="bx bx-error-circle"></span> Debes detallar el síntoma que presentas.
+                    </p>
+                  }
+                </div>
+              }
+
+              @if (form.controls.sintomaPrincipal.invalid && form.controls.sintomaPrincipal.touched) {
+                <p class="inline-error-msg" role="alert">
+                  <span class="bx bx-error-circle"></span> Selecciona una opción (o indica "Ninguno").
+                </p>
+              }
+            </div>
+          </article>
+
+          <!-- 4. SECCIÓN: ACTIVIDAD FÍSICA SUGERIDA (SI EXISTE DEL NUTRIÓLOGO) -->
+          @if (sugerenciaTexto()) {
+            <article class="form-card suggestion-highlight-card">
+              <div class="form-card-header">
+                <div class="header-icon-circle emerald">
+                  <span class="bx bx-run"></span>
+                </div>
+                <div>
+                  <div class="suggestion-mini-tag">Indicación de tu Nutriólogo</div>
+                  <h2 class="form-card-title">Actividad Sugerida del Día</h2>
+                </div>
+              </div>
+
+              <div class="suggestion-banner-box">
+                <span class="bx bx-info-circle banner-icon"></span>
+                <p class="suggestion-banner-text">{{ sugerenciaTexto() }}</p>
+              </div>
+
+              <div class="activity-choice-group">
+                <span class="activity-choice-label">¿Pudiste realizar esta actividad? <span class="required-asterisk">*</span></span>
+                <div class="activity-cards-row">
+                  <button
+                    type="button"
+                    class="activity-toggle-btn activity-toggle-btn--yes"
+                    [class.activity-toggle-btn--active]="form.controls.actividadRealizada.value === true"
+                    (click)="setActividad(true)"
+                  >
+                    <span class="bx bx-check-circle"></span> Sí, realizada
+                  </button>
+                  <button
+                    type="button"
+                    class="activity-toggle-btn activity-toggle-btn--no"
+                    [class.activity-toggle-btn--active]="form.controls.actividadRealizada.value === false"
+                    (click)="setActividad(false)"
+                  >
+                    <span class="bx bx-x-circle"></span> No realizada
+                  </button>
+                </div>
+                @if (form.controls.actividadRealizada.value === null && form.controls.actividadRealizada.touched) {
+                  <p class="inline-error-msg" role="alert">
+                    <span class="bx bx-error-circle"></span> Indica si realizaste o no la actividad sugerida.
+                  </p>
+                }
+              </div>
+            </article>
+          }
+
+          <!-- 5. SECCIÓN: HIDRATACIÓN Y LÍQUIDOS -->
+          <article class="form-card">
+            <div class="form-card-header">
+              <div class="header-icon-circle cyan">
+                <span class="bx bx-water"></span>
+              </div>
+              <div>
+                <h2 class="form-card-title">4. Hidratación y Líquidos Consumidos</h2>
+                <p class="form-card-subtitle">Registra el agua y las bebidas que tomaste durante el día.</p>
+              </div>
+            </div>
+
+            <!-- Botones de atajo rápido -->
+            <div class="quick-drinks-row">
+              <span class="quick-drinks-label">Atajos rápidos:</span>
+              <button
+                type="button"
+                class="btn-quick-drink"
+                (click)="quickAddBebida('Agua Natural (Vaso)', 250)"
+              >
+                + 🥤 Vaso de Agua (250ml)
+              </button>
+              <button
+                type="button"
+                class="btn-quick-drink"
+                (click)="quickAddBebida('Agua Natural (Botella)', 500)"
+              >
+                + 💧 Botella de Agua (500ml)
+              </button>
+              <button
+                type="button"
+                class="btn-quick-drink"
+                (click)="quickAddBebida('Té / Infusión', 250)"
+              >
+                + 🍵 Té / Infusión (250ml)
+              </button>
+            </div>
+
+            <!-- Inputs manuales para añadir bebidas -->
+            <div class="beverage-input-row">
+              <div class="input-beverage-field" style="flex: 2;">
+                <label for="drink-name-input" class="sr-only">Nombre de bebida</label>
+                <input
+                  id="drink-name-input"
+                  type="text"
+                  class="form-input-beverage"
+                  placeholder="Nombre de la bebida (ej: Café, Jugo verde...)"
+                  formControlName="bebidasNombre"
+                  (keyup.enter)="addBebida()"
+                />
+              </div>
+              <div class="input-beverage-field" style="flex: 1;">
+                <label for="drink-amount-input" class="sr-only">Cantidad en ml</label>
+                <input
+                  id="drink-amount-input"
+                  type="number"
+                  class="form-input-beverage"
+                  placeholder="Cantidad (ml)"
+                  formControlName="bebidasCantidad"
+                  min="1"
+                  step="50"
+                  (keyup.enter)="addBebida()"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn-add-beverage"
+                (click)="addBebida()"
+                aria-label="Añadir bebida a la lista"
+              >
+                <span class="bx bx-plus"></span> Añadir
+              </button>
+            </div>
+
+            <!-- Lista de Chips de Bebidas Registradas -->
+            @if (bebidas().length > 0) {
+              <div class="beverages-list-box">
+                <span class="list-heading">Bebidas agregadas hoy:</span>
+                <ul class="beverages-chip-list" aria-label="Lista de bebidas consumidas">
+                  @for (bebida of bebidas(); track $index) {
+                    <li class="beverage-chip">
+                      <span class="bx bx-check chip-icon"></span>
+                      <span class="chip-name">{{ bebida.nombre }}</span>
+                      <span class="chip-qty">({{ bebida.cantidad }} ml)</span>
+                      <button
+                        type="button"
+                        class="btn-chip-remove"
+                        (click)="removeBebida($index)"
+                        [attr.aria-label]="'Eliminar ' + bebida.nombre"
+                      >
+                        <span class="bx bx-x"></span>
+                      </button>
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+          </article>
+
+          <!-- 6. ACCIÓN DE ENVÍO -->
+          <div class="form-submit-row">
+            @if (isEditing()) {
+              <button
+                type="button"
+                class="btn-form-cancel"
+                (click)="cancelEditing()"
+                [disabled]="isSaving()"
+              >
+                Cancelar Edición
+              </button>
+            }
+
+            <button
+              type="submit"
+              class="btn-form-submit"
+              [disabled]="isSaving() || isLocked() || isFormIncomplete()"
+              [attr.aria-busy]="isSaving()"
+            >
+              @if (isSaving()) {
+                <span class="bx bx-loader-alt bx-spin"></span> Guardando Registro...
+              } @else if (isLocked()) {
+                <span class="bx bx-lock-alt"></span> Plazo Vencido
+              } @else if (isEditing()) {
+                <span class="bx bx-check"></span> Guardar Cambios
+              } @else {
+                <span class="bx bx-save"></span> Guardar Registro de Bienestar
+              }
+            </button>
+          </div>
+
+        </div>
+      </form>
+
+    } <!-- end @else (form) -->
+
+  } <!-- end @else (data loaded) -->
+
+  <!-- ─── HISTORIAL RECIENTE ───────────────────────────────────────────────── -->
+  <aside class="bienestar-history-section" aria-labelledby="history-section-title">
+    <div class="history-header-row">
+      <div class="history-title-group">
+        <span class="bx bx-history history-icon"></span>
+        <h2 id="history-section-title" class="history-title">Historial Reciente de Bienestar</h2>
+      </div>
+      <span class="history-count-badge">Últimos registros</span>
+    </div>
+
+    @if (historyResource.isLoading()) {
+      <div class="state-container loading-state" role="status" aria-live="polite">
+        <div class="app-spinner"></div>
+        <p class="state-text">Cargando historial...</p>
+      </div>
+    } @else if (historyResource.error()) {
+      <p class="state-text text-danger" role="alert">No se pudo cargar el historial.</p>
+    } @else {
+      @let historyPage = historyResource.value();
+      @if (!historyPage || historyPage.content.length === 0) {
+        <div class="empty-history-box">
+          <span class="bx bx-calendar-x empty-icon"></span>
+          <p class="empty-text">Aún no tienes registros guardados en tu historial.</p>
+        </div>
+      } @else {
+        <div class="history-cards-grid">
+          @for (entry of historyPage.content; track entry.id) {
+            <article class="history-entry-card">
+              <div class="history-card-top">
+                <span class="history-date-text">
+                  <span class="bx bx-calendar"></span> {{ formatHistoryDate(entry.fecha) }}
+                </span>
+
+                @if (canEditHistoryEntry(entry.fecha)) {
+                  <button
+                    type="button"
+                    class="btn-edit-history-pill"
+                    (click)="triggerEdit(entry.fecha)"
+                    [attr.aria-label]="'Editar registro de ' + formatHistoryDate(entry.fecha)"
+                  >
+                    <span class="bx bx-edit"></span> Editar
+                  </button>
+                } @else {
+                  <span class="badge-history-locked">
+                    <span class="bx bx-lock-alt"></span> Finalizado
+                  </span>
+                }
+              </div>
+
+              <div class="history-card-body">
+                <div class="history-metric-item">
+                  <span class="metric-title">Ánimo</span>
+                  <span class="metric-val">
+                    {{ ESTADO_ANIMO_MAP[entry.estadoAnimo].emoji }} {{ ESTADO_ANIMO_MAP[entry.estadoAnimo].label }}
+                  </span>
+                </div>
+                <div class="history-metric-item">
+                  <span class="metric-title">Descanso</span>
+                  <span class="metric-val">🌙 {{ CALIDAD_SUENO_MAP[entry.calidadSueno].label }}</span>
+                </div>
+                <div class="history-metric-item">
+                  <span class="metric-title">Síntoma</span>
+                  <span class="metric-val">🩺 {{ SINTOMA_LABEL[entry.sintomaPrincipal] }}</span>
+                </div>
+              </div>
+
+              @if (entry.bebidas && entry.bebidas.length > 0) {
+                <div class="history-card-footer">
+                  <span class="footer-label"><span class="bx bx-water"></span> Líquidos:</span>
+                  <div class="history-drinks-tags">
+                    @for (b of entry.bebidas; track $index) {
+                      <span class="drink-mini-tag">{{ b.nombre }} ({{ b.cantidad }}ml)</span>
+                    }
+                  </div>
+                </div>
+              }
+            </article>
+          }
+        </div>
+
         @if (historyPage.totalPages > 1) {
-          <app-pagination
-            [currentPage]="historialPage()"
-            [totalPages]="historyPage.totalPages"
-            [totalElements]="historyPage.totalElements"
-            [pageSize]="historialSize"
-            (pageChange)="onHistorialPageChange($event)"
-          />
+          <div class="history-pagination-wrap">
+            <app-pagination
+              [currentPage]="historialPage()"
+              [totalPages]="historyPage.totalPages"
+              [totalElements]="historyPage.totalElements"
+              [pageSize]="historialSize"
+              (pageChange)="onHistorialPageChange($event)"
+            />
+          </div>
         }
       }
     }

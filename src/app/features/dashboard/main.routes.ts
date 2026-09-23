@@ -133,7 +133,7 @@ const mainRoutes: Routes = [
         path: 'diario-admin',
         loadChildren: () => import('../diario/diario.routes').then(m => m.diarioAdminRoutes),
         canMatch: [authGuard],
-        data: { roles: [UserRole.ADMINISTRADOR] }
+        data: { roles: [UserRole.ADMINISTRADOR, UserRole.NUTRIOLOGO] }
       },
       {
         path: 'mi-bienestar',
@@ -151,7 +151,25 @@ const mainRoutes: Routes = [
         path: 'bienestar-admin',
         loadChildren: () => import('../diario-extendido/diario-extendido.routes').then(m => m.diarioExtendidoAdminRoutes),
         canMatch: [authGuard],
+        data: { roles: [UserRole.ADMINISTRADOR, UserRole.NUTRIOLOGO] }
+      },
+      {
+        path: 'mi-seguimiento',
+        loadChildren: () => import('../seguimiento/seguimiento.routes').then(m => m.miSeguimientoRoutes),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.PACIENTE] }
+      },
+      {
+        path: 'seguimiento-admin',
+        loadChildren: () => import('../seguimiento/seguimiento.routes').then(m => m.seguimientoAdminRoutes),
+        canMatch: [authGuard],
         data: { roles: [UserRole.ADMINISTRADOR] }
+      },
+      {
+        path: 'calendario',
+        loadChildren: () => import('../calendario/calendario.routes').then(m => m.default),
+        canMatch: [authGuard],
+        data: { roles: [UserRole.NUTRIOLOGO, UserRole.PACIENTE] }
       },
       {
         path: '**',

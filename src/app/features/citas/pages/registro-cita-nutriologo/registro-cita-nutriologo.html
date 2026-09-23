@@ -50,18 +50,20 @@
         <div class="form-group">
           <label for="fechaHoraInicio">Fecha y hora de inicio</label>
           <input type="datetime-local" id="fechaHoraInicio" formControlName="fechaHoraInicio"
-            [class.error]="isInvalid('fechaHoraInicio')">
+            [min]="minDatetime"
+            [class.error]="isInvalid('fechaHoraInicio')" (change)="onFechaInicioChange()">
           @if (isInvalid('fechaHoraInicio')) {
-            <small class="error-msg" role="alert">La fecha de inicio es requerida</small>
+            <small class="error-msg" role="alert">{{ getErrorMessage('fechaHoraInicio', 'fecha de inicio') }}</small>
           }
         </div>
 
         <div class="form-group">
           <label for="fechaHoraFin">Fecha y hora de fin</label>
           <input type="datetime-local" id="fechaHoraFin" formControlName="fechaHoraFin"
+            [min]="minDatetime"
             [class.error]="isInvalid('fechaHoraFin')">
           @if (isInvalid('fechaHoraFin')) {
-            <small class="error-msg" role="alert">La fecha de fin es requerida</small>
+            <small class="error-msg" role="alert">{{ getErrorMessage('fechaHoraFin', 'fecha de fin') }}</small>
           }
         </div>
 

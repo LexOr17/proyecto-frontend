@@ -6,7 +6,7 @@ export const reportesRoutes: Routes = [
   {
     path: '',
     component: DashboardReportes,
-    title: 'Reportes e Inteligencia',
+    title: 'Reportes',
   },
 ];
 

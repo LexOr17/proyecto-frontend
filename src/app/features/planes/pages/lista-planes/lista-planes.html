@@ -173,9 +173,16 @@
             formControlName="nombre"
             placeholder="Ej: Plan Descenso Fase 1"
             autocomplete="off"
+            maxlength="100"
           >
           @if (form.get('nombre')?.touched && form.get('nombre')?.hasError('required')) {
             <span class="error-msg" role="alert">El nombre del plan es obligatorio</span>
+          }
+          @if (form.get('nombre')?.touched && form.get('nombre')?.hasError('minlength')) {
+            <span class="error-msg" role="alert">El nombre debe tener al menos 3 caracteres</span>
+          }
+          @if (form.get('nombre')?.touched && form.get('nombre')?.hasError('maxlength')) {
+            <span class="error-msg" role="alert">El nombre no puede superar los 100 caracteres</span>
           }
         </div>
 
@@ -187,22 +194,39 @@
             class="form-control"
             [class.invalid]="form.get('fechaInicio')?.invalid && form.get('fechaInicio')?.touched"
             formControlName="fechaInicio"
+            [min]="minDate"
           >
           @if (form.get('fechaInicio')?.touched && form.get('fechaInicio')?.hasError('required')) {
             <span class="error-msg" role="alert">La fecha de inicio es obligatoria</span>
           }
+          @if (form.get('fechaInicio')?.touched && form.get('fechaInicio')?.hasError('fechaFutura')) {
+            <span class="error-msg" role="alert">La fecha de inicio debe ser igual o posterior a hoy</span>
+          }
         </div>
 
         <div class="form-group">
-          <label for="modal-plan-duracion">Duración (días) <span aria-hidden="true">*</span></label>
+          <label for="modal-plan-duracion">Duración del plan (días) <span aria-hidden="true">*</span></label>
+          <div class="preset-duraciones-row">
+            @for (dias of [7, 14, 21, 30]; track dias) {
+              <button
+                type="button"
+                class="chip-duracion"
+                [class.activo]="form.get('duracionDias')?.value === dias"
+                (click)="setDuracionPreset(dias)"
+              >
+                {{ dias }} días
+              </button>
+            }
+          </div>
           <input
             id="modal-plan-duracion"
             type="number"
-            class="form-control"
+            class="form-control mt-2"
             [class.invalid]="form.get('duracionDias')?.invalid && form.get('duracionDias')?.touched"
             formControlName="duracionDias"
             min="1"
             max="90"
+            placeholder="Personalizado (ej. 15)"
           >
           @if (form.get('duracionDias')?.touched && form.get('duracionDias')?.hasError('required')) {
             <span class="error-msg" role="alert">La duración es obligatoria</span>

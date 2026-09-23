@@ -2,231 +2,296 @@
 
   @if (pacienteResource.isLoading()) {
   <div class="loading-state" role="status" aria-live="polite">
-    <p>Cargando seguimiento...</p>
+    <div class="spinner-icon">
+      <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i>
+    </div>
+    <p>Cargando información del paciente...</p>
   </div>
   } @else if (pacienteResource.error()) {
   <div class="error-state" role="alert">
-    <p>No se pudo cargar la información del paciente.</p>
-    <a routerLink="/main/pacientes" class="btn-back">Volver a la lista</a>
+    <div class="error-icon">
+      <i class="bx bx-error-circle" aria-hidden="true"></i>
+    </div>
+    <h3>No se pudo cargar el paciente</h3>
+    <p>Ocurrió un error al obtener la información del paciente.</p>
+    <a routerLink="/main/pacientes" class="btn-primary">
+      <i class="bx bx-arrow-back" aria-hidden="true"></i> Volver a la lista
+    </a>
   </div>
   } @else if (pacienteResource.value(); as paciente) {
 
-  <!-- Header removed per design: title and subtitle removed. -->
-
-  <!-- Tarjeta de Información Principal -->
-  <div class="patient-card">
-
-    <div class="card-banner">
-        <a routerLink="/main/pacientes" class="back-link card-back" aria-label="Volver a la lista de pacientes">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-          <span class="visually-hidden">Volver</span>
+  <!-- Barra Superior / Breadcrumb & Acciones de Cabecera -->
+  <header class="profile-header">
+    <div class="header-left">
+      <nav class="breadcrumb" aria-label="Navegación secundaria">
+        <a routerLink="/main/pacientes" class="breadcrumb-item">
+          <i class="bx bx-group" aria-hidden="true"></i> Pacientes
         </a>
-        <div class="avatar" aria-hidden="true">{{ iniciales() }}</div>
-      <div class="banner-info">
-        <h2>{{ nombreCompleto() }}</h2>
-        <div class="badges">
-          <span class="badge">Paciente</span>
-          <span class="badge">{{ edad() }} años</span>
+        <span class="breadcrumb-separator" aria-hidden="true">/</span>
+        <span class="breadcrumb-current">{{ nombreCompleto() }}</span>
+      </nav>
+      <h1 class="page-title">Perfil del Paciente</h1>
+    </div>
+
+    <div class="header-actions">
+      <a routerLink="/main/pacientes" class="btn-ghost">
+        <i class="bx bx-arrow-back" aria-hidden="true"></i>
+        <span>Volver</span>
+      </a>
+      <a [routerLink]="['/main/pacientes/editar', paciente.id]" class="btn-outline">
+        <i class="bx bx-edit" aria-hidden="true"></i>
+        <span>Editar Paciente</span>
+      </a>
+      <a [routerLink]="['/main/chat']" [queryParams]="{ pacienteId: paciente.id }" class="btn-primary">
+        <i class="bx bx-message-rounded-dots" aria-hidden="true"></i>
+        <span>Chat Directo</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Tarjeta Hero del Paciente -->
+  <section class="patient-hero-card" aria-label="Información principal del paciente">
+    <div class="hero-banner-bg" aria-hidden="true"></div>
+
+    <div class="hero-content">
+      <div class="avatar-wrapper">
+        <div class="avatar-initials" aria-hidden="true">{{ iniciales() }}</div>
+        <span class="status-indicator" title="Paciente Activo"></span>
+      </div>
+
+      <div class="hero-details">
+        <div class="hero-title-row">
+          <h2 class="hero-name">{{ nombreCompleto() }}</h2>
+          <div class="badges-row">
+            <span class="badge badge-role">
+              <i class="bx bx-user" aria-hidden="true"></i> Paciente
+            </span>
+            <span class="badge badge-age">
+              <i class="bx bx-time-five" aria-hidden="true"></i> {{ edad() }} años
+            </span>
+            <span class="badge" [class.badge-masculino]="paciente.genero === 'MASCULINO'" [class.badge-femenino]="paciente.genero === 'FEMENINO'">
+              <i class="bx" [class.bx-male]="paciente.genero === 'MASCULINO'" [class.bx-female]="paciente.genero === 'FEMENINO'" aria-hidden="true"></i>
+              {{ generoFormateado() }}
+            </span>
+          </div>
+        </div>
+
+        <div class="hero-contact-chips">
+          <a [href]="'tel:' + paciente.telefono" class="contact-chip" title="Llamar al paciente">
+            <i class="bx bx-phone" aria-hidden="true"></i>
+            <span>{{ telefonoFormateado() }}</span>
+          </a>
+          <a [href]="'mailto:' + paciente.correo" class="contact-chip" title="Enviar correo electrónico">
+            <i class="bx bx-envelope" aria-hidden="true"></i>
+            <span>{{ paciente.correo }}</span>
+          </a>
+          <span class="contact-chip chip-static" title="Fecha de nacimiento">
+            <i class="bx bx-cake" aria-hidden="true"></i>
+            <span>{{ fechaNacimientoFormateada() }}</span>
+          </span>
+          <span class="contact-chip chip-id" title="Identificador de paciente">
+            <i class="bx bx-id-card" aria-hidden="true"></i>
+            <span>ID: #{{ paciente.id }}</span>
+          </span>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- Sección de Acciones Rápidas -->
+  <section class="quick-actions-section" aria-labelledby="acciones-title">
+    <div class="section-header-row">
+      <div>
+        <h3 id="acciones-title" class="section-heading">Acciones Rápidas</h3>
+        <p class="section-subheading">Accesos directos a los módulos de atención y seguimiento</p>
+      </div>
+    </div>
+
+    <div class="actions-grid">
+
+      <!-- 1. Agendar Cita -->
+      <a [routerLink]="['/main/citas/nueva']" [queryParams]="{ pacienteId: paciente.id }" class="action-card card-emerald">
+        <div class="action-icon-pill" aria-hidden="true">
+          <i class="bx bx-calendar-plus"></i>
+        </div>
+        <div class="action-card-text">
+          <span class="action-title">Agendar Cita</span>
+          <span class="action-desc">Programar una nueva consulta</span>
+        </div>
+        <i class="bx bx-chevron-right action-arrow" aria-hidden="true"></i>
+      </a>
+
+      <!-- 2. Planes Alimenticios -->
+      <a routerLink="/main/planes" class="action-card card-green">
+        <div class="action-icon-pill" aria-hidden="true">
+          <i class="bx bx-dish"></i>
+        </div>
+        <div class="action-card-text">
+          <span class="action-title">Planes Alimenticios</span>
+          <span class="action-desc">Gestionar dietas y menús</span>
+        </div>
+        <i class="bx bx-chevron-right action-arrow" aria-hidden="true"></i>
+      </a>
+
+      <!-- 3. Registrar Medidas -->
+      <a [routerLink]="['/main/pacientes', paciente.id, 'medidas']" class="action-card card-purple">
+        <div class="action-icon-pill" aria-hidden="true">
+          <i class="bx bx-pulse"></i>
+        </div>
+        <div class="action-card-text">
+          <span class="action-title">Medidas Antropométricas</span>
+          <span class="action-desc">Peso, talla, circunferencias e IMC</span>
+        </div>
+        <i class="bx bx-chevron-right action-arrow" aria-hidden="true"></i>
+      </a>
+
+      <!-- 4. Historial Médico -->
+      <a [routerLink]="['/main/pacientes', paciente.id, 'historial-medico']" class="action-card card-rose">
+        <div class="action-icon-pill" aria-hidden="true">
+          <i class="bx bx-plus-medical"></i>
+        </div>
+        <div class="action-card-text">
+          <span class="action-title">Historial de Salud</span>
+          <span class="action-desc">Patologías, síntomas y antecedentes</span>
+        </div>
+        <i class="bx bx-chevron-right action-arrow" aria-hidden="true"></i>
+      </a>
+
+      <!-- 5. Seguimiento -->
+      <a [routerLink]="['/main/pacientes', paciente.id, 'seguimiento']" class="action-card card-blue">
+        <div class="action-icon-pill" aria-hidden="true">
+          <i class="bx bx-clipboard"></i>
+        </div>
+        <div class="action-card-text">
+          <span class="action-title">Seguimiento</span>
+          <span class="action-desc">Consultas y evolución nutricional</span>
+        </div>
+        <i class="bx bx-chevron-right action-arrow" aria-hidden="true"></i>
+      </a>
+
+      <!-- 6. Diario Alimenticio -->
+      <a [routerLink]="['/main/diario/paciente', paciente.id]" class="action-card card-amber">
+        <div class="action-icon-pill" aria-hidden="true">
+          <i class="bx bx-book-open"></i>
+        </div>
+        <div class="action-card-text">
+          <span class="action-title">Diario de Comidas</span>
+          <span class="action-desc">Registro diario de alimentos</span>
+        </div>
+        <i class="bx bx-chevron-right action-arrow" aria-hidden="true"></i>
+      </a>
+
+      <!-- 7. Diario de Bienestar -->
+      <a [routerLink]="['/main/bienestar/paciente', paciente.id]" class="action-card card-pink">
+        <div class="action-icon-pill" aria-hidden="true">
+          <i class="bx bx-heart"></i>
+        </div>
+        <div class="action-card-text">
+          <span class="action-title">Diario de Bienestar</span>
+          <span class="action-desc">Agua, sueño, humor y actividad</span>
+        </div>
+        <i class="bx bx-chevron-right action-arrow" aria-hidden="true"></i>
+      </a>
+
+      <!-- 8. Metas y Objetivos -->
+      <a [routerLink]="['/main/metas', paciente.id]" class="action-card card-cyan">
+        <div class="action-icon-pill" aria-hidden="true">
+          <i class="bx bx-target-lock"></i>
+        </div>
+        <div class="action-card-text">
+          <span class="action-title">Objetivos del Paciente</span>
+          <span class="action-desc">Objetivos de peso y nutrición</span>
+        </div>
+        <i class="bx bx-chevron-right action-arrow" aria-hidden="true"></i>
+      </a>
+
+      <!-- 9. Chat Directo -->
+      <a [routerLink]="['/main/chat']" [queryParams]="{ pacienteId: paciente.id }" class="action-card card-teal">
+        <div class="action-icon-pill" aria-hidden="true">
+          <i class="bx bx-message-rounded-dots"></i>
+        </div>
+        <div class="action-card-text">
+          <span class="action-title">Chat con Paciente</span>
+          <span class="action-desc">Mensajes y comunicación directa</span>
+        </div>
+        <i class="bx bx-chevron-right action-arrow" aria-hidden="true"></i>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- Ficha Detallada de Información -->
+  <section class="info-card" aria-labelledby="detalles-title">
+    <div class="info-card-header">
+      <h3 id="detalles-title" class="info-card-title">
+        <i class="bx bx-id-card" aria-hidden="true"></i> Información del Expediente
+      </h3>
+      <a [routerLink]="['/main/pacientes/editar', paciente.id]" class="btn-text-edit">
+        <i class="bx bx-edit" aria-hidden="true"></i> Editar datos
+      </a>
     </div>
 
     <div class="info-grid">
 
       <!-- Datos Personales -->
-      <section class="info-section" aria-labelledby="datos-personales-title">
-        <h3 id="datos-personales-title" class="info-section-title">Datos Personales</h3>
-        <ul class="info-list" role="list">
+      <div class="info-group">
+        <h4 class="group-title">Datos Personales</h4>
+        <dl class="group-list">
+          <div class="group-item">
+            <dt class="group-label">Nombre Completo</dt>
+            <dd class="group-value">{{ nombreCompleto() }}</dd>
+          </div>
+          <div class="group-item">
+            <dt class="group-label">Género</dt>
+            <dd class="group-value">
+              <span class="gender-tag" [class.gender-m]="paciente.genero === 'MASCULINO'" [class.gender-f]="paciente.genero === 'FEMENINO'">
+                {{ generoFormateado() }}
+              </span>
+            </dd>
+          </div>
+          <div class="group-item">
+            <dt class="group-label">Fecha de Nacimiento</dt>
+            <dd class="group-value">{{ fechaNacimientoFormateada() }}</dd>
+          </div>
+          <div class="group-item">
+            <dt class="group-label">Edad Actual</dt>
+            <dd class="group-value">{{ edad() }} años</dd>
+          </div>
+        </dl>
+      </div>
 
-          <li class="info-item">
-            <div class="info-icon" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-            </div>
-            <div class="info-text">
-              <p class="info-label">Nombre Completo</p>
-              <p class="info-value">{{ nombreCompleto() }}</p>
-            </div>
-          </li>
-
-          <li class="info-item">
-            <div class="info-icon" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="8" r="5" />
-                <path d="M20 21a8 8 0 1 0-16 0" />
-              </svg>
-            </div>
-            <div class="info-text">
-              <p class="info-label">Género</p>
-              <p class="info-value">{{ generoFormateado() }}</p>
-            </div>
-          </li>
-
-          <li class="info-item">
-            <div class="info-icon" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M8 2v4" />
-                <path d="M16 2v4" />
-                <rect width="18" height="18" x="3" y="4" rx="2" />
-                <path d="M3 10h18" />
-              </svg>
-            </div>
-            <div class="info-text">
-              <p class="info-label">Fecha de Nacimiento</p>
-              <p class="info-value">{{ fechaNacimientoFormateada() }}</p>
-            </div>
-          </li>
-
-        </ul>
-      </section>
-
-      <!-- Contacto y Sistema -->
-      <section class="info-section" aria-labelledby="contacto-title">
-        <h3 id="contacto-title" class="info-section-title">Contacto y Sistema</h3>
-        <ul class="info-list" role="list">
-
-          <li class="info-item">
-            <div class="info-icon" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path
-                  d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.11 12 19.79 19.79 0 0 1 1.04 3.4a2 2 0 0 1 2-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-              </svg>
-            </div>
-            <div class="info-text">
-              <p class="info-label">Teléfono</p>
-              <p class="info-value">{{ paciente.telefono }}</p>
-            </div>
-          </li>
-
-          <li class="info-item">
-            <div class="info-icon" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect width="20" height="16" x="2" y="4" rx="2" />
-                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-              </svg>
-            </div>
-            <div class="info-text">
-              <p class="info-label">Correo Electrónico</p>
-              <p class="info-value">{{ paciente.correo }}</p>
-            </div>
-          </li>
-
-          <li class="info-item">
-            <div class="info-icon" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-                <path d="m9 12 2 2 4-4" />
-              </svg>
-            </div>
-            <div class="info-text">
-              <p class="info-label">Rol en Sistema</p>
-              <p class="info-value">Paciente</p>
-            </div>
-          </li>
-
-        </ul>
-      </section>
-
-    </div>
-  </div>
-
-  <!-- Acciones Rápidas -->
-  <section class="quick-actions-section" aria-labelledby="acciones-title">
-    <h3 id="acciones-title" class="quick-actions-title">Acciones Rápidas</h3>
-    <div class="actions-grid">
-
-      <a href="#agendar-cita" class="action-card">
-        <div class="action-icon-wrapper" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8 2v4" />
-            <path d="M16 2v4" />
-            <path d="M21 13V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8" />
-            <path d="M3 10h18" />
-            <path d="M16 19h6" />
-            <path d="M19 16v6" />
-          </svg>
-        </div>
-        <span>Agendar Cita</span>
-      </a>
-
-      <a href="#asignar-plan" class="action-card">
-        <div class="action-icon-wrapper" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path
-              d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z" />
-            <path d="M10 2c1 .5 2 2 2 5" />
-          </svg>
-        </div>
-        <span>Asignar Plan</span>
-      </a>
-
-      <a [routerLink]="['/main/pacientes', pacienteResource.value()?.id, 'medidas']" class="action-card">
-        <div class="action-icon-wrapper" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-          </svg>
-        </div>
-        <span>Registrar Medidas</span>
-      </a>
-
-      <a [routerLink]="['/main/pacientes', pacienteResource.value()?.id, 'historial-medico']" class="action-card">
-        <div class="action-icon-wrapper" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 12h6" />
-            <path d="M12 9v6" />
-            <path d="M3 9a2 2 0 0 1 2-2h1V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v2h1a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-          </svg>
-        </div>
-        <span>Historial Médico</span>
-      </a>
-
-      <a [routerLink]="['/main/diario/paciente', pacienteResource.value()?.id]" class="action-card">
-        <div class="action-icon-wrapper" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-          </svg>
-        </div>
-        <span>Ver Diario</span>
-      </a>
-
-      <a [routerLink]="['/main/bienestar/paciente', pacienteResource.value()?.id]" class="action-card">
-        <div class="action-icon-wrapper" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-          </svg>
-        </div>
-        <span>Diario de Bienestar</span>
-      </a>
-
-      <a [routerLink]="['/main/metas', pacienteResource.value()?.id]" class="action-card">
-        <div class="action-icon-wrapper" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <circle cx="12" cy="12" r="6"/>
-            <circle cx="12" cy="12" r="2"/>
-          </svg>
-        </div>
-        <span>Metas</span>
-      </a>
+      <!-- Contacto y Cuenta -->
+      <div class="info-group">
+        <h4 class="group-title">Contacto y Sistema</h4>
+        <dl class="group-list">
+          <div class="group-item">
+            <dt class="group-label">Teléfono</dt>
+            <dd class="group-value">
+              <a [href]="'tel:' + paciente.telefono" class="link-contact">
+                <i class="bx bx-phone" aria-hidden="true"></i> {{ telefonoFormateado() }}
+              </a>
+            </dd>
+          </div>
+          <div class="group-item">
+            <dt class="group-label">Correo Electrónico</dt>
+            <dd class="group-value">
+              <a [href]="'mailto:' + paciente.correo" class="link-contact">
+                <i class="bx bx-envelope" aria-hidden="true"></i> {{ paciente.correo }}
+              </a>
+            </dd>
+          </div>
+          <div class="group-item">
+            <dt class="group-label">Rol en el Sistema</dt>
+            <dd class="group-value">
+              <span class="badge-system">Paciente Registrado</span>
+            </dd>
+          </div>
+          <div class="group-item">
+            <dt class="group-label">Folio / ID Único</dt>
+            <dd class="group-value font-mono">#{{ paciente.id }}</dd>
+          </div>
+        </dl>
+      </div>
 
     </div>
   </section>

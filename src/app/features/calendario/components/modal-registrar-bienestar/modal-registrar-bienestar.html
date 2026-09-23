@@ -1,0 +1,218 @@
+<div class="modal-backdrop" (click)="cerrar()">
+  <div class="modal-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    
+    <div class="modal-header">
+      <div class="modal-title-wrapper">
+        <div class="icon-badge">
+          <span class="bx bx-heart"></span>
+        </div>
+        <div>
+          <h3 class="modal-title">Mi Bienestar Diario</h3>
+          <p class="modal-subtitle">Registro del día {{ fecha }}</p>
+        </div>
+      </div>
+      <button type="button" class="btn-close" (click)="cerrar()" aria-label="Cerrar">
+        <span class="bx bx-x"></span>
+      </button>
+    </div>
+
+    @if (isLoading()) {
+      <div class="modal-loading">
+        <div class="spinner"></div>
+        <p>Cargando información del día...</p>
+      </div>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal-body" novalidate>
+        
+        <!-- SUGERENCIA DEL NUTRIÓLOGO (si existe) -->
+        @if (sugerenciaTexto()) {
+          <div class="sugerencia-card" role="region" aria-label="Actividad física sugerida">
+            <div class="sugerencia-header">
+              <span class="bx bx-run sugerencia-icon"></span>
+              <h4>Sugerencia de tu Nutriólogo</h4>
+            </div>
+            <p class="sugerencia-content">{{ sugerenciaTexto() }}</p>
+            <div class="activity-options" role="group" aria-label="¿Realizaste la actividad?">
+              <button
+                type="button"
+                class="activity-option"
+                [class.selected]="form.controls.actividadRealizada.value === true"
+                (click)="setActividad(true)"
+              >
+                <span class="bx bx-check-circle"></span>
+                <span>Realizado</span>
+              </button>
+              <button
+                type="button"
+                class="activity-option"
+                [class.selected]="form.controls.actividadRealizada.value === false"
+                (click)="setActividad(false)"
+              >
+                <span class="bx bx-x-circle"></span>
+                <span>No realizado</span>
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- 1. Estado de Ánimo -->
+        <div class="form-group">
+          <label class="form-label">
+            1. ¿Cómo te sientes hoy? <span class="required-star">*</span>
+          </label>
+          <div class="emoji-selector-row">
+            @for (animo of animos; track animo) {
+              <button
+                type="button"
+                class="emoji-btn"
+                [class.active]="form.controls.estadoAnimo.value === animo"
+                (click)="setAnimo(animo)"
+                [title]="animoMap[animo].label"
+              >
+                <span class="emoji-icon">{{ animoMap[animo].emoji }}</span>
+                <span class="emoji-label">{{ animoMap[animo].label }}</span>
+              </button>
+            }
+          </div>
+          @if (form.controls.estadoAnimo.invalid && form.controls.estadoAnimo.touched) {
+            <p class="modal-field-error">
+              <span class="bx bx-error-circle"></span> Selecciona tu estado de ánimo.
+            </p>
+          }
+        </div>
+
+        <!-- 2. Descanso y Calidad de Sueño -->
+        <div class="form-group">
+          <label class="form-label" for="calidadSuenoSelect">
+            2. Calidad de Sueño / Descanso <span class="required-star">*</span>
+          </label>
+          <select
+            id="calidadSuenoSelect"
+            class="form-control"
+            [value]="form.controls.calidadSueno.value || ''"
+            (change)="setSueno($any($event.target).value)"
+          >
+            <option value="" disabled selected>-- Selecciona la calidad de tu descanso --</option>
+            @for (sueno of suenos; track sueno) {
+              <option [value]="sueno">{{ suenoMap[sueno].label }}</option>
+            }
+          </select>
+          @if (form.controls.calidadSueno.invalid && form.controls.calidadSueno.touched) {
+            <p class="modal-field-error">
+              <span class="bx bx-error-circle"></span> Selecciona la calidad de descanso.
+            </p>
+          }
+        </div>
+
+        <!-- 3. Síntomas -->
+        <div class="form-group">
+          <label class="form-label" for="sintomaSelect">
+            3. ¿Experimentaste algún síntoma o molestia? <span class="required-star">*</span>
+          </label>
+          <select
+            id="sintomaSelect"
+            class="form-control"
+            [value]="form.controls.sintomaPrincipal.value || ''"
+            (change)="onSintomaSelect($event)"
+          >
+            <option value="" disabled selected>-- Selecciona si presentas algún síntoma o ninguno --</option>
+            @for (s of sintomasList; track s.value) {
+              <option [value]="s.value">{{ s.label }}</option>
+            }
+          </select>
+
+          @if (form.controls.sintomaPrincipal.value === 'OTRO') {
+            <textarea
+              formControlName="sintomaDetalle"
+              rows="2"
+              class="form-control mt-2"
+              placeholder="Describe brevemente el síntoma o molestia..."
+              maxlength="255"
+            ></textarea>
+            @if (form.controls.sintomaDetalle.invalid && form.controls.sintomaDetalle.touched) {
+              <p class="modal-field-error">
+                <span class="bx bx-error-circle"></span> Debes especificar el síntoma.
+              </p>
+            }
+          }
+
+          @if (form.controls.sintomaPrincipal.invalid && form.controls.sintomaPrincipal.touched) {
+            <p class="modal-field-error">
+              <span class="bx bx-error-circle"></span> Selecciona un síntoma o "Ninguno".
+            </p>
+          }
+        </div>
+
+        <!-- 4. Hidratación Dinámica (Lista de Bebidas) -->
+        <div class="form-group">
+          <label class="form-label">4. Hidratación (Líquidos Consumidos)</label>
+          <div class="beverage-input-row">
+            <input
+              type="text"
+              class="form-control beverage-name-input"
+              placeholder="Ej: Agua natural, Té, Café..."
+              formControlName="bebidasNombre"
+              (keyup.enter)="addBebida()"
+            />
+            <input
+              type="number"
+              class="form-control beverage-amount-input"
+              placeholder="ml"
+              formControlName="bebidasCantidad"
+              min="1"
+              step="50"
+              (keyup.enter)="addBebida()"
+            />
+            <button
+              type="button"
+              class="btn-add-beverage"
+              (click)="addBebida()"
+              title="Añadir bebida"
+            >
+              <span class="bx bx-plus"></span>
+              <span>Añadir</span>
+            </button>
+          </div>
+
+          @if (bebidas().length > 0) {
+            <div class="beverage-chips-container">
+              @for (bebida of bebidas(); track $index) {
+                <div class="beverage-chip">
+                  <span class="bx bx-coffee beverage-chip-icon"></span>
+                  <span class="beverage-chip-text">{{ bebida.nombre }} ({{ bebida.cantidad }}ml)</span>
+                  <button
+                    type="button"
+                    class="btn-remove-chip"
+                    (click)="removeBebida($index)"
+                    aria-label="Eliminar bebida"
+                  >
+                    &times;
+                  </button>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="beverage-empty-hint">Sin bebidas agregadas aún para este día.</p>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cerrar()" [disabled]="isSubmitting()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="isSubmitting() || isFormIncomplete()">
+            @if (isSubmitting()) {
+              <span class="spinner-sm"></span>
+              <span>Guardando...</span>
+            } @else {
+              <span class="bx bx-check"></span>
+              <span>Guardar Bienestar</span>
+            }
+          </button>
+        </div>
+
+      </form>
+    }
+
+  </div>
+</div>

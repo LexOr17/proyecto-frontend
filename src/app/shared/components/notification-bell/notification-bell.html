@@ -1,0 +1,81 @@
+<button
+  id="notification-bell-btn"
+  class="bell-btn"
+  type="button"
+  (click)="togglePanel()"
+  aria-label="Notificaciones"
+  [attr.aria-expanded]="isOpen()"
+>
+  <svg class="bell-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+
+  @if (svc.tienePendientes()) {
+    <span class="bell-badge" aria-label="{{ svc.noLeidasCount() }} notificaciones no leídas">
+      {{ svc.noLeidasCount() > 99 ? '99+' : svc.noLeidasCount() }}
+    </span>
+  }
+</button>
+
+@if (isOpen()) {
+  <div class="notif-panel" role="dialog" aria-label="Panel de notificaciones">
+    <!-- Header del panel -->
+    <div class="notif-panel-header">
+      <h3 class="notif-panel-title">Notificaciones</h3>
+      @if (svc.tienePendientes()) {
+        <button
+          type="button"
+          class="notif-mark-all-btn"
+          (click)="marcarTodasComoLeidas($event)"
+        >
+          Marcar todas como leídas
+        </button>
+      }
+    </div>
+
+    <!-- Lista de notificaciones -->
+    <ul class="notif-list" role="list">
+      @if (svc.cargando()) {
+        <li class="notif-empty">
+          <span class="notif-spinner" aria-label="Cargando..."></span>
+          <span>Cargando...</span>
+        </li>
+      } @else if (svc.notificaciones().length === 0) {
+        <li class="notif-empty">
+          <span class="notif-empty-icon">🔔</span>
+          <span>No tienes notificaciones</span>
+        </li>
+      } @else {
+        @for (notif of svc.notificaciones(); track notif.notificacionUsuarioId) {
+          <li
+            class="notif-item"
+            [class.notif-item--unread]="!notif.leida"
+            (click)="onClickNotificacion(notif)"
+            (keydown.enter)="onClickNotificacion(notif)"
+            tabindex="0"
+            role="button"
+            [attr.aria-label]="notif.titulo + ': ' + notif.mensaje"
+          >
+            <span class="notif-item-icon" aria-hidden="true">{{ getIcono(notif.tipo) }}</span>
+            <div class="notif-item-body">
+              <p class="notif-item-title">{{ notif.titulo }}</p>
+              <p class="notif-item-msg">{{ notif.mensaje }}</p>
+              <time class="notif-item-time" [attr.datetime]="notif.creadoEn">
+                {{ notif.creadoEn | date: 'd MMM, HH:mm' : '' : 'es-MX' }}
+              </time>
+            </div>
+            @if (!notif.leida) {
+              <span class="notif-item-dot" aria-hidden="true"></span>
+            }
+          </li>
+        }
+      }
+    </ul>
+  </div>
+}

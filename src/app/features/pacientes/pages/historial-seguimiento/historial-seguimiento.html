@@ -1,0 +1,217 @@
+<div class="main-content">
+  <div class="header-banner">
+    <div class="banner-left">
+      <a [routerLink]="['/main/pacientes', pacienteId()]" class="back-link" aria-label="Volver al perfil del paciente">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+        <span>Perfil del Paciente</span>
+      </a>
+      @if (pacienteResource.value(); as paciente) {
+      <h2>Historial de Seguimiento</h2>
+      <p class="subtitle">
+        <i class="bx bx-user" aria-hidden="true"></i> Paciente: <strong>{{ paciente.nombre }} {{ paciente.apellidoPaterno }} {{ paciente.apellidoMaterno }}</strong>
+      </p>
+      }
+    </div>
+
+    @if (isNutriologo()) {
+    <button class="btn-primary" (click)="irANuevo()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14" />
+        <path d="M12 5v14" />
+      </svg>
+      Nueva Consulta de Seguimiento
+    </button>
+    }
+  </div>
+
+  @if (seguimientosResource.isLoading()) {
+  <div class="loading-state">
+    <div class="spinner-custom"></div>
+    <p>Cargando historial de consultas de seguimiento...</p>
+  </div>
+  } @else if (seguimientosResource.error()) {
+  <div class="error-state">
+    <i class="bx bx-error-circle" aria-hidden="true"></i>
+    <p>Ocurrió un error al obtener las consultas de seguimiento.</p>
+  </div>
+  } @else if (seguimientosResource.value(); as page) {
+  @if (page.content.length === 0) {
+  <div class="empty-state">
+    <div class="empty-icon">📋</div>
+    <h3>Sin consultas de seguimiento registradas</h3>
+    <p>Aún no se ha realizado ninguna evaluación de seguimiento periódico para este paciente.</p>
+    @if (isNutriologo()) {
+    <button class="btn-primary mt-3" (click)="irANuevo()">
+      <i class="bx bx-plus" aria-hidden="true"></i> Registrar primera consulta
+    </button>
+    }
+  </div>
+  } @else {
+  <div class="seguimientos-list">
+    @for (item of page.content; track item.id) {
+    @let adherence = getAdherenciaBadge(item.pctCumplimientoAlimentos, item.pctActividad);
+
+    <div class="card-seguimiento" [class.expanded]="seleccionado()?.id === item.id">
+      
+      <!-- Cabecera de la Consulta -->
+      <div class="card-header">
+        <div class="header-left-meta">
+          <div class="periodo-chip">
+            <i class="bx bx-calendar" aria-hidden="true"></i>
+            <span class="periodo-dates">Período: {{ item.fechaInicio | date:'dd/MM/yyyy' }} — {{ item.fechaFin | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <span class="fecha-registro-pill">
+            <i class="bx bx-time" aria-hidden="true"></i> Evaluado el {{ item.fechaConsulta | date:'mediumDate' }}
+          </span>
+          <span class="adherence-badge-sm" [ngClass]="adherence.cssClass">
+            <i class="bx" [ngClass]="adherence.icon" aria-hidden="true"></i>
+            {{ adherence.label }} ({{ adherence.score }}%)
+          </span>
+        </div>
+
+        <div class="actions">
+          <button class="btn-detail-toggle" (click)="verDetalle(item)"
+            [attr.aria-label]="seleccionado()?.id === item.id ? 'Ocultar informe' : 'Ver informe'">
+            <i class="bx" [class.bx-chevron-up]="seleccionado()?.id === item.id" [class.bx-chevron-down]="seleccionado()?.id !== item.id" aria-hidden="true"></i>
+            {{ seleccionado()?.id === item.id ? 'Ocultar Informe' : 'Ver Informe' }}
+          </button>
+          @if (isNutriologo()) {
+          <button class="btn-icon edit" (click)="irAEditar(item)" title="Editar observaciones">
+            <i class="bx bx-edit" aria-hidden="true"></i> Editar
+          </button>
+          }
+          @if (isNutriologo() || isAdmin()) {
+          <button class="btn-icon delete" (click)="eliminar(item)" title="Eliminar consulta">
+            <i class="bx bx-trash" aria-hidden="true"></i>
+          </button>
+          }
+        </div>
+      </div>
+
+      <!-- Resumen Kpis en Grid -->
+      <div class="kpis-grid">
+        <!-- KPI 1: Peso -->
+        <div class="kpi-box peso-kpi">
+          <div class="kpi-box-top">
+            <i class="bx bx-scale kpi-icon" aria-hidden="true"></i>
+            <span class="kpi-label">Evolución de Peso</span>
+          </div>
+          <span class="kpi-val">{{ item.pesoInicio !== null ? (item.pesoInicio | number:'1.1-1') + ' kg' : 'N/D' }} → {{ item.pesoFin !== null ? (item.pesoFin | number:'1.1-1') + ' kg' : 'N/D' }}</span>
+          @if (item.diferenciaPeso !== null) {
+          <span class="kpi-sub" [class.loss]="item.diferenciaPeso < 0" [class.gain]="item.diferenciaPeso > 0" [class.neutral]="item.diferenciaPeso === 0">
+            <i class="bx" [class.bx-trending-down]="item.diferenciaPeso < 0" [class.bx-trending-up]="item.diferenciaPeso > 0" [class.bx-minus]="item.diferenciaPeso === 0" aria-hidden="true"></i>
+            {{ item.diferenciaPeso > 0 ? '+' : '' }}{{ item.diferenciaPeso | number:'1.1-2' }} kg
+          </span>
+          } @else {
+            <span class="kpi-sub text-muted">Sin medidas registradas</span>
+          }
+        </div>
+
+        <!-- KPI 2: Cumplimiento Alimentario -->
+        <div class="kpi-box food-kpi">
+          <div class="kpi-box-top">
+            <i class="bx bx-restaurant kpi-icon" aria-hidden="true"></i>
+            <span class="kpi-label">Plan Alimentario</span>
+          </div>
+          <span class="kpi-val highlight-purple">{{ item.pctCumplimientoAlimentos | number:'1.0-1' }}%</span>
+          <span class="kpi-sub">
+            🟢 {{ item.comidasCumplidas }} · 🟡 {{ item.comidasModificadas }} · 🔴 {{ item.comidasSaltadas }}
+          </span>
+        </div>
+
+        <!-- KPI 3: Actividad Física -->
+        <div class="kpi-box activity-kpi">
+          <div class="kpi-box-top">
+            <i class="bx bx-run kpi-icon" aria-hidden="true"></i>
+            <span class="kpi-label">Actividad Física</span>
+          </div>
+          <span class="kpi-val highlight-green">{{ item.pctActividad | number:'1.0-1' }}%</span>
+          <span class="kpi-sub">{{ item.diasActividadRealizada }} de {{ item.totalDiasExtendidos }} días activos</span>
+        </div>
+
+        <!-- KPI 4: Objetivos & Citas -->
+        <div class="kpi-box goals-kpi">
+          <div class="kpi-box-top">
+            <i class="bx bx-target-lock kpi-icon" aria-hidden="true"></i>
+            <span class="kpi-label">Objetivos & Citas</span>
+          </div>
+          <span class="kpi-val">🎯 {{ item.metasCumplidas }}/{{ item.totalMetas }} <small class="text-sep">|</small> 📅 {{ item.citasCompletadas }}/{{ item.totalCitas }}</span>
+          <span class="kpi-sub">{{ item.totalMetas > 0 ? ((item.metasCumplidas / item.totalMetas * 100) | number:'1.0-0') + '% objetivos logrados' : 'Sin objetivos fijados' }}</span>
+        </div>
+      </div>
+
+      <!-- Detalle Plegable: INFORME CLÍNICO -->
+      @if (seleccionado()?.id === item.id) {
+      <div class="detalle-panel">
+        <div class="report-header">
+          <h4><i class="bx bx-file-blank" aria-hidden="true"></i> Evaluación y Notas</h4>
+          <span class="report-tag">Expediente Oficial</span>
+        </div>
+
+        <!-- Desglose de Comidas en Detalle -->
+        <div class="breakdown-inline-summary">
+          <div class="breakdown-item">
+            <span class="bk-dot green"></span>
+            <span>Comidas Cumplidas: <strong>{{ item.comidasCumplidas }}</strong></span>
+          </div>
+          <div class="breakdown-item">
+            <span class="bk-dot yellow"></span>
+            <span>Modificadas: <strong>{{ item.comidasModificadas }}</strong></span>
+          </div>
+          <div class="breakdown-item">
+            <span class="bk-dot red"></span>
+            <span>Saltadas: <strong>{{ item.comidasSaltadas }}</strong></span>
+          </div>
+          <div class="breakdown-item ml-auto">
+            <span>Total monitoreadas: <strong>{{ item.totalComidasRegistradas }}</strong></span>
+          </div>
+        </div>
+
+        <div class="clinical-notes-grid">
+          <div class="text-section observations-box">
+            <div class="section-badge-title">
+              <i class="bx bx-edit-alt" aria-hidden="true"></i>
+              <h5>Observaciones Generales</h5>
+            </div>
+            <p>{{ item.observaciones || 'Sin observaciones registradas.' }}</p>
+          </div>
+
+          @if (item.conclusiones) {
+          <div class="text-section conclusions-box">
+            <div class="section-badge-title">
+              <i class="bx bx-check-circle" aria-hidden="true"></i>
+              <h5>Conclusiones Diagnósticas</h5>
+            </div>
+            <p>{{ item.conclusiones }}</p>
+          </div>
+          }
+
+          @if (item.recomendaciones) {
+          <div class="text-section recommendations-box">
+            <div class="section-badge-title">
+              <i class="bx bx-bulb" aria-hidden="true"></i>
+              <h5>Recomendaciones & Ajustes</h5>
+            </div>
+            <p>{{ item.recomendaciones }}</p>
+          </div>
+          }
+        </div>
+
+        <div class="report-footer">
+          <div class="doctor-signature">
+            <i class="bx bx-shield-quarter" aria-hidden="true"></i>
+            <span>Nutriólogo Responsable: <strong>{{ item.nutriologoNombre }}</strong></span>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+    }
+  </div>
+  }
+  }
+</div>

@@ -18,6 +18,7 @@
             <h3 class="section-title">Información de Cuenta</h3>
             <div class="form-grid">
 
+                @if (!modoEdicion()) {
                 <div class="form-group">
                     <label for="rol">Rol</label>
                     <select id="rol" formControlName="rol">
@@ -26,6 +27,7 @@
                         <option value="ADMINISTRADOR">Administrador</option>
                     </select>
                 </div>
+                }
 
                 <div class="form-group">
                     <label for="correo">Correo</label>
@@ -60,9 +62,10 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="apellidoMaterno">Apellido Materno</label>
+                    <label for="apellidoMaterno">Apellido Materno (Opcional)</label>
                     <input type="text" id="apellidoMaterno" formControlName="apellidoMaterno"
                         autocomplete="additional-name" [class.error]="isInvalid('apellidoMaterno')">
+                    <small class="help-text">Puedes dejarlo en blanco si no tienes segundo apellido.</small>
                 </div>
 
                 <div class="form-group">
@@ -80,7 +83,11 @@
                     <input type="date" id="fechaNacimiento" formControlName="fechaNacimiento"
                         [class.error]="isInvalid('fechaNacimiento')">
                     @if (isInvalid('fechaNacimiento')) {
-                    <small class="error-msg">Fecha requerida</small>
+                        @if (registroForm.get('fechaNacimiento')?.hasError('required')) {
+                        <small class="error-msg">Fecha requerida</small>
+                        } @else if (registroForm.get('fechaNacimiento')?.hasError('fechaFutura')) {
+                        <small class="error-msg">La fecha de nacimiento debe ser una fecha pasada</small>
+                        }
                     }
                 </div>
 
@@ -101,9 +108,14 @@
                         <label for="cedulaProfesional">Cédula Profesional <span class="required"
                                 aria-hidden="true">*</span></label>
                         <input type="text" id="cedulaProfesional" formControlName="cedulaProfesional"
-                            [class.error]="isInvalid('cedulaProfesional')">
+                            maxlength="8" [class.error]="isInvalid('cedulaProfesional')"
+                            (input)="onCedulaInput($event)">
                         @if (isInvalid('cedulaProfesional')) {
-                        <small class="error-msg">La cédula es obligatoria para nutriólogos</small>
+                            @if (registroForm.get('cedulaProfesional')?.hasError('required')) {
+                            <small class="error-msg">La cédula es obligatoria para nutriólogos</small>
+                            } @else if (registroForm.get('cedulaProfesional')?.hasError('pattern')) {
+                            <small class="error-msg">La cédula debe constar de exactamente 8 dígitos numéricos</small>
+                            }
                         }
                     </div>
                 </div>

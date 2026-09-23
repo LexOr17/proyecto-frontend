@@ -15,6 +15,7 @@ import { AuthService } from '../../../../core/services/auth-service';
 import { PacienteService } from '../../../pacientes/service/paciente-service';
 import { NotificationService } from '../../../../shared/service/notification-service';
 import { MotivoCita } from '../../interfaces/cita.interface';
+import { FormValidatorHelper } from '../../../../shared/helpers/form-validator-helper';
 
 @Component({
   selector: 'app-registro-cita-nutriologo',
@@ -71,12 +72,26 @@ export class RegistroCitaNutriologo {
 
   protected readonly form = this.fb.nonNullable.group({
     pacienteId: [0, [Validators.required, Validators.min(1)]],
-    fechaHoraInicio: ['', Validators.required],
+    fechaHoraInicio: ['', [Validators.required, FormValidatorHelper.fechaHoraFuturaValidator()]],
     fechaHoraFin: ['', Validators.required],
     motivoCita: ['PRIMERA_VEZ' as MotivoCita, Validators.required],
-  });
+  }, { validators: [FormValidatorHelper.finPosteriorInicioValidator('fechaHoraInicio', 'fechaHoraFin')] });
+
+  /** Valor mínimo para los inputs datetime-local (ahora mismo) */
+  protected get minDatetime(): string {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 1);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }
 
   constructor() {
+    // Si viene pacienteId por queryParams (desde perfil de paciente), preseleccionarlo
+    const qPacienteId = this.route.snapshot.queryParamMap.get('pacienteId');
+    if (qPacienteId && !isNaN(Number(qPacienteId))) {
+      this.form.patchValue({ pacienteId: Number(qPacienteId) });
+    }
+
     // Poblar formulario en modo edición
     effect(() => {
       const cita = this.citaResource.value();
@@ -93,7 +108,18 @@ export class RegistroCitaNutriologo {
 
   protected isInvalid(field: string): boolean {
     const ctrl = this.form.get(field);
-    return !!(ctrl && ctrl.invalid && (ctrl.touched || ctrl.dirty));
+    // Verificar también error del grupo (cross-field) para fechaHoraFin
+    if (field === 'fechaHoraFin' && (ctrl?.touched || ctrl?.dirty) && this.form.hasError('finAnteriorInicio')) {
+      return true;
+    }
+    return FormValidatorHelper.isFieldInvalidTouchedOrDirty(ctrl);
+  }
+
+  protected getErrorMessage(field: string, label: string): string {
+    if (field === 'fechaHoraFin' && (this.form.get(field)?.touched || this.form.get(field)?.dirty) && this.form.hasError('finAnteriorInicio')) {
+      return 'La hora de fin debe ser posterior a la hora de inicio.';
+    }
+    return FormValidatorHelper.getErrorMessage(this.form.get(field), label);
   }
 
   protected onSubmit(): void {
@@ -149,5 +175,27 @@ export class RegistroCitaNutriologo {
     // changes the hour. To preserve the hour the user selected, send the
     // local datetime string without converting to UTC (no trailing 'Z').
     return `${datetimeLocal}:00`;
+  }
+
+  protected onFechaInicioChange(): void {
+    const val = this.form.controls.fechaHoraInicio.value;
+    if (val) {
+      const date = new Date(val);
+      if (!isNaN(date.getTime())) {
+        date.setHours(date.getHours() + 1);
+        const formatted = this.formatDateToLocalString(date);
+        this.form.patchValue({ fechaHoraFin: formatted });
+      }
+    }
+  }
+
+  private formatDateToLocalString(date: Date): string {
+    const pad = (num: number) => num.toString().padStart(2, '0');
+    const YYYY = date.getFullYear();
+    const MM = pad(date.getMonth() + 1);
+    const DD = pad(date.getDate());
+    const HH = pad(date.getHours());
+    const mm = pad(date.getMinutes());
+    return `${YYYY}-${MM}-${DD}T${HH}:${mm}`;
   }
 }

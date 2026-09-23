@@ -45,6 +45,29 @@ export class MetaService {
   obtenerConteoMetas(pacienteId: number): Observable<MetaStatusCount> {
     return this.http
       .get<ApiResponse<MetaStatusCount>>(`${this.baseUrl}/paciente/${pacienteId}/resumen`)
-      .pipe(map(r => r.datos!));
+      .pipe(
+        map(r => {
+          const d = r.datos ?? {
+            pendientes: 0,
+            porValidar: 0,
+            cumplidas: 0,
+            rechazadas: 0,
+            noCumplidas: 0,
+            total: 0,
+            porcentaje: 0,
+            porcentajeExito: 0,
+          };
+          const rawPct =
+            d.porcentajeExito ??
+            d.porcentaje ??
+            (d.total > 0 ? (d.cumplidas / d.total) * 100 : 0);
+          const roundedPct = Math.round(rawPct);
+          return {
+            ...d,
+            porcentaje: roundedPct,
+            porcentajeExito: rawPct,
+          };
+        })
+      );
   }
 }

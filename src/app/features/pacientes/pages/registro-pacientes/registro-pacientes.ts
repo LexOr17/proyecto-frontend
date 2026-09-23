@@ -5,6 +5,7 @@ import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PacienteService } from '../../service/paciente-service';
 import { mapPacienteFormToRequest } from '../../mappers/paciente.mapper';
 import { NotificationService } from '../../../../shared/service/notification-service';
+import { FormValidatorHelper } from '../../../../shared/helpers/form-validator-helper';
 
 @Component({
   selector: 'app-registro-pacientes',
@@ -40,12 +41,12 @@ export class RegistroPacientes {
 
   // Formulario
   protected registroForm = this.fb.nonNullable.group({
-    nombre: ['', [Validators.required, Validators.minLength(2)]],
-    apellidoPaterno: ['', [Validators.required]],
-    apellidoMaterno: [''],
+    nombre: ['', [Validators.required, Validators.minLength(2), FormValidatorHelper.soloLetrasValidator()]],
+    apellidoPaterno: ['', [Validators.required, Validators.minLength(2), FormValidatorHelper.soloLetrasValidator()]],
+    apellidoMaterno: ['', [FormValidatorHelper.soloLetrasValidator()]],
     correo: ['', [Validators.required, Validators.email]],
     telefono: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
-    fechaNacimiento: ['', [Validators.required]],
+    fechaNacimiento: ['', [Validators.required, FormValidatorHelper.fechaPasadaValidator()]],
     genero: ['MASCULINO', [Validators.required]],
   });
 
@@ -118,8 +119,11 @@ export class RegistroPacientes {
   }
 
   protected isInvalid(field: string): boolean {
-    const ctrl = this.registroForm.get(field);
-    return !!(ctrl && ctrl.invalid && (ctrl.touched || ctrl.dirty));
+    return FormValidatorHelper.isFieldInvalidTouchedOrDirty(this.registroForm.get(field));
+  }
+
+  protected getErrorMessage(field: string, label: string): string {
+    return FormValidatorHelper.getErrorMessage(this.registroForm.get(field), label);
   }
 
   private formatearTelefono(telefono: string): string {

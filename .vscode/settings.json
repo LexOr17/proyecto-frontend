@@ -9,5 +9,9 @@
         "angular-page": {
             "skipChangeDetectionOnPush": true
         }
-    }
+    },
+    "git.timeline.showAuthor": false,
+    "git.blame.editorDecoration.template": "${subject}",
+    "git.blame.statusBarItem.template": "${authorName} ",
+    "github.showAvatar": false
 }

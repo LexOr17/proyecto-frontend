@@ -4,6 +4,7 @@ export interface PlantillaAlimentoResponse {
   alimentoId: number;
   nombreAlimento: string;
   cantidad: number;
+  porcionBase?: number;
   unidadPorcion: string;
 }
 

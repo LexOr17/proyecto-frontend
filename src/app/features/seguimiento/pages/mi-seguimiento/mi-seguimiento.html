@@ -1,0 +1,166 @@
+<div class="main-content">
+  <div class="header-banner">
+    <h2>Mi Seguimiento</h2>
+    <p class="subtitle">Consulta las evaluaciones y observaciones periódicas emitidas por tu nutriólogo.</p>
+  </div>
+
+  @if (seguimientosResource.isLoading()) {
+  <div class="loading-state">
+    <div class="spinner-custom"></div>
+    <p>Cargando tus evaluaciones de seguimiento...</p>
+  </div>
+  } @else if (seguimientosResource.error()) {
+  <div class="error-state">
+    <i class="bx bx-error-circle" aria-hidden="true"></i>
+    <p>Ocurrió un error al cargar tu historial de seguimiento.</p>
+  </div>
+  } @else if (seguimientosResource.value(); as page) {
+  @if (page.content.length === 0) {
+  <div class="empty-state">
+    <div class="empty-icon">📋</div>
+    <h3>Sin evaluaciones registradas aún</h3>
+    <p>Tu nutriólogo registrará aquí las consultas y avances de tu seguimiento periódico.</p>
+  </div>
+  } @else {
+  <div class="seguimientos-list">
+    @for (item of page.content; track item.id) {
+    @let adherence = getAdherenciaBadge(item.pctCumplimientoAlimentos, item.pctActividad);
+
+    <div class="card-seguimiento" [class.expanded]="seleccionado()?.id === item.id">
+      <div class="card-header">
+        <div class="header-left-meta">
+          <div class="periodo-chip">
+            <i class="bx bx-calendar" aria-hidden="true"></i>
+            <span class="periodo-dates">Período: {{ item.fechaInicio | date:'dd/MM/yyyy' }} — {{ item.fechaFin | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <span class="fecha-registro-pill">
+            <i class="bx bx-time" aria-hidden="true"></i> Evaluado el {{ item.fechaConsulta | date:'mediumDate' }}
+          </span>
+          <span class="adherence-badge-sm" [ngClass]="adherence.cssClass">
+            <i class="bx" [ngClass]="adherence.icon" aria-hidden="true"></i>
+            {{ adherence.label }} ({{ adherence.score }}%)
+          </span>
+        </div>
+        
+        <button class="btn-detail-toggle" (click)="verDetalle(item)">
+          <i class="bx" [class.bx-chevron-up]="seleccionado()?.id === item.id" [class.bx-chevron-down]="seleccionado()?.id !== item.id" aria-hidden="true"></i>
+          {{ seleccionado()?.id === item.id ? 'Ocultar Informe' : 'Ver Informe Completo' }}
+        </button>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpis-grid">
+        <div class="kpi-box peso-kpi">
+          <div class="kpi-box-top">
+            <i class="bx bx-scale kpi-icon" aria-hidden="true"></i>
+            <span class="kpi-label">Evolución de Peso</span>
+          </div>
+          <span class="kpi-val">{{ item.pesoInicio !== null ? (item.pesoInicio | number:'1.1-1') + ' kg' : 'N/D' }} → {{ item.pesoFin !== null ? (item.pesoFin | number:'1.1-1') + ' kg' : 'N/D' }}</span>
+          @if (item.diferenciaPeso !== null) {
+          <span class="kpi-sub" [class.loss]="item.diferenciaPeso < 0" [class.gain]="item.diferenciaPeso > 0" [class.neutral]="item.diferenciaPeso === 0">
+            <i class="bx" [class.bx-trending-down]="item.diferenciaPeso < 0" [class.bx-trending-up]="item.diferenciaPeso > 0" [class.bx-minus]="item.diferenciaPeso === 0" aria-hidden="true"></i>
+            {{ item.diferenciaPeso > 0 ? '+' : '' }}{{ item.diferenciaPeso | number:'1.1-2' }} kg
+          </span>
+          } @else {
+            <span class="kpi-sub text-muted">Sin medidas registradas</span>
+          }
+        </div>
+
+        <div class="kpi-box food-kpi">
+          <div class="kpi-box-top">
+            <i class="bx bx-restaurant kpi-icon" aria-hidden="true"></i>
+            <span class="kpi-label">Cumplimiento Dietético</span>
+          </div>
+          <span class="kpi-val highlight-purple">{{ item.pctCumplimientoAlimentos | number:'1.0-1' }}%</span>
+          <span class="kpi-sub">🟢 {{ item.comidasCumplidas }} · 🟡 {{ item.comidasModificadas }} · 🔴 {{ item.comidasSaltadas }}</span>
+        </div>
+
+        <div class="kpi-box activity-kpi">
+          <div class="kpi-box-top">
+            <i class="bx bx-run kpi-icon" aria-hidden="true"></i>
+            <span class="kpi-label">Actividad Física</span>
+          </div>
+          <span class="kpi-val highlight-green">{{ item.pctActividad | number:'1.0-1' }}%</span>
+          <span class="kpi-sub">{{ item.diasActividadRealizada }} de {{ item.totalDiasExtendidos }} días activos</span>
+        </div>
+
+        <div class="kpi-box goals-kpi">
+          <div class="kpi-box-top">
+            <i class="bx bx-target-lock kpi-icon" aria-hidden="true"></i>
+            <span class="kpi-label">Objetivos & Citas</span>
+          </div>
+          <span class="kpi-val">🎯 {{ item.metasCumplidas }}/{{ item.totalMetas }} <small class="text-sep">|</small> 📅 {{ item.citasCompletadas }}/{{ item.totalCitas }}</span>
+          <span class="kpi-sub">{{ item.totalMetas > 0 ? ((item.metasCumplidas / item.totalMetas * 100) | number:'1.0-0') + '% objetivos logrados' : 'Sin objetivos fijados' }}</span>
+        </div>
+      </div>
+
+      <!-- Detalle Plegable: INFORME -->
+      @if (seleccionado()?.id === item.id) {
+      <div class="detalle-panel">
+        <div class="report-header">
+          <h4><i class="bx bx-file-blank" aria-hidden="true"></i> Informe de Consulta</h4>
+          <span class="report-tag">Observaciones Médicas</span>
+        </div>
+
+        <div class="breakdown-inline-summary">
+          <div class="breakdown-item">
+            <span class="bk-dot green"></span>
+            <span>Comidas Cumplidas: <strong>{{ item.comidasCumplidas }}</strong></span>
+          </div>
+          <div class="breakdown-item">
+            <span class="bk-dot yellow"></span>
+            <span>Modificadas: <strong>{{ item.comidasModificadas }}</strong></span>
+          </div>
+          <div class="breakdown-item">
+            <span class="bk-dot red"></span>
+            <span>Saltadas: <strong>{{ item.comidasSaltadas }}</strong></span>
+          </div>
+          <div class="breakdown-item ml-auto">
+            <span>Total monitoreadas: <strong>{{ item.totalComidasRegistradas }}</strong></span>
+          </div>
+        </div>
+
+        <div class="clinical-notes-grid">
+          <div class="text-section observations-box">
+            <div class="section-badge-title">
+              <i class="bx bx-edit-alt" aria-hidden="true"></i>
+              <h5>Observaciones de tu Nutriólogo</h5>
+            </div>
+            <p>{{ item.observaciones || 'Sin observaciones especificadas.' }}</p>
+          </div>
+
+          @if (item.conclusiones) {
+          <div class="text-section conclusions-box">
+            <div class="section-badge-title">
+              <i class="bx bx-check-circle" aria-hidden="true"></i>
+              <h5>Conclusiones del Avance</h5>
+            </div>
+            <p>{{ item.conclusiones }}</p>
+          </div>
+          }
+
+          @if (item.recomendaciones) {
+          <div class="text-section recommendations-box">
+            <div class="section-badge-title">
+              <i class="bx bx-bulb" aria-hidden="true"></i>
+              <h5>Recomendaciones para Ti</h5>
+            </div>
+            <p>{{ item.recomendaciones }}</p>
+          </div>
+          }
+        </div>
+
+        <div class="report-footer">
+          <div class="doctor-signature">
+            <i class="bx bx-shield-quarter" aria-hidden="true"></i>
+            <span>Nutriólogo a Cargo: <strong>{{ item.nutriologoNombre }}</strong></span>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+    }
+  </div>
+  }
+  }
+</div>

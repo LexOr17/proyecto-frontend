@@ -1,0 +1,175 @@
+<div class="modal-backdrop" (click)="cerrar()">
+  <div class="modal-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    
+    <div class="modal-header">
+      <div class="modal-title-wrapper">
+        <div class="icon-badge">
+          <span class="bx bx-calendar-event"></span>
+        </div>
+        <div>
+          <h3 class="modal-title">Detalle de la Cita</h3>
+          <p class="modal-subtitle">{{ formatFecha(cita.fechaHoraInicio) }}</p>
+        </div>
+      </div>
+      <button type="button" class="btn-close" (click)="cerrar()" aria-label="Cerrar">
+        <span class="bx bx-x"></span>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      
+      <!-- Banner Estado Actual -->
+      <div class="status-banner">
+        <div class="status-info">
+          <span class="status-label">Estado:</span>
+          <span class="badge-status" [class]="estadoColor[cita.estado]">
+            {{ estadoLabel[cita.estado] || cita.estado }}
+          </span>
+        </div>
+        <div class="horario-badge">
+          <span class="bx bx-time-five"></span>
+          <span>{{ formatHora(cita.fechaHoraInicio) }} @if (cita.fechaHoraFin) { - {{ formatHora(cita.fechaHoraFin) }} }</span>
+        </div>
+      </div>
+
+      <!-- Info Cards -->
+      <div class="info-grid">
+        <div class="info-card">
+          <span class="info-card-label">
+            @if (isNutriologo) { Paciente } @else { Nutriólogo }
+          </span>
+          <div class="info-card-value">
+            <span class="bx bx-user-circle info-icon"></span>
+            <strong>
+              @if (isNutriologo) { {{ cita.pacienteNombre }} } @else { {{ cita.nutriologoNombre }} }
+            </strong>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <span class="info-card-label">Motivo de Consulta</span>
+          <div class="info-card-value">
+            <span class="bx bx-bookmark info-icon"></span>
+            <span>{{ motivoLabel[cita.motivoCita] || cita.motivoCita }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCIONES PARA NUTRIÓLOGO -->
+      @if (isNutriologo && (cita.estado === 'PROGRAMADA' || cita.estado === 'SOLICITADA')) {
+        <div class="actions-panel">
+          <h4 class="actions-title">Gestión de la Consulta</h4>
+          
+          <div class="quick-actions-grid">
+            <button 
+              type="button" 
+              class="btn-action btn-action--success"
+              (click)="toggleObservaciones()"
+              [disabled]="isSubmitting()"
+            >
+              <span class="bx bx-check-double"></span>
+              <span>Marcar Asistencia</span>
+            </button>
+
+            <button 
+              type="button" 
+              class="btn-action btn-action--warning"
+              (click)="marcarNoAsistio()"
+              [disabled]="isSubmitting()"
+            >
+              <span class="bx bx-user-x"></span>
+              <span>No Asistió</span>
+            </button>
+
+            <button 
+              type="button" 
+              class="btn-action btn-action--danger"
+              (click)="cancelarCita()"
+              [disabled]="isSubmitting()"
+            >
+              <span class="bx bx-trash"></span>
+              <span>Cancelar Cita</span>
+            </button>
+          </div>
+
+          @if (showObservacionesInput()) {
+            <div class="observaciones-box">
+              <label class="form-label" for="obs">Notas u Observaciones Clínicas (Opcional):</label>
+              <textarea
+                id="obs"
+                rows="2"
+                class="form-control"
+                placeholder="Escribe comentarios u observaciones de la sesión..."
+                [ngModel]="observaciones()"
+                (ngModelChange)="observaciones.set($event)"
+              ></textarea>
+              <div class="obs-actions">
+                <button 
+                  type="button" 
+                  class="btn btn-primary btn-sm"
+                  (click)="marcarAsistio()"
+                  [disabled]="isSubmitting()"
+                >
+                  <span class="bx bx-check"></span>
+                  Confirmar Asistencia
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ACCIONES PARA PACIENTE -->
+      @if (!isNutriologo && (cita.estado === 'PROGRAMADA' || cita.estado === 'SOLICITADA')) {
+        <div class="actions-panel">
+          <div class="paciente-action-header">
+            <h4 class="actions-title">Opciones de la Cita</h4>
+            <button 
+              type="button" 
+              class="btn-cancel-link"
+              (click)="showCancelacionPaciente.set(!showCancelacionPaciente())"
+            >
+              Solicitar Cancelación
+            </button>
+          </div>
+
+          @if (showCancelacionPaciente()) {
+            <div class="cancelacion-paciente-box">
+              <label class="form-label" for="motivoCancel">Motivo por el cual necesitas cancelar:</label>
+              <textarea
+                id="motivoCancel"
+                rows="2"
+                class="form-control"
+                placeholder="Indica el motivo de la cancelación..."
+                [ngModel]="motivoCancelacion()"
+                (ngModelChange)="motivoCancelacion.set($event)"
+              ></textarea>
+              <button 
+                type="button" 
+                class="btn btn-danger btn-sm"
+                (click)="solicitarCancelacionPaciente()"
+                [disabled]="isSubmitting()"
+              >
+                Enviar Solicitud de Cancelación
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="modal-footer">
+        @if (isNutriologo && cita.pacienteId) {
+          <button type="button" class="btn btn-outline" (click)="verExpedientePaciente()">
+            <span class="bx bx-folder-open"></span>
+            <span>Ver Expediente</span>
+          </button>
+        }
+        <button type="button" class="btn btn-secondary" (click)="cerrar()">
+          Cerrar
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</div>

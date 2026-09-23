@@ -7,6 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -16,6 +17,10 @@ import { SugerenciaService } from '../../service/sugerencia-service';
 import { NotificationService } from '../../../../shared/service/notification-service';
 import { Alimento, CATEGORIAS_ALIMENTO } from '../../../alimentos/interfaces/alimento.interface';
 import { Plantilla, TIPOS_COMIDA, TipoComida } from '../../../plantillas/interfaces/plantilla.interface';
+import {
+  CATEGORIAS_MOTIVO_SUGERENCIA,
+  CategoriaMotivoSugerencia,
+} from '../../interfaces/sugerencia.interface';
 import { Pagination } from '../../../../shared/components/pagination/pagination';
 import { PageEvent } from '../../../../shared/interfaces/page.interface';
 
@@ -26,7 +31,7 @@ interface ItemSugerencia {
 
 @Component({
   selector: 'app-editar-sugerencia',
-  imports: [ReactiveFormsModule, RouterLink, Pagination],
+  imports: [ReactiveFormsModule, RouterLink, Pagination, DecimalPipe],
   templateUrl: './editar-sugerencia.html',
   styleUrl: '../nueva-sugerencia/nueva-sugerencia.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,6 +49,7 @@ export class EditarSugerencia {
 
   protected readonly categorias = CATEGORIAS_ALIMENTO;
   protected readonly tiposComida = TIPOS_COMIDA;
+  protected readonly categoriasMotivo = CATEGORIAS_MOTIVO_SUGERENCIA;
 
   protected isSubmitting = signal(false);
   protected searchTerm = signal('');
@@ -60,6 +66,7 @@ export class EditarSugerencia {
   protected sugerenciaForm = this.fb.nonNullable.group({
     nombre: ['', [Validators.required, Validators.maxLength(100)]],
     tipoComida: ['DESAYUNO' as TipoComida, [Validators.required]],
+    categoriaMotivo: ['PREFERENCIA_SABOR' as CategoriaMotivoSugerencia, [Validators.required]],
     motivoSugerencia: ['', [Validators.maxLength(500)]],
   });
 
@@ -87,20 +94,25 @@ export class EditarSugerencia {
   });
 
   protected alimentosResource = rxResource({
-    params: () => ({ page: this.currentPage(), size: this.pageSize() }),
-    stream: ({ params }) =>
-      this.alimentoService.obtenerAlimentos(params.page, params.size),
+    params: () => ({
+      keyword: this.searchTerm(),
+      page: this.currentPage(),
+      size: this.pageSize(),
+    }),
+    stream: ({ params }) => {
+      const kw = params.keyword.trim();
+      if (kw) {
+        return this.alimentoService.buscarAlimentos(kw, params.page, params.size);
+      }
+      return this.alimentoService.obtenerAlimentos(params.page, params.size);
+    },
   });
 
   protected alimentosFiltrados = computed(() => {
     const alimentos = this.alimentosResource.value()?.content ?? [];
-    const term = this.searchTerm().toLowerCase();
     const cat = this.selectedCategory();
-    return alimentos.filter((a) => {
-      const matchText = !term || a.nombre.toLowerCase().includes(term);
-      const matchCat = !cat || a.categoria === cat;
-      return matchText && matchCat;
-    });
+    if (!cat) return alimentos;
+    return alimentos.filter((a) => a.categoria === cat);
   });
 
   protected totales = computed(() => {
@@ -136,6 +148,7 @@ export class EditarSugerencia {
       this.sugerenciaForm.patchValue({
         nombre: sugerencia.nombre,
         tipoComida: sugerencia.tipoComida,
+        categoriaMotivo: sugerencia.categoriaMotivo ?? 'PREFERENCIA_SABOR',
         motivoSugerencia: sugerencia.motivoSugerencia ?? '',
       });
 
@@ -172,10 +185,25 @@ export class EditarSugerencia {
 
   protected onSearchChange(event: Event): void {
     this.searchTerm.set((event.target as HTMLInputElement).value);
+    this.currentPage.set(0);
   }
 
   protected onCategoryChange(event: Event): void {
     this.selectedCategory.set((event.target as HTMLSelectElement).value);
+  }
+
+  protected setTipoComida(tipo: TipoComida): void {
+    this.sugerenciaForm.controls.tipoComida.setValue(tipo);
+  }
+
+  protected setCategoriaMotivo(categoria: CategoriaMotivoSugerencia): void {
+    this.sugerenciaForm.controls.categoriaMotivo.setValue(categoria);
+  }
+
+  protected limpiarBusqueda(): void {
+    this.searchTerm.set('');
+    this.selectedCategory.set('');
+    this.currentPage.set(0);
   }
 
   protected agregarAlimento(alimento: Alimento): void {
@@ -193,12 +221,26 @@ export class EditarSugerencia {
   protected actualizarCantidad(index: number, delta: number): void {
     this.items.update((current) => {
       const updated = [...current];
-      const newCantidad = updated[index].cantidad + delta;
+      const newCantidad = Math.round((updated[index].cantidad + delta) * 100) / 100;
       if (newCantidad <= 0) {
         updated.splice(index, 1);
       } else {
         updated[index] = { ...updated[index], cantidad: newCantidad };
       }
+      return updated;
+    });
+  }
+
+  protected cambiarCantidadDirecta(index: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const val = parseFloat(input.value);
+    if (isNaN(val) || val <= 0) {
+      this.quitarAlimento(index);
+      return;
+    }
+    this.items.update((current) => {
+      const updated = [...current];
+      updated[index] = { ...updated[index], cantidad: Math.round(val * 100) / 100 };
       return updated;
     });
   }
@@ -223,7 +265,7 @@ export class EditarSugerencia {
     }
 
     this.isSubmitting.set(true);
-    const { nombre, tipoComida, motivoSugerencia } = this.sugerenciaForm.getRawValue();
+    const { nombre, tipoComida, categoriaMotivo, motivoSugerencia } = this.sugerenciaForm.getRawValue();
     const plantillaOriginalId =
       this.plantillaSeleccionada()?.id ?? this.originalPlantillaId() ?? undefined;
 
@@ -231,6 +273,7 @@ export class EditarSugerencia {
       .actualizarSugerencia(this.sugerenciaId, {
         nombre,
         tipoComida,
+        categoriaMotivo,
         motivoSugerencia: motivoSugerencia || undefined,
         plantillaOriginalId,
         alimentos: this.items().map((i) => ({ alimentoId: i.alimento.id!, cantidad: i.cantidad })),

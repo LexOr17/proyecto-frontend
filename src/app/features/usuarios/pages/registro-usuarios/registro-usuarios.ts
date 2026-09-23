@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { UsuarioService } from '../../service/usuario-service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { mapRegistroFormToRequest } from '../../mappers/usuario.mapper';
@@ -46,7 +46,7 @@ export class RegistroUsuarios {
     apellidoMaterno: [''],
     correo: ['', [Validators.required, Validators.email]],
     telefono: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
-    fechaNacimiento: ['', [Validators.required]],
+    fechaNacimiento: ['', [Validators.required, fechaPasadaValidator()]],
     genero: ['MASCULINO', [Validators.required]],
     rol: ['PACIENTE', [Validators.required]],
     cedulaProfesional: [''],
@@ -126,7 +126,7 @@ export class RegistroUsuarios {
 
     // Aplicar lógica condicional
     if (rol === 'NUTRIOLOGO') {
-      cedulaCtrl?.setValidators([Validators.required]);
+      cedulaCtrl?.setValidators([Validators.required, Validators.pattern('^[0-9]{8}$')]);
     } else if (rol === 'PACIENTE') {
       nutriologoCtrl?.setValidators([Validators.required]);
     }
@@ -218,6 +218,14 @@ export class RegistroUsuarios {
     this.registroForm.get('telefono')?.setValue(limitedValue, { emitEvent: false });
   }
 
+  protected onCedulaInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value.replace(/\D/g, ''); // Solo números
+    const limitedValue = value.substring(0, 8); // Máximo 8 dígitos
+    input.value = limitedValue;
+    this.registroForm.get('cedulaProfesional')?.setValue(limitedValue, { emitEvent: false });
+  }
+
   protected limpiarFormulario(): void {
     this.registroForm.reset({
       genero: 'MASCULINO',
@@ -232,4 +240,14 @@ export class RegistroUsuarios {
     }
   }
 
+}
+
+function fechaPasadaValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value) return null;
+    const selectedDate = new Date(control.value + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return selectedDate < today ? null : { fechaFutura: true };
+  };
 }

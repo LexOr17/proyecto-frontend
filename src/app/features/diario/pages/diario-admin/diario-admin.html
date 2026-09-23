@@ -1,150 +1,261 @@
-<div class="main-content">
+<div class="diario-admin-container">
 
-  <!-- Banner de advertencia admin -->
-  <div class="admin-banner" role="region" aria-label="Información del modo administrador">
-    <div class="admin-banner-icon" aria-hidden="true">
-      <span class="bx bx-shield-x"></span>
-    </div>
-    <div class="admin-banner-text">
-      <div class="admin-banner-tag">
-        <span class="bx bx-error-circle" aria-hidden="true"></span>
-        Modo Administrador
-      </div>
-      <h1 class="admin-banner-title">Mantenimiento de Historial</h1>
-      <p class="admin-banner-desc">
-        Tiene permisos para realizar <strong>borrado permanente</strong> de registros.
-        Estas acciones no pueden deshacerse y afectan los reportes de adherencia.
-      </p>
-    </div>
-  </div>
-
-  <!-- Búsqueda de paciente -->
-  <div class="search-panel">
-    <form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="search-form" novalidate>
-      <div class="form-group">
-        <label for="admin-paciente-id" class="form-label">ID del Paciente</label>
-        <div class="input-wrap">
-          <span class="input-icon bx bx-user" aria-hidden="true"></span>
-          <input
-            id="admin-paciente-id"
-            type="number"
-            formControlName="pacienteId"
-            class="form-input"
-            placeholder="Ej: 42"
-            min="1"
-          />
+  <!-- ─── SECCIÓN: SELECCIÓN DE PACIENTE (SIN ID MANUAL) ───────────────────── -->
+  @if (!selectedPaciente()) {
+    <section class="patient-picker-section" aria-label="Selección de paciente">
+      <div class="picker-hero-banner">
+        <div class="picker-hero-content">
+          <div class="picker-icon-badge" aria-hidden="true">
+            <span class="bx bx-shield-quarter"></span>
+          </div>
+          <div>
+            <div class="picker-hero-tag">Módulo de Control y Auditoría</div>
+            <h1 class="picker-hero-title">Control de Diarios de Alimentación</h1>
+            <p class="picker-hero-subtitle">
+              Selecciona un paciente para revisar y gestionar sus comidas registradas, con opción de eliminación individual o por lotes.
+            </p>
+          </div>
         </div>
-        @if (searchForm.get('pacienteId')?.invalid && searchForm.get('pacienteId')?.touched) {
-          <p class="form-error" role="alert">Ingresa un ID de paciente válido.</p>
+
+        <!-- Buscador en tiempo real -->
+        <div class="search-input-wrapper">
+          <span class="bx bx-search search-icon" aria-hidden="true"></span>
+          <input
+            type="search"
+            [value]="searchTerm()"
+            (input)="searchTerm.set($any($event.target).value)"
+            class="patient-search-input"
+            placeholder="Buscar paciente por nombre, apellido, correo o ID..."
+            aria-label="Buscar paciente"
+          />
+          @if (searchTerm()) {
+            <button type="button" class="btn-clear-search" (click)="searchTerm.set('')" aria-label="Limpiar búsqueda">
+              <span class="bx bx-x"></span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Lista de Pacientes -->
+      @if (pacientesListResource.isLoading()) {
+        <div class="state-container loading-state" role="status" aria-live="polite">
+          <div class="app-spinner"></div>
+          <p class="state-text">Cargando catálogo de pacientes...</p>
+        </div>
+      } @else if (filteredPacientes().length === 0) {
+        <div class="state-container empty-state">
+          <div class="state-icon-circle neutral">
+            <span class="bx bx-user-x"></span>
+          </div>
+          <h3 class="state-title">No se encontraron pacientes</h3>
+          <p class="state-desc">
+            {{ searchTerm() ? 'No hay coincidencias con "' + searchTerm() + '"' : 'Aún no hay pacientes disponibles.' }}
+          </p>
+        </div>
+      } @else {
+        <div class="patients-grid">
+          @for (p of filteredPacientes(); track p.id) {
+            <div class="patient-picker-card" (click)="selectPaciente(p)">
+              <div class="picker-card-header">
+                <div class="patient-avatar-circle">
+                  {{ (p.nombre ? p.nombre[0] : '') + (p.apellidoPaterno ? p.apellidoPaterno[0] : '') }}
+                </div>
+                <div class="patient-card-info">
+                  <h3 class="patient-card-name">
+                    {{ p.nombre }} {{ p.apellidoPaterno }} {{ p.apellidoMaterno ?? '' }}
+                  </h3>
+                  <span class="patient-card-email">{{ p.correo }}</span>
+                </div>
+              </div>
+
+              <div class="picker-card-footer">
+                <span class="patient-id-tag">ID: #{{ p.id }}</span>
+                <span class="btn-view-diary-text">
+                  Ver Diarios de Comidas <span class="bx bx-chevron-right"></span>
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+  } @else {
+
+    <!-- ─── MODO PACIENTE SELECCIONADO ─────────────────────────────────────── -->
+    <header class="patient-header-bar">
+      <div class="header-left-group">
+        <button type="button" class="btn-back-link" (click)="cambiarPaciente()" title="Volver a la selección de pacientes">
+          <span class="bx bx-arrow-back"></span>
+        </button>
+        <div class="patient-avatar-badge" aria-hidden="true">
+          {{ (selectedPaciente()!.nombre ? selectedPaciente()!.nombre[0] : '') + (selectedPaciente()!.apellidoPaterno ? selectedPaciente()!.apellidoPaterno[0] : '') }}
+        </div>
+        <div class="header-patient-info">
+          <div class="header-pre-title">Auditoría de Comidas del Paciente</div>
+          <h1 class="header-patient-name">
+            {{ selectedPaciente()!.nombre }} {{ selectedPaciente()!.apellidoPaterno }} {{ selectedPaciente()!.apellidoMaterno ?? '' }}
+          </h1>
+          <span class="header-patient-sub">ID: #{{ selectedPaciente()!.id }} · {{ selectedPaciente()!.correo }}</span>
+        </div>
+      </div>
+
+      <div class="header-actions-group">
+        <button type="button" class="btn-switch-patient" (click)="cambiarPaciente()">
+          <span class="bx bx-transfer-alt"></span> Cambiar Paciente
+        </button>
+      </div>
+    </header>
+
+    <!-- Barra de Herramientas y Acciones por Lote -->
+    <section class="batch-toolbar-card" aria-label="Acciones por lote y filtros">
+      <div class="toolbar-left-actions">
+        <label class="select-all-checkbox-label">
+          <input
+            type="checkbox"
+            class="custom-checkbox"
+            [checked]="isAllSelected()"
+            (change)="toggleSelectAll()"
+            [disabled]="filteredEntries().length === 0"
+          />
+          <span class="select-all-text">Seleccionar Todos ({{ filteredEntries().length }})</span>
+        </label>
+
+        @if (selectedCount() > 0) {
+          <span class="selected-counter-badge">
+            {{ selectedCount() }} seleccionado(s)
+          </span>
         }
       </div>
-      <button
-        type="submit"
-        class="btn-search"
-        [disabled]="searchForm.invalid"
-      >
-        <span class="bx bx-search" aria-hidden="true"></span>
-        Cargar Registros
-      </button>
-    </form>
 
-    <!-- Filtro de resultados -->
-    @if ((historialResource.value()?.length ?? 0) > 0) {
-      <div class="filter-wrap">
-        <label for="filter-input" class="sr-only">Filtrar resultados</label>
-        <div class="input-wrap">
-          <span class="input-icon bx bx-filter" aria-hidden="true"></span>
+      <div class="toolbar-right-actions">
+        <!-- Filtro local -->
+        <div class="filter-input-wrap">
+          <span class="filter-icon bx bx-filter-alt" aria-hidden="true"></span>
           <input
-            id="filter-input"
             type="search"
-            class="form-input"
-            placeholder="Filtrar por fecha, horario, estado..."
+            class="filter-input-control"
+            placeholder="Filtrar por fecha, horario, platillo..."
             (input)="onFilterChange($event)"
           />
         </div>
+
+        <!-- Botón de Borrado Múltiple -->
+        <button
+          type="button"
+          class="btn-delete-batch"
+          [disabled]="selectedCount() === 0 || isDeletingBatch()"
+          (click)="eliminarSeleccionados()"
+          title="Eliminar todos los registros seleccionados"
+        >
+          @if (isDeletingBatch()) {
+            <span class="bx bx-loader-alt bx-spin"></span> Eliminando...
+          } @else {
+            <span class="bx bx-trash"></span> Eliminar Seleccionados ({{ selectedCount() }})
+          }
+        </button>
       </div>
-    }
-  </div>
+    </section>
 
-  <!-- Resultados -->
-  @if (historialResource.isLoading()) {
-    <div class="loading-state" role="status" aria-live="polite">
-      <span class="bx bx-loader-alt bx-spin" aria-hidden="true"></span>
-      <p>Cargando registros...</p>
-    </div>
-  } @else if (historialResource.error()) {
-    <div class="error-state" role="alert">
-      <span class="bx bx-error-circle" aria-hidden="true"></span>
-      <p>No se pudieron cargar los registros. Verifica el ID e intenta de nuevo.</p>
-      <button type="button" class="btn-retry" (click)="historialResource.reload()">Reintentar</button>
-    </div>
-  } @else if (searchedPacienteId() !== null) {
-    <!-- Cabecera de resultados -->
-    <div class="results-header">
-      <h2 class="results-title">Registros del Sistema</h2>
-      <span class="results-count" aria-live="polite">
-        {{ filteredEntries().length }} registro(s) encontrado(s)
-      </span>
-    </div>
-
-    @if (filteredEntries().length === 0) {
-      <div class="empty-state">
-        <span class="bx bx-folder-open" aria-hidden="true"></span>
-        <p class="empty-text">Sin registros para este paciente.</p>
+    <!-- Resultados -->
+    @if (historialResource.isLoading()) {
+      <div class="state-container loading-state" role="status" aria-live="polite">
+        <div class="app-spinner"></div>
+        <p class="state-text">Consultando los registros del paciente...</p>
+      </div>
+    } @else if (historialResource.error()) {
+      <div class="state-container error-state" role="alert">
+        <div class="state-icon-circle error">
+          <span class="bx bx-error-circle"></span>
+        </div>
+        <h3 class="state-title">Error al consultar el historial</h3>
+        <p class="state-desc">Hubo un problema al cargar los diarios de este paciente.</p>
+        <button type="button" class="btn-primary" (click)="historialResource.reload()">
+          <span class="bx bx-refresh"></span> Reintentar
+        </button>
+      </div>
+    } @else if (filteredEntries().length === 0) {
+      <div class="state-container empty-state">
+        <div class="state-icon-circle neutral">
+          <span class="bx bx-folder-open"></span>
+        </div>
+        <h3 class="state-title">Sin registros encontrados</h3>
+        <p class="state-desc">
+          {{ filterTerm() ? 'No hay comidas que coincidan con "' + filterTerm() + '"' : 'El paciente no tiene registros de comidas en su historial.' }}
+        </p>
       </div>
     } @else {
-      <ul class="records-list" role="list">
+      <div class="records-grid">
         @for (entry of filteredEntries(); track entry.id) {
-          <li class="record-card">
-            <div class="record-id" aria-label="ID del registro">
-              <span>#{{ entry.id }}</span>
-            </div>
-            <div class="record-info">
-              <div class="record-meta">
-                <span class="record-fecha">{{ entry.fecha }}</span>
-                <span class="record-dot" aria-hidden="true">·</span>
-                <span class="record-horario">{{ horariosLabel[entry.horario] }}</span>
+          <article
+            class="record-admin-card"
+            [class.record-admin-card--selected]="isSelected(entry.id)"
+            (click)="toggleSelect(entry.id)"
+          >
+            <!-- Cabecera de la tarjeta con Checkbox y Badges -->
+            <div class="record-card-top">
+              <div class="record-top-left">
+                <input
+                  type="checkbox"
+                  class="custom-checkbox record-item-checkbox"
+                  [checked]="isSelected(entry.id)"
+                  (click)="$event.stopPropagation()"
+                  (change)="toggleSelect(entry.id)"
+                  aria-label="Seleccionar este registro"
+                />
+                <span class="record-id-badge">#{{ entry.id }}</span>
               </div>
-              <p
-                class="record-estado"
-                [class.record-estado--cumplido]="entry.estado === 'CUMPLIDO'"
-                [class.record-estado--modificado]="entry.estado === 'MODIFICADO'"
-                [class.record-estado--saltada]="entry.estado === 'SALTADA'"
-              >
+
+              <span class="record-status-badge record-status-badge--{{ toLower(entry.estado) }}">
                 {{ estadosLabel[entry.estado] }}
-              </p>
+              </span>
+            </div>
+
+            <!-- Cuerpo de la tarjeta -->
+            <div class="record-card-body">
+              <div class="record-meta-row">
+                <span class="meta-item"><span class="bx bx-calendar"></span> {{ entry.fecha }}</span>
+                <span class="meta-item"><span class="bx bx-time"></span> {{ horariosLabel[entry.horario] }}</span>
+              </div>
+
               @if (entry.nombreComidaSugerida) {
-                <p class="record-sugerida">{{ entry.nombreComidaSugerida }}</p>
+                <div class="record-dish-name">
+                  <span class="bx bx-food-menu"></span> {{ entry.nombreComidaSugerida }}
+                </div>
               }
+
               @if (entry.detallesComidaReal) {
-                <p class="record-detalles">"{{ entry.detallesComidaReal }}"</p>
+                <p class="record-details-quote">"{{ entry.detallesComidaReal }}"</p>
+              }
+
+              @if (entry.observacionNutriologo) {
+                <div class="record-obs-box">
+                  <span class="bx bx-user-voice"></span> {{ entry.observacionNutriologo }}
+                </div>
               }
             </div>
-            <div class="record-actions">
+
+            <!-- Footer con Botón Eliminar Individual -->
+            <div class="record-card-actions" (click)="$event.stopPropagation()">
               <button
                 type="button"
-                class="btn-delete"
-                (click)="eliminar(entry)"
+                class="btn-delete-record"
+                (click)="eliminar(entry, $event)"
                 [disabled]="isDeletingId() === entry.id"
-                [attr.aria-label]="'Eliminar registro #' + entry.id"
+                title="Eliminar permanentemente este registro"
               >
                 @if (isDeletingId() === entry.id) {
-                  <span class="bx bx-loader-alt bx-spin" aria-hidden="true"></span>
+                  <span class="bx bx-loader-alt bx-spin"></span> Eliminando...
                 } @else {
-                  <span class="bx bx-trash" aria-hidden="true"></span>
+                  <span class="bx bx-trash"></span> Eliminar
                 }
               </button>
             </div>
-          </li>
+          </article>
         }
-      </ul>
+      </div>
     }
-  } @else {
-    <!-- Estado inicial (sin buscar) -->
-    <div class="initial-state">
-      <span class="bx bx-search-alt" aria-hidden="true"></span>
-      <p>Ingresa el ID de un paciente para cargar su historial.</p>
-    </div>
-  }
+
+  } <!-- end @else (selectedPaciente !== null) -->
 
 </div>

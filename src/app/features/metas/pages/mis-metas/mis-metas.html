@@ -1,215 +1,472 @@
 <div class="mis-metas-page">
 
-  <!-- PROGRESS HERO -->
-  <section class="progress-hero" aria-label="Progreso general de metas">
-    <div class="hero-body">
-      <div class="hero-text">
-        <h1>¡Hola, {{ userName() }}! 👋</h1>
-        <p>Aquí puedes ver y gestionar tus objetivos de salud.</p>
+  <!-- ── PROGRESS HERO MOTIVACIONAL ───────────────────────────── -->
+  <section class="patient-hero-banner" aria-label="Progreso general de objetivos">
+    <div class="hero-ambient-glow" aria-hidden="true"></div>
+
+    <div class="hero-top-row">
+      <div class="hero-welcome-text">
+        <span class="hero-user-salute">¡Hola, {{ userName() }}! 👋</span>
+        <h1 class="hero-motivational-title">{{ mensajeMotivacional().titulo }}</h1>
+        <p class="hero-motivational-desc">{{ mensajeMotivacional().texto }}</p>
       </div>
-      <div class="hero-percentage" aria-label="Porcentaje de metas logradas">
-        {{ porcentajeProgreso() }}%
+
+      <!-- Anillo Circular de Logro -->
+      <div class="hero-ring-container" aria-label="Porcentaje de objetivos logrados">
+        <svg class="ring-svg" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#34D399" />
+              <stop offset="100%" stop-color="#10B981" />
+            </linearGradient>
+          </defs>
+          <circle cx="50" cy="50" [attr.r]="radioGauge" class="ring-track" />
+          <circle
+            cx="50"
+            cy="50"
+            [attr.r]="radioGauge"
+            class="ring-indicator"
+            [attr.stroke-dasharray]="circunferenciaGauge"
+            [attr.stroke-dashoffset]="getOffsetGauge(porcentajeProgreso())" />
+        </svg>
+        <div class="ring-center-content">
+          <span class="ring-pct-number">{{ porcentajeProgreso() }}%</span>
+          <span class="ring-pct-label">Completado</span>
+        </div>
       </div>
     </div>
-    <div class="progress-bar-container" role="progressbar"
-         [attr.aria-valuenow]="porcentajeProgreso()"
-         aria-valuemin="0"
-         aria-valuemax="100"
-         [attr.aria-label]="porcentajeProgreso() + '% de metas completadas'">
-      <div class="progress-bar-fill" [style.width]="porcentajeProgreso() + '%'"></div>
+
+    <!-- Barra de Nivel & Logro -->
+    <div class="hero-bottom-bar">
+      <div class="progress-bar-track" role="progressbar"
+           [attr.aria-valuenow]="porcentajeProgreso()"
+           aria-valuemin="0"
+           aria-valuemax="100"
+           [attr.aria-label]="porcentajeProgreso() + '% de objetivos completados'">
+        <div class="progress-bar-glow-fill" [style.width.%]="porcentajeProgreso()"></div>
+      </div>
+      <div class="hero-status-tag-row">
+        <span class="hero-level-chip">
+          <i class="bx bx-trophy"></i>
+          {{ mensajeMotivacional().badge }}
+        </span>
+        <span class="hero-count-info">
+          {{ conteoResource.value()?.cumplidas ?? 0 }} de {{ conteoResource.value()?.total ?? 0 }} objetivos logrados
+        </span>
+      </div>
     </div>
   </section>
 
-  <!-- STAT WIDGETS -->
-  <section class="widgets-grid" aria-label="Resumen estadístico de metas">
-    <div class="widget-card w-pendientes">
-      <div class="widget-icon-box" aria-hidden="true">
+  <!-- ── KPIS RESUMEN DEL PACIENTE ────────────────────────────── -->
+  <section class="patient-kpi-grid" aria-label="Resumen estadístico de objetivos">
+    <div
+      class="patient-kpi-card kpi--pendientes"
+      [class.kpi-card--selected]="activeTab() === 'ACTIVAS'"
+      (click)="setTab('ACTIVAS')"
+      role="button"
+      tabindex="0"
+      (keydown.enter)="setTab('ACTIVAS')"
+      (keydown.space)="setTab('ACTIVAS')"
+      aria-label="Ver objetivos activos en curso">
+      <div class="kpi-icon-wrap" aria-hidden="true">
         <i class="bx bx-time-five"></i>
       </div>
-      <span class="widget-val">{{ conteoResource.value()?.pendientes ?? 0 }}</span>
-      <span class="widget-label">Pendientes</span>
+      <div class="kpi-data-box">
+        <span class="kpi-num">{{ conteoResource.value()?.pendientes ?? 0 }}</span>
+        <span class="kpi-text">En Curso</span>
+      </div>
     </div>
-    <div class="widget-card w-logradas">
-      <div class="widget-icon-box" aria-hidden="true">
+
+    <div
+      class="patient-kpi-card kpi--revision"
+      [class.kpi-card--selected]="activeTab() === 'REVISION'"
+      (click)="setTab('REVISION')"
+      role="button"
+      tabindex="0"
+      (keydown.enter)="setTab('REVISION')"
+      (keydown.space)="setTab('REVISION')"
+      aria-label="Ver objetivos en revisión">
+      <div class="kpi-icon-wrap" aria-hidden="true">
+        <i class="bx bx-hourglass"></i>
+      </div>
+      <div class="kpi-data-box">
+        <span class="kpi-num">{{ conteoResource.value()?.porValidar ?? 0 }}</span>
+        <span class="kpi-text">En Revisión</span>
+      </div>
+    </div>
+
+    <div
+      class="patient-kpi-card kpi--logradas"
+      [class.kpi-card--selected]="activeTab() === 'LOGRADAS'"
+      (click)="setTab('LOGRADAS')"
+      role="button"
+      tabindex="0"
+      (keydown.enter)="setTab('LOGRADAS')"
+      (keydown.space)="setTab('LOGRADAS')"
+      aria-label="Ver objetivos logrados">
+      <div class="kpi-icon-wrap" aria-hidden="true">
         <i class="bx bx-check-circle"></i>
       </div>
-      <span class="widget-val">{{ conteoResource.value()?.cumplidas ?? 0 }}</span>
-      <span class="widget-label">Logradas</span>
-    </div>
-    <div class="widget-card w-revision">
-      <div class="widget-icon-box" aria-hidden="true">
-        <i class="bx bx-search-alt"></i>
+      <div class="kpi-data-box">
+        <span class="kpi-num">{{ conteoResource.value()?.cumplidas ?? 0 }}</span>
+        <span class="kpi-text">Logrados</span>
       </div>
-      <span class="widget-val">{{ conteoResource.value()?.porValidar ?? 0 }}</span>
-      <span class="widget-label">En Revisión</span>
     </div>
-    <div class="widget-card w-ajuste">
-      <div class="widget-icon-box" aria-hidden="true">
-        <i class="bx bx-error-alt"></i>
+
+    <div
+      class="patient-kpi-card kpi--ajuste"
+      [class.kpi-card--selected]="activeTab() === 'NO_LOGRADAS'"
+      (click)="setTab('NO_LOGRADAS')"
+      role="button"
+      tabindex="0"
+      (keydown.enter)="setTab('NO_LOGRADAS')"
+      (keydown.space)="setTab('NO_LOGRADAS')"
+      aria-label="Ver objetivos no logrados">
+      <div class="kpi-icon-wrap" aria-hidden="true">
+        <i class="bx bx-x-circle"></i>
       </div>
-      <span class="widget-val">{{ conteoResource.value()?.noCumplidas ?? 0 }}</span>
-      <span class="widget-label">Requiere ajuste</span>
+      <div class="kpi-data-box">
+        <span class="kpi-num">{{ conteoResource.value()?.noCumplidas ?? 0 }}</span>
+        <span class="kpi-text">No Logrados</span>
+      </div>
     </div>
   </section>
 
-  <!-- GOALS LIST -->
+  <!-- ── PESTAÑAS DE NAVEGACIÓN ───────────────────────────────── -->
+  <nav class="tabs-nav" aria-label="Categorías de objetivos">
+    <button
+      type="button"
+      class="tab-btn"
+      [class.tab-btn--active]="activeTab() === 'ACTIVAS'"
+      (click)="setTab('ACTIVAS')"
+      aria-label="Ver objetivos activos">
+      <i class="bx bx-bolt-circle" aria-hidden="true"></i>
+      <span>Objetivos Activos</span>
+      <span class="tab-badge">{{ metasActivas().length }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="tab-btn"
+      [class.tab-btn--active]="activeTab() === 'REVISION'"
+      (click)="setTab('REVISION')"
+      aria-label="Ver objetivos en revisión médica">
+      <i class="bx bx-search-alt" aria-hidden="true"></i>
+      <span>En Revisión</span>
+      <span class="tab-badge tab-badge--amber">{{ metasEnRevision().length }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="tab-btn"
+      [class.tab-btn--active]="activeTab() === 'LOGRADAS'"
+      (click)="setTab('LOGRADAS')"
+      aria-label="Ver objetivos logrados">
+      <i class="bx bx-check-double" aria-hidden="true"></i>
+      <span>Logrados</span>
+      <span class="tab-badge tab-badge--green">{{ metasLogradas().length }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="tab-btn"
+      [class.tab-btn--active]="activeTab() === 'NO_LOGRADAS'"
+      (click)="setTab('NO_LOGRADAS')"
+      aria-label="Ver objetivos no logrados">
+      <i class="bx bx-x-circle" aria-hidden="true"></i>
+      <span>No Logrados</span>
+      <span class="tab-badge tab-badge--red">{{ metasNoLogradas().length }}</span>
+    </button>
+  </nav>
+
+  <!-- ── LISTADO DE OBJETIVOS SEGÚN PESTAÑA ────────────────────── -->
   @if (metasResource.isLoading()) {
-    <div class="loading-message"><p>Cargando tus metas...</p></div>
+    <div class="loading-panel">
+      <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i>
+      <p>Cargando tus objetivos de salud...</p>
+    </div>
   } @else {
 
-    <!-- ACTIVE GOALS -->
-    @if (metasActivas().length > 0) {
-      <h2 class="section-header">Metas Activas <span aria-hidden="true">⚡</span></h2>
-      <div class="goals-group">
-        @for (meta of metasActivas(); track meta.id) {
-          <article class="goal-item" [attr.aria-label]="'Meta activa: ' + meta.descripcion">
-            <div class="goal-header">
-              <div class="date-chip">
-                <i class="bx bx-calendar" aria-hidden="true"></i>
-                Meta para el {{ formatearFecha(meta.fechaObjetivo) }}
-              </div>
-              <span class="badge" [class]="claseEstado(meta.estado)">
-                {{ etiquetaEstado(meta.estado) }}
-              </span>
-            </div>
-            <p class="goal-desc">{{ meta.descripcion }}</p>
-            @if (meta.observaciones) {
-              <div class="feedback-box feedback-box--nutriologo" role="note">
-                <strong>Nota de tu Nutriólogo</strong>
-                <q>{{ meta.observaciones }}</q>
-              </div>
-            }
-            <div class="action-area">
-              <div class="btn-group">
-                <button
-                  type="button"
-                  class="btn btn-success"
-                  [disabled]="processingId() === meta.id"
-                  (click)="marcarCumplida(meta)"
-                  [attr.aria-label]="'Marcar como lograda: ' + meta.descripcion">
-                  @if (processingId() === meta.id) {
-                    <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i>
-                  } @else {
-                    <i class="bx bx-trophy" aria-hidden="true"></i>
-                  }
-                  Lograda
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-outline-warning"
-                  [disabled]="processingId() === meta.id"
-                  (click)="toggleReporte(meta.id)"
-                  [attr.aria-expanded]="reportingMetaId() === meta.id"
-                  [attr.aria-controls]="'reason-' + meta.id">
-                  <i class="bx bx-comment-error" aria-hidden="true"></i>
-                  Reportar dificultad
-                </button>
-              </div>
-              @if (reportingMetaId() === meta.id) {
-                <div
-                  [id]="'reason-' + meta.id"
-                  class="reason-panel"
-                  role="region"
-                  [attr.aria-label]="'Formulario de reporte para meta: ' + meta.descripcion">
-                  <label [for]="'text-' + meta.id">¿Qué obstáculo tuviste?</label>
-                  <textarea
-                    [id]="'text-' + meta.id"
-                    rows="3"
-                    placeholder="Cuéntanos qué pasó para que tu nutriólogo te ayude a ajustar el plan..."
-                    [value]="reportTexts()[meta.id] || ''"
-                    (input)="setReportText(meta.id, $event)">
-                  </textarea>
-                  <button
-                    type="button"
-                    class="btn btn-warning"
-                    [disabled]="processingId() === meta.id"
-                    (click)="enviarReporte(meta)">
-                    <i class="bx bx-send" aria-hidden="true"></i> Enviar reporte
-                  </button>
+    <!-- TAB 1: OBJETIVOS ACTIVOS -->
+    @if (activeTab() === 'ACTIVAS') {
+      @if (metasActivas().length > 0) {
+        <div class="goals-cards-list">
+          @for (meta of metasActivas(); track meta.id) {
+            @let days = diasRestantes(meta.fechaObjetivo);
+            <article class="patient-goal-card" [attr.aria-label]="'Objetivo activo: ' + meta.descripcion">
+              <div class="card-side-accent" aria-hidden="true"></div>
+
+              <div class="goal-card-main">
+                <div class="goal-card-top">
+                  <span class="countdown-chip" [class]="days.statusClass">
+                    <i class="bx bx-calendar" aria-hidden="true"></i>
+                    {{ days.texto }} ({{ formatearFecha(meta.fechaObjetivo) }})
+                  </span>
+
+                  <span class="status-badge" [class]="claseEstado(meta.estado)">
+                    {{ etiquetaEstado(meta.estado) }}
+                  </span>
                 </div>
-              }
-            </div>
-          </article>
-        }
-      </div>
-    }
 
-    <!-- IN REVIEW GOALS -->
-    @if (metasEnRevision().length > 0) {
-      <h2 class="section-header">Pendientes de Validación <span aria-hidden="true">⏳</span></h2>
-      <div class="goals-group">
-        @for (meta of metasEnRevision(); track meta.id) {
-          <article class="goal-item goal-item--revision" [attr.aria-label]="'Meta en revisión: ' + meta.descripcion">
-            <div class="goal-header">
-              <div class="date-chip">
-                <i class="bx bx-calendar" aria-hidden="true"></i>
-                Meta para el {{ formatearFecha(meta.fechaObjetivo) }}
+                <h2 class="goal-title-text">{{ meta.descripcion }}</h2>
+
+                @if (meta.observaciones) {
+                  <div class="clinical-feedback-note" role="note">
+                    <div class="note-author">
+                      <i class="bx bx-user-pin"></i>
+                      <span>Nota de tu Nutriólogo:</span>
+                    </div>
+                    <p class="note-quote">"{{ meta.observaciones }}"</p>
+                  </div>
+                }
+
+                <!-- Zona de Acción Principal -->
+                <div class="goal-action-zone">
+                  <div class="primary-buttons-row">
+                    <button
+                      type="button"
+                      class="btn-complete-goal"
+                      [disabled]="processingId() === meta.id"
+                      (click)="marcarCumplida(meta)"
+                      [attr.aria-label]="'Marcar como logrado: ' + meta.descripcion">
+                      @if (processingId() === meta.id) {
+                        <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i>
+                        <span>Enviando reporte...</span>
+                      } @else {
+                        <i class="bx bx-trophy" aria-hidden="true"></i>
+                        <span>¡Lo logré hoy! 🎉</span>
+                      }
+                    </button>
+
+                    <button
+                      type="button"
+                      class="btn-report-obstacle"
+                      [disabled]="processingId() === meta.id"
+                      (click)="toggleReporte(meta.id)"
+                      [attr.aria-expanded]="reportingMetaId() === meta.id"
+                      [attr.aria-controls]="'help-panel-' + meta.id">
+                      <i class="bx bx-message-alt-error" aria-hidden="true"></i>
+                      <span>Reportar dificultad</span>
+                    </button>
+                  </div>
+
+                  <!-- Panel Desplegable de Ayuda / Reporte -->
+                  @if (reportingMetaId() === meta.id) {
+                    <div
+                      [id]="'help-panel-' + meta.id"
+                      class="difficulty-help-panel"
+                      role="region"
+                      aria-label="Reportar obstáculo para este objetivo">
+                      <div class="help-panel-header">
+                        <i class="bx bx-help-circle"></i>
+                        <span>¿Qué obstáculo tuviste? Selecciona o escribe para que tu nutriólogo ajuste tu plan:</span>
+                      </div>
+
+                      <!-- Chips rápidos de dificultad -->
+                      <div class="difficulty-chips-wrap">
+                        @for (dif of dificultadesSugeridas; track dif) {
+                          <button
+                            type="button"
+                            class="dif-chip"
+                            (click)="agregarDificultadPredefinida(meta.id, dif)">
+                            + {{ dif }}
+                          </button>
+                        }
+                      </div>
+
+                      <textarea
+                        rows="3"
+                        placeholder="Escribe más detalles sobre lo que pasó..."
+                        [value]="reportTexts()[meta.id] || ''"
+                        (input)="setReportText(meta.id, $event)">
+                      </textarea>
+
+                      <div class="help-panel-actions">
+                        <button type="button" class="btn-cancel-help" (click)="toggleReporte(meta.id)">
+                          Cancelar
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-send-help"
+                          [disabled]="processingId() === meta.id"
+                          (click)="enviarReporte(meta)">
+                          <i class="bx bx-send"></i> Enviar a mi Nutriólogo
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
               </div>
-              <span class="badge" [class]="claseEstado(meta.estado)">
-                {{ etiquetaEstado(meta.estado) }}
-              </span>
-            </div>
-            <p class="goal-desc">{{ meta.descripcion }}</p>
-            <p class="revision-notice" role="status">
-              <i class="bx bx-hourglass" aria-hidden="true"></i>
-              Tu nutriólogo validará esto en tu próxima revisión.
-            </p>
-          </article>
-        }
-      </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="empty-patient-state">
+          <div class="empty-glow-icon">
+            <i class="bx bx-target-lock"></i>
+          </div>
+          <h3>¡No tienes objetivos activos pendientes!</h3>
+          <p>Has completado tus retos actuales o tu nutriólogo está preparando nuevas metas para tu próxima cita.</p>
+        </div>
+      }
     }
 
-    <!-- HISTORY GOALS -->
-    @if (metasHistorial().length > 0) {
-      <h2 class="section-header">Historial de Metas <span aria-hidden="true">📚</span></h2>
-      <div class="goals-group">
-        @for (meta of metasHistorial(); track meta.id) {
-          <article class="goal-item" [attr.aria-label]="'Meta en historial: ' + meta.descripcion">
-            <div class="goal-header">
-              <div class="date-chip">
-                <i class="bx bx-calendar" aria-hidden="true"></i>
-                Meta para el {{ formatearFecha(meta.fechaObjetivo) }}
+    <!-- TAB 2: OBJETIVOS EN REVISIÓN -->
+    @if (activeTab() === 'REVISION') {
+      @if (metasEnRevision().length > 0) {
+        <div class="goals-cards-list">
+          @for (meta of metasEnRevision(); track meta.id) {
+            <article class="patient-goal-card card--revision" [attr.aria-label]="'Objetivo en revisión: ' + meta.descripcion">
+              <div class="card-side-accent side-accent--amber" aria-hidden="true"></div>
+
+              <div class="goal-card-main">
+                <div class="goal-card-top">
+                  <span class="countdown-chip countdown-soon">
+                    <i class="bx bx-calendar"></i>
+                    Evaluación: {{ formatearFecha(meta.fechaObjetivo) }}
+                  </span>
+                  <span class="status-badge badge-por-validar">
+                    <i class="bx bx-hourglass bx-spin"></i> En Revisión
+                  </span>
+                </div>
+
+                <h2 class="goal-title-text">{{ meta.descripcion }}</h2>
+
+                <div class="revision-status-notice" role="status">
+                  <div class="notice-icon"><i class="bx bx-check-shield"></i></div>
+                  <div>
+                    <strong>Reporte enviado con éxito</strong>
+                    <p>Tu nutriólogo validará tu progreso en tu próxima consulta de seguimiento.</p>
+                  </div>
+                </div>
               </div>
-              <span class="badge" [class]="claseEstado(meta.estado)">
-                {{ etiquetaEstado(meta.estado) }}
-              </span>
-            </div>
-            <p class="goal-desc">{{ meta.descripcion }}</p>
-            @if (meta.observaciones) {
-              <div
-                class="feedback-box"
-                [class.feedback-box--nutriologo]="meta.estado === 'CUMPLIDA'"
-                [class.feedback-box--paciente]="meta.estado === 'NO_CUMPLIDA'"
-                role="note">
-                <strong>
-                  @if (meta.estado === 'NO_CUMPLIDA') { Tu comentario } @else { Nota de tu Nutriólogo }
-                </strong>
-                <q>{{ meta.observaciones }}</q>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="empty-patient-state">
+          <div class="empty-glow-icon">
+            <i class="bx bx-hourglass"></i>
+          </div>
+          <h3>Sin objetivos pendientes de validación</h3>
+          <p>Cuando marques tus objetivos activos como logrados, aparecerán aquí mientras tu nutriólogo los revisa.</p>
+        </div>
+      }
+    }
+
+    <!-- TAB 3: OBJETIVOS LOGRADOS -->
+    @if (activeTab() === 'LOGRADAS') {
+      @if (metasLogradas().length > 0) {
+        <div class="goals-cards-list">
+          @for (meta of metasLogradas(); track meta.id) {
+            <article class="patient-goal-card card--history" [attr.aria-label]="'Objetivo logrado: ' + meta.descripcion">
+              <div class="card-side-accent side-accent--green" aria-hidden="true"></div>
+
+              <div class="goal-card-main">
+                <div class="goal-card-top">
+                  <span class="countdown-chip countdown-normal">
+                    <i class="bx bx-check-circle"></i>
+                    Completado: {{ formatearFecha(meta.fechaObjetivo) }}
+                  </span>
+                  <span class="status-badge badge-cumplida">
+                    <i class="bx bx-trophy"></i> ¡Logrado!
+                  </span>
+                </div>
+
+                <h2 class="goal-title-text text-completed">
+                  {{ meta.descripcion }}
+                </h2>
+
+                @if (meta.observaciones) {
+                  <div class="clinical-feedback-note" role="note">
+                    <div class="note-author">
+                      <i class="bx bx-user-pin"></i>
+                      <span>Nota de tu Nutriólogo:</span>
+                    </div>
+                    <p class="note-quote">"{{ meta.observaciones }}"</p>
+                  </div>
+                }
               </div>
-            }
-          </article>
-        }
-      </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="empty-patient-state">
+          <div class="empty-glow-icon">
+            <i class="bx bx-trophy"></i>
+          </div>
+          <h3>Aún no has completado objetivos en este ciclo</h3>
+          <p>Cumple tus hábitos activos y márcalos como logrados para ver aquí todos tus éxitos acumulados.</p>
+        </div>
+      }
     }
 
-    @if (
-      metasActivas().length === 0 &&
-      metasEnRevision().length === 0 &&
-      metasHistorial().length === 0
-    ) {
-      <div class="empty-state">
-        <i class="bx bx-target-lock" aria-hidden="true"></i>
-        <p>No tienes metas asignadas aún. Tu nutriólogo te asignará objetivos pronto.</p>
-      </div>
+    <!-- TAB 4: OBJETIVOS NO LOGRADOS (REQUIERE AJUSTE) -->
+    @if (activeTab() === 'NO_LOGRADAS') {
+      @if (metasNoLogradas().length > 0) {
+        <div class="non-achieved-intro-card">
+          <i class="bx bx-info-circle" aria-hidden="true"></i>
+          <div>
+            <strong>Oportunidades de Aprendizaje y Ajuste</strong>
+            <p>Estos objetivos no se pudieron completar debido a los obstáculos reportados. Tu nutriólogo los revisará contigo para diseñar estrategias más cómodas y realistas.</p>
+          </div>
+        </div>
+
+        <div class="goals-cards-list">
+          @for (meta of metasNoLogradas(); track meta.id) {
+            <article class="patient-goal-card card--history" [attr.aria-label]="'Objetivo no logrado: ' + meta.descripcion">
+              <div class="card-side-accent side-accent--red" aria-hidden="true"></div>
+
+              <div class="goal-card-main">
+                <div class="goal-card-top">
+                  <span class="countdown-chip countdown-overdue">
+                    <i class="bx bx-calendar-x"></i>
+                    Fecha prevista: {{ formatearFecha(meta.fechaObjetivo) }}
+                  </span>
+                  <span class="status-badge badge-no-cumplida">
+                    <i class="bx bx-refresh"></i> Requiere Ajuste
+                  </span>
+                </div>
+
+                <h2 class="goal-title-text">
+                  {{ meta.descripcion }}
+                </h2>
+
+                @if (meta.observaciones) {
+                  <div class="clinical-feedback-note note--patient" role="note">
+                    <div class="note-author">
+                      <i class="bx bx-comment-detail"></i>
+                      <span>Dificultad reportada:</span>
+                    </div>
+                    <p class="note-quote">"{{ meta.observaciones }}"</p>
+                  </div>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="empty-patient-state">
+          <div class="empty-glow-icon empty-glow--success">
+            <i class="bx bx-smile"></i>
+          </div>
+          <h3>¡Excelente! No tienes objetivos no logrados</h3>
+          <p>Todos tus objetivos se encuentran en curso, en revisión o han sido completados con éxito.</p>
+        </div>
+      }
     }
 
+    <!-- Paginación -->
     @if ((metasResource.value()?.totalPages ?? 0) > 0) {
-      <app-pagination
-        [currentPage]="currentPage()"
-        [totalPages]="metasResource.value()?.totalPages ?? 0"
-        [totalElements]="metasResource.value()?.totalElements ?? 0"
-        [pageSize]="pageSize()"
-        (pageChange)="onPageChange($event)" />
+      <div class="patient-pagination-wrap">
+        <app-pagination
+          [currentPage]="currentPage()"
+          [totalPages]="metasResource.value()?.totalPages ?? 0"
+          [totalElements]="metasResource.value()?.totalElements ?? 0"
+          [pageSize]="pageSize()"
+          (pageChange)="onPageChange($event)" />
+      </div>
     }
   }
+
 </div>

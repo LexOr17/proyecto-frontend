@@ -12,11 +12,20 @@ export class NotificationService {
   readonly notifications = this._notifications.asReadonly();
 
   private show(message: string, type: NotificationType, duration: number = 5000): void {
+    if (!message || !message.trim()) return;
+
+    const trimmed = message.trim();
+    // Evitar alertas duplicadas si ya existe una notificación idéntica en pantalla
+    const yaExiste = this._notifications().some(
+      (n) => n.message.trim().toLowerCase() === trimmed.toLowerCase() && n.type === type
+    );
+    if (yaExiste) return;
+
     const id = this.generateId();
-    const notification: Notification = { id, message, type, duration };
+    const notification: Notification = { id, message: trimmed, type, duration };
 
     // Agregar notificación
-    this._notifications.update(current => [...current, notification]);
+    this._notifications.update((current) => [...current, notification]);
 
     // Auto-eliminar después del tiempo especificado
     if (duration > 0) {

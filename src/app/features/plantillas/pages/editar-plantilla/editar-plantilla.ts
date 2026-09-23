@@ -62,14 +62,28 @@ export class EditarPlantilla {
   });
 
   protected alimentosResource = rxResource({
-    params: () => ({ page: this.currentPage(), size: this.pageSize() }),
-    stream: ({ params }) =>
-      this.alimentoService.obtenerAlimentos(params.page, params.size),
+    params: () => ({
+      keyword: this.searchTerm(),
+      categoria: this.selectedCategory(),
+      page: this.currentPage(),
+      size: this.pageSize(),
+    }),
+    stream: ({ params }) => {
+      const searchKey = params.keyword.trim() || params.categoria;
+      if (searchKey) {
+        return this.alimentoService.buscarAlimentos(
+          searchKey,
+          params.page,
+          params.size
+        );
+      }
+      return this.alimentoService.obtenerAlimentos(params.page, params.size);
+    },
   });
 
   protected alimentosFiltrados = computed(() => {
     const alimentos = this.alimentosResource.value()?.content ?? [];
-    const term = this.searchTerm().toLowerCase();
+    const term = this.searchTerm().trim().toLowerCase();
     const cat = this.selectedCategory();
     return alimentos.filter((a) => {
       const matchText = !term || a.nombre.toLowerCase().includes(term);
@@ -125,12 +139,12 @@ export class EditarPlantilla {
       forkJoin(
         plantilla.detalles.map((detalle) =>
           this.alimentoService.obtenerAlimentoPorId(detalle.alimentoId).pipe(
-            map((alimento) => ({ alimento: alimento!, cantidad: Number(detalle.cantidad) }))
+            map((alimento) => (alimento ? { alimento, cantidad: Number(detalle.cantidad) } : null))
           )
         )
       )
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe((items) => this.items.set(items));
+        .subscribe((items) => this.items.set(items.filter((item): item is ItemPlantilla => item !== null)));
     });
   }
 
@@ -142,11 +156,22 @@ export class EditarPlantilla {
   protected onSearchChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
+    this.currentPage.set(0);
   }
 
   protected onCategoryChange(event: Event): void {
     const select = event.target as HTMLSelectElement;
     this.selectedCategory.set(select.value);
+    this.currentPage.set(0);
+  }
+
+  protected setTipoComida(tipo: TipoComida): void {
+    this.plantillaForm.controls.tipoComida.setValue(tipo);
+  }
+
+  protected limpiarBusqueda(): void {
+    this.searchTerm.set('');
+    this.currentPage.set(0);
   }
 
   protected agregarAlimento(alimento: Alimento): void {
@@ -164,12 +189,26 @@ export class EditarPlantilla {
   protected actualizarCantidad(index: number, delta: number): void {
     this.items.update((current) => {
       const updated = [...current];
-      const newCantidad = updated[index].cantidad + delta;
+      const newCantidad = Math.round((updated[index].cantidad + delta) * 100) / 100;
       if (newCantidad <= 0) {
         updated.splice(index, 1);
       } else {
         updated[index] = { ...updated[index], cantidad: newCantidad };
       }
+      return updated;
+    });
+  }
+
+  protected cambiarCantidadDirecta(index: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const val = parseFloat(input.value);
+    if (isNaN(val) || val <= 0) {
+      this.quitarAlimento(index);
+      return;
+    }
+    this.items.update((current) => {
+      const updated = [...current];
+      updated[index] = { ...updated[index], cantidad: Math.round(val * 100) / 100 };
       return updated;
     });
   }

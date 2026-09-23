@@ -27,13 +27,27 @@ export class MisMetas {
   private readonly notificationService = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
 
-  private readonly pacienteId = this.authService.userId()!;
+  protected readonly pacienteId = this.authService.userId()!;
 
   protected readonly currentPage = signal(0);
-  protected readonly pageSize = signal(4);
+  protected readonly pageSize = signal(6);
   protected readonly processingId = signal<number | null>(null);
   protected readonly reportingMetaId = signal<number | null>(null);
   protected readonly reportTexts = signal<Record<number, string>>({});
+  protected readonly activeTab = signal<'ACTIVAS' | 'REVISION' | 'LOGRADAS' | 'NO_LOGRADAS'>('ACTIVAS');
+
+  // Sugerencias de dificultad rápida para el reporte del paciente
+  protected readonly dificultadesSugeridas = [
+    'Falta de tiempo en el día',
+    'Dificultad preparando las comidas',
+    'Salidas / Eventos sociales',
+    'Malestar o indisposición de salud',
+    'Dudas con las porciones prescritas',
+  ];
+
+  // SVG Gauge para el Hero
+  protected readonly radioGauge = 44;
+  protected readonly circunferenciaGauge = 2 * Math.PI * 44;
 
   protected readonly conteoResource = rxResource({
     params: () => this.pacienteId,
@@ -60,6 +74,14 @@ export class MisMetas {
     (this.metasResource.value()?.content ?? []).filter(m => m.estado === 'POR_VALIDAR')
   );
 
+  protected readonly metasLogradas = computed(() =>
+    (this.metasResource.value()?.content ?? []).filter(m => m.estado === 'CUMPLIDA')
+  );
+
+  protected readonly metasNoLogradas = computed(() =>
+    (this.metasResource.value()?.content ?? []).filter(m => m.estado === 'NO_CUMPLIDA')
+  );
+
   protected readonly metasHistorial = computed(() =>
     (this.metasResource.value()?.content ?? []).filter(
       m => m.estado === 'CUMPLIDA' || m.estado === 'NO_CUMPLIDA'
@@ -68,6 +90,63 @@ export class MisMetas {
 
   protected readonly userName = this.authService.userName;
 
+  protected readonly porcentajeProgreso = computed(() => {
+    const c = this.conteoResource.value();
+    if (!c) return 0;
+    const pct = c.porcentaje ?? c.porcentajeExito ?? (c.total > 0 ? (c.cumplidas / c.total) * 100 : 0);
+    return Math.min(100, Math.max(0, Math.round(pct)));
+  });
+
+  // Mensaje motivacional dinámico según el porcentaje
+  protected readonly mensajeMotivacional = computed(() => {
+    const pct = this.porcentajeProgreso();
+    if (pct === 100) {
+      return {
+        titulo: '¡Extraordinario logro!',
+        texto: 'Has cumplido el 100% de tus objetivos. Tu constancia y disciplina son admirables.',
+        badge: '¡Nivel Campeón! 🏆',
+        clase: 'status-master',
+      };
+    } else if (pct >= 75) {
+      return {
+        titulo: '¡A pasos de la cima!',
+        texto: 'Estás muy cerca de completar todos tus objetivos del período. ¡Mantén este gran ritmo!',
+        badge: 'Gran Avance ⭐',
+        clase: 'status-high',
+      };
+    } else if (pct >= 50) {
+      return {
+        titulo: '¡Más de la mitad logrado!',
+        texto: 'Tu esfuerzo diario está rindiendo frutos. ¡Sigue enfocado en tus metas de salud!',
+        badge: 'Ritmo Imparable 🔥',
+        clase: 'status-mid',
+      };
+    } else if (pct > 0) {
+      return {
+        titulo: '¡Buen camino iniciado!',
+        texto: 'Cada hábito positivo suma a tu bienestar general. ¡Continúa con entusiasmo!',
+        badge: 'En Progreso 💪',
+        clase: 'status-start',
+      };
+    } else {
+      return {
+        titulo: '¡Comencemos con energía!',
+        texto: 'Revisa tus objetivos activos y marca cada avance. ¡Tu nutriólogo está contigo!',
+        badge: 'Primer Paso 🚀',
+        clase: 'status-zero',
+      };
+    }
+  });
+
+  protected getOffsetGauge(pct: number): number {
+    const clampPct = Math.min(100, Math.max(0, pct));
+    return this.circunferenciaGauge - (clampPct / 100) * this.circunferenciaGauge;
+  }
+
+  protected setTab(tab: 'ACTIVAS' | 'REVISION' | 'LOGRADAS' | 'NO_LOGRADAS'): void {
+    this.activeTab.set(tab);
+  }
+
   protected marcarCumplida(meta: MetaResponse): void {
     this.processingId.set(meta.id);
     this.metaService
@@ -75,7 +154,7 @@ export class MisMetas {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.notificationService.success('¡Meta enviada a revisión! Tu nutriólogo la validará pronto.');
+          this.notificationService.success('¡Objetivo enviado a revisión! Tu nutriólogo lo validará pronto.');
           this.processingId.set(null);
           this.metasResource.reload();
           this.conteoResource.reload();
@@ -93,6 +172,12 @@ export class MisMetas {
     this.reportTexts.update(m => ({ ...m, [metaId]: value }));
   }
 
+  protected agregarDificultadPredefinida(metaId: number, dificultad: string): void {
+    const actual = (this.reportTexts()[metaId] ?? '').trim();
+    const nuevoTexto = actual ? `${actual} • ${dificultad}` : dificultad;
+    this.reportTexts.update(m => ({ ...m, [metaId]: nuevoTexto }));
+  }
+
   protected enviarReporte(meta: MetaResponse): void {
     const texto = (this.reportTexts()[meta.id] ?? '').trim();
     if (!texto) {
@@ -105,7 +190,7 @@ export class MisMetas {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.notificationService.info('Reporte enviado. Tu nutriólogo revisará tu caso.');
+          this.notificationService.info('Reporte enviado. Tu nutriólogo revisará tu caso para ajustar el plan.');
           this.processingId.set(null);
           this.reportingMetaId.set(null);
           this.reportTexts.update(m => {
@@ -126,6 +211,7 @@ export class MisMetas {
   }
 
   protected formatearFecha(fecha: string): string {
+    if (!fecha) return 'Sin fecha';
     const date = new Date(fecha + 'T00:00:00');
     return date.toLocaleDateString('es-ES', {
       day: 'numeric',
@@ -134,13 +220,32 @@ export class MisMetas {
     });
   }
 
+  protected diasRestantes(fecha: string): { texto: string; statusClass: string } {
+    if (!fecha) return { texto: '', statusClass: '' };
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const target = new Date(fecha + 'T00:00:00');
+    const diffTime = target.getTime() - hoy.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return { texto: `Venció hace ${Math.abs(diffDays)}d`, statusClass: 'countdown-overdue' };
+    } else if (diffDays === 0) {
+      return { texto: 'Para hoy ⚡', statusClass: 'countdown-today' };
+    } else if (diffDays === 1) {
+      return { texto: 'Mañana ⏳', statusClass: 'countdown-soon' };
+    } else {
+      return { texto: `Quedan ${diffDays} días`, statusClass: 'countdown-normal' };
+    }
+  }
+
   protected etiquetaEstado(estado: EstadoMeta): string {
     const labels: Record<EstadoMeta, string> = {
       PENDIENTE: 'En Curso',
       POR_VALIDAR: 'En Revisión',
-      CUMPLIDA: '¡Lograda!',
-      RECHAZADA: 'A reintentar',
-      NO_CUMPLIDA: 'Requiere ajuste',
+      CUMPLIDA: '¡Logrado!',
+      RECHAZADA: 'Reintentar',
+      NO_CUMPLIDA: 'Requiere Ajuste',
     };
     return labels[estado];
   }
@@ -154,9 +259,5 @@ export class MisMetas {
       NO_CUMPLIDA: 'badge-no-cumplida',
     };
     return classes[estado];
-  }
-
-  protected porcentajeProgreso(): number {
-    return Math.min(100, this.conteoResource.value()?.porcentaje ?? 0);
   }
 }

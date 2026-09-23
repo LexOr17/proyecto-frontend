@@ -5,7 +5,7 @@ const metasNutriologoRoutes: Routes = [
     path: ':pacienteId',
     loadComponent: () =>
       import('./pages/metas-nutriologo/metas-nutriologo').then(m => m.MetasNutriologo),
-    title: 'Metas del Paciente',
+    title: 'Objetivos del Paciente',
   },
 ];
 
@@ -14,7 +14,7 @@ const metasPacienteRoutes: Routes = [
     path: '',
     loadComponent: () =>
       import('./pages/mis-metas/mis-metas').then(m => m.MisMetas),
-    title: 'Mis Metas',
+    title: 'Mis Objetivos',
   },
 ];
 

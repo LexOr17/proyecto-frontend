@@ -1,0 +1,125 @@
+<div class="modal-backdrop" (click)="cerrar()">
+  <div class="modal-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    
+    <div class="modal-header">
+      <div class="modal-title-wrapper">
+        <div class="icon-badge">
+          <span class="bx bx-restaurant"></span>
+        </div>
+        <div>
+          <h3 class="modal-title">
+            {{ registroExistente ? 'Actualizar Comida' : 'Registrar Comida' }}
+          </h3>
+          <p class="modal-subtitle">{{ getHorarioLabel(comida.horario) }} — {{ fecha }}</p>
+        </div>
+      </div>
+      <button type="button" class="btn-close" (click)="cerrar()" aria-label="Cerrar">
+        <span class="bx bx-x"></span>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal-body">
+      
+      <!-- Sugerencia del Plan -->
+      <div class="sugerencia-card">
+        <span class="sugerencia-label">Sugerido en tu plan alimenticio:</span>
+        <h4 class="sugerencia-nombre">{{ comida.plantillaNombre }}</h4>
+        @if (comida.observaciones) {
+          <p class="sugerencia-obs"><span class="bx bx-info-circle"></span> {{ comida.observaciones }}</p>
+        }
+      </div>
+
+      <!-- Selector de Estado Interactivo -->
+      <div class="form-group">
+        <label class="form-label">¿Cómo realizaste esta comida?</label>
+        
+        <div class="estado-selector-grid">
+          <button
+            type="button"
+            class="estado-option"
+            [class.active]="form.controls.estado.value === 'CUMPLIDO'"
+            (click)="setEstado('CUMPLIDO')"
+          >
+            <div class="option-icon option-icon--cumplido">
+              <span class="bx bx-check-circle"></span>
+            </div>
+            <div class="option-text">
+              <span class="option-title">Cumplido</span>
+              <span class="option-desc">Comí lo sugerido</span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            class="estado-option"
+            [class.active]="form.controls.estado.value === 'MODIFICADO'"
+            (click)="setEstado('MODIFICADO')"
+          >
+            <div class="option-icon option-icon--modificado">
+              <span class="bx bx-edit-alt"></span>
+            </div>
+            <div class="option-text">
+              <span class="option-title">Modificado</span>
+              <span class="option-desc">Hice cambios</span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            class="estado-option"
+            [class.active]="form.controls.estado.value === 'SALTADA'"
+            (click)="setEstado('SALTADA')"
+          >
+            <div class="option-icon option-icon--saltada">
+              <span class="bx bx-skip-next-circle"></span>
+            </div>
+            <div class="option-text">
+              <span class="option-title">Saltada</span>
+              <span class="option-desc">No comí</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Detalles si es modificado o saltada -->
+      @if (form.controls.estado.value === 'MODIFICADO' || form.controls.estado.value === 'SALTADA') {
+        <div class="form-group detalles-fade">
+          <label class="form-label" for="detalles">
+            @if (form.controls.estado.value === 'MODIFICADO') {
+              ¿Qué comiste en su lugar? <span class="text-danger">*</span>
+            } @else {
+              ¿Por qué no realizaste esta comida? (Opcional)
+            }
+          </label>
+          <textarea
+            id="detalles"
+            rows="3"
+            formControlName="detallesComidaReal"
+            class="form-control"
+            [placeholder]="form.controls.estado.value === 'MODIFICADO' ? 'Escribe los alimentos consumidos, cantidades o sustituciones...' : 'Motivo por el que no realizaste la comida...'"
+          ></textarea>
+          @if (form.controls.detallesComidaReal.invalid && form.controls.detallesComidaReal.touched) {
+            <span class="error-text">Especifica los alimentos consumidos cuando el estado es modificado.</span>
+          }
+        </div>
+      }
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrar()" [disabled]="isSubmitting()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <span class="spinner-sm"></span>
+            <span>Guardando...</span>
+          } @else {
+            <span class="bx bx-check-double"></span>
+            <span>{{ registroExistente ? 'Guardar Cambios' : 'Guardar Registro' }}</span>
+          }
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>

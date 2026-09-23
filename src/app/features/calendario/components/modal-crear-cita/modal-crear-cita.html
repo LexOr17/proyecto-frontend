@@ -1,0 +1,122 @@
+<div class="modal-backdrop" (click)="cerrar()">
+  <div class="modal-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    
+    <div class="modal-header">
+      <div class="modal-title-wrapper">
+        <div class="icon-badge">
+          <span class="bx bx-calendar-plus"></span>
+        </div>
+        <div>
+          <h3 id="modal-title" class="modal-title">Agendar Cita Rápida</h3>
+          <p class="modal-subtitle">Configura y confirma la cita directamente en tu calendario</p>
+        </div>
+      </div>
+      <button type="button" class="btn-close" (click)="cerrar()" aria-label="Cerrar modal">
+        <span class="bx bx-x"></span>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal-body">
+      
+      <!-- Selector de Paciente -->
+      <div class="form-group">
+        <label class="form-label" for="pacienteSelect">
+          Paciente <span class="required">*</span>
+        </label>
+        
+        @if (pacientes().length > 5) {
+          <div class="search-box">
+            <span class="bx bx-search search-icon"></span>
+            <input
+              type="text"
+              class="form-control form-control--sm"
+              placeholder="Buscar paciente por nombre..."
+              [ngModel]="searchPaciente()"
+              (ngModelChange)="searchPaciente.set($event)"
+              [ngModelOptions]="{standalone: true}"
+            />
+          </div>
+        }
+
+        <select
+          id="pacienteSelect"
+          formControlName="pacienteId"
+          class="form-control"
+          [class.is-invalid]="form.get('pacienteId')?.invalid && form.get('pacienteId')?.touched"
+        >
+          <option [value]="0" disabled>Selecciona un paciente...</option>
+          @for (p of filteredPacientes(); track p.id) {
+            <option [value]="p.id">
+              {{ p.nombre }} {{ p.apellidoPaterno }} {{ p.apellidoMaterno || '' }}
+            </option>
+          }
+        </select>
+        @if (form.get('pacienteId')?.invalid && form.get('pacienteId')?.touched) {
+          <span class="error-text">Debes seleccionar un paciente</span>
+        }
+      </div>
+
+      <!-- Fechas y Horas -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="fechaInicio">
+            Hora de Inicio <span class="required">*</span>
+          </label>
+          <input
+            id="fechaInicio"
+            type="datetime-local"
+            formControlName="fechaHoraInicio"
+            (change)="onFechaInicioChange()"
+            class="form-control"
+            [class.is-invalid]="form.get('fechaHoraInicio')?.invalid && form.get('fechaHoraInicio')?.touched"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="fechaFin">
+            Hora de Fin <span class="required">*</span>
+          </label>
+          <input
+            id="fechaFin"
+            type="datetime-local"
+            formControlName="fechaHoraFin"
+            class="form-control"
+            [class.is-invalid]="form.get('fechaHoraFin')?.invalid && form.get('fechaHoraFin')?.touched"
+          />
+        </div>
+      </div>
+
+      <!-- Motivo de la Cita -->
+      <div class="form-group">
+        <label class="form-label" for="motivoCita">
+          Motivo de la Cita <span class="required">*</span>
+        </label>
+        <select
+          id="motivoCita"
+          formControlName="motivoCita"
+          class="form-control"
+        >
+          @for (m of motivosCita; track m.value) {
+            <option [value]="m.value">{{ m.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrar()" [disabled]="isSubmitting()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <span class="spinner-sm"></span>
+            <span>Agendando...</span>
+          } @else {
+            <span class="bx bx-check-circle"></span>
+            <span>Confirmar Cita</span>
+          }
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>

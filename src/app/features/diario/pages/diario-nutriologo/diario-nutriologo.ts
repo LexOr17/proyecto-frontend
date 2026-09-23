@@ -18,12 +18,23 @@ import {
   HORARIOS_LABEL,
   ESTADOS_LABEL,
 } from '../../interfaces/diario.interface';
+import { Paciente } from '../../../pacientes/interfaces/paciente.interface';
 
 function toDateStr(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+export interface NutriWeekDayItem {
+  date: Date;
+  dateStr: string;
+  dayName: string;
+  dayNumber: number;
+  isToday: boolean;
+  isSelected: boolean;
+  entriesCount: number;
 }
 
 @Component({
@@ -51,14 +62,28 @@ export class DiarioNutriologo {
     this.rawId ? Number(this.rawId) : null
   );
 
-  // ─── Search form (shown when no pacienteId) ───────────────────────────
-  protected readonly searchForm = this.fb.nonNullable.group({
-    pacienteId: ['', [Validators.required, Validators.pattern(/^\d+$/)]],
+  // ─── Patient Search & Autocomplete ────────────────────────────────────
+  protected readonly searchTerm = signal<string>('');
+
+  protected readonly pacientesListResource = rxResource({
+    stream: () => this.pacienteService.obtenerPacientes(0, 100),
   });
 
-  protected onSearch(): void {
-    if (this.searchForm.invalid) return;
-    const id = Number(this.searchForm.getRawValue().pacienteId);
+  protected readonly allPacientes = computed((): Paciente[] => {
+    return this.pacientesListResource.value()?.content ?? [];
+  });
+
+  protected readonly filteredPacientes = computed((): Paciente[] => {
+    const term = this.searchTerm().toLowerCase().trim();
+    const list = this.allPacientes();
+    if (!term) return list;
+    return list.filter(p => {
+      const full = `${p.nombre} ${p.apellidoPaterno} ${p.apellidoMaterno ?? ''}`.toLowerCase();
+      return full.includes(term) || (p.id && String(p.id).includes(term)) || (p.correo && p.correo.toLowerCase().includes(term));
+    });
+  });
+
+  protected selectPaciente(id: number): void {
     this.router.navigate(['/main/diario/paciente', id]);
   }
 
@@ -69,10 +94,20 @@ export class DiarioNutriologo {
       params !== null ? this.pacienteService.obtenerPacientePorId(params) : of(null),
   });
 
+  protected readonly paciente = computed(() => this.pacienteResource.value());
+
   protected readonly pacienteNombre = computed(() => {
-    const p = this.pacienteResource.value();
+    const p = this.paciente();
     if (!p) return `Paciente #${this.pacienteId()}`;
     return [p.nombre, p.apellidoPaterno, p.apellidoMaterno].filter(Boolean).join(' ');
+  });
+
+  protected readonly pacienteInitials = computed(() => {
+    const p = this.paciente();
+    if (!p) return 'P';
+    const n = p.nombre ? p.nombre[0] : '';
+    const a = p.apellidoPaterno ? p.apellidoPaterno[0] : '';
+    return `${n}${a}`.toUpperCase();
   });
 
   // ─── Historial data ───────────────────────────────────────────────────
@@ -99,10 +134,57 @@ export class DiarioNutriologo {
     });
   });
 
+  protected readonly isToday = computed(
+    () => toDateStr(new Date()) === this.selectedDateStr()
+  );
+
   protected readonly filteredEntries = computed(() => {
     const entries = this.historialResource.value() ?? [];
     return entries.filter(e => e.fecha === this.selectedDateStr());
   });
+
+  // ─── Week Days Strip ──────────────────────────────────────────────────
+  protected readonly weekDays = computed((): NutriWeekDayItem[] => {
+    const curr = new Date(this.selectedDate());
+    const dayOfWeek = (curr.getDay() + 6) % 7; // 0 = Lunes, 6 = Domingo
+    const monday = new Date(curr);
+    monday.setDate(curr.getDate() - dayOfWeek);
+
+    const history = this.historialResource.value() ?? [];
+    const todayStr = toDateStr(new Date());
+    const selectedStr = this.selectedDateStr();
+
+    const days: NutriWeekDayItem[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const dStr = toDateStr(d);
+      
+      const dayEntries = history.filter(e => e.fecha === dStr);
+
+      days.push({
+        date: d,
+        dateStr: dStr,
+        dayName: d.toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', ''),
+        dayNumber: d.getDate(),
+        isToday: dStr === todayStr,
+        isSelected: dStr === selectedStr,
+        entriesCount: dayEntries.length,
+      });
+    }
+    return days;
+  });
+
+  // ─── Resumen de Adherencia del Día ────────────────────────────────────
+  protected readonly cumplidasCount = computed(() =>
+    this.filteredEntries().filter(e => e.estado === 'CUMPLIDO').length
+  );
+  protected readonly modificadasCount = computed(() =>
+    this.filteredEntries().filter(e => e.estado === 'MODIFICADO').length
+  );
+  protected readonly saltadasCount = computed(() =>
+    this.filteredEntries().filter(e => e.estado === 'SALTADA').length
+  );
 
   protected changeDate(delta: number): void {
     this.selectedDate.update(d => {
@@ -112,10 +194,33 @@ export class DiarioNutriologo {
     });
   }
 
+  protected selectDay(dStr: string): void {
+    const [y, m, d] = dStr.split('-').map(Number);
+    this.selectedDate.set(new Date(y, m - 1, d));
+  }
+
+  protected goToToday(): void {
+    this.selectedDate.set(new Date());
+  }
+
   protected jumpToDate(value: string): void {
     if (!value) return;
     const [y, m, d] = value.split('-').map(Number);
     this.selectedDate.set(new Date(y, m - 1, d));
+  }
+
+  // ─── Meal icon helper ─────────────────────────────────────────────────
+  protected getMealIcon(horario: string): string {
+    const icons: Record<string, string> = {
+      DESAYUNO: 'bx-sun',
+      ALMUERZO: 'bx-bowl-hot',
+      COMIDA: 'bx-dish',
+      MERIENDA: 'bx-lemon',
+      CENA: 'bx-moon',
+      COLACION_1: 'bx-apple',
+      COLACION_2: 'bx-cookie',
+    };
+    return icons[horario] ?? 'bx-food-menu';
   }
 
   // ─── Observation modal ────────────────────────────────────────────────
@@ -123,9 +228,26 @@ export class DiarioNutriologo {
   protected readonly obsEntry = signal<DiarioComidaResponse | null>(null);
   protected readonly isSubmittingObs = signal(false);
 
+  protected readonly quickChips: string[] = [
+    '¡Excelente apego al plan!',
+    'Recuerda cuidar la porción de carbohidratos.',
+    'Procura no saltar este horario de comida.',
+    'Buena sustitución de alimentos, continúa así.',
+    'Asegúrate de tomar suficiente agua durante el día.',
+  ];
+
   protected readonly obsForm = this.fb.nonNullable.group({
     observacion: ['', [Validators.required, Validators.maxLength(500)]],
   });
+
+  protected applyQuickChip(chip: string): void {
+    const current = this.obsForm.get('observacion')?.value || '';
+    if (!current) {
+      this.obsForm.patchValue({ observacion: chip });
+    } else {
+      this.obsForm.patchValue({ observacion: `${current} ${chip}` });
+    }
+  }
 
   protected openObsModal(entry: DiarioComidaResponse): void {
     this.obsEntry.set(entry);

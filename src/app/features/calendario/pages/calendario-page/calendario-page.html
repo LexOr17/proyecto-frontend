@@ -1,0 +1,526 @@
+<section class="calendario-wrapper">
+
+  <!-- ─── ENCABEZADO ──────────────────────────────────────────────────────── -->
+  <div class="calendario-header">
+    <div class="cal-header-left">
+      <h1 class="cal-titulo">Calendario Interactivo</h1>
+      <p class="cal-subtitulo">
+        @if (currentUserRole() === 'NUTRIOLOGO') {
+          Gestiona citas, horarios disponibles, finalización de planes y seguimiento clínico
+        } @else {
+          Consulta tus citas, registra tus comidas y bienestar diario
+        }
+      </p>
+    </div>
+    <div class="cal-header-right">
+      @if (currentUserRole() === 'NUTRIOLOGO') {
+        <button class="btn-action-header" (click)="abrirModalCrearCita()" id="btn-nueva-cita-header">
+          <span class="bx bx-calendar-plus"></span>
+          <span>Nueva Cita</span>
+        </button>
+      }
+      <button class="btn-hoy" (click)="irAHoy()" id="btn-ir-hoy">Hoy</button>
+    </div>
+  </div>
+
+  <!-- ─── CONTENIDO PRINCIPAL ────────────────────────────────────────────── -->
+  <div class="calendario-content" [class.drawer-open]="isDrawerOpen()">
+
+    <!-- PANEL IZQUIERDO: GRID DEL CALENDARIO -->
+    <div class="cal-panel-grid">
+
+      <!-- Navegación del mes -->
+      <div class="cal-nav">
+        <button class="cal-nav-btn" (click)="mesAnterior()" id="btn-mes-anterior" aria-label="Mes anterior">
+          <span class="bx bx-chevron-left"></span>
+        </button>
+        <h2 class="cal-mes-nombre">{{ mesNombre() }} {{ currentYear() }}</h2>
+        <button class="cal-nav-btn" (click)="mesSiguiente()" id="btn-mes-siguiente" aria-label="Mes siguiente">
+          <span class="bx bx-chevron-right"></span>
+        </button>
+      </div>
+
+      <!-- Leyenda de indicadores -->
+      <div class="cal-leyenda">
+        @if (currentUserRole() === 'NUTRIOLOGO') {
+          <span class="leyenda-item"><span class="dot dot-cita"></span> Cita programada</span>
+          <span class="leyenda-item"><span class="dot dot-fin-plan"></span> Fin de Plan</span>
+          <span class="leyenda-item"><span class="dot dot-libre"></span> Horas libres</span>
+          <span class="leyenda-item"><span class="dot dot-alerta"></span> Paciente sin diario</span>
+        } @else {
+          <span class="leyenda-item"><span class="dot dot-cita"></span> Cita programada</span>
+          <span class="leyenda-item"><span class="dot dot-plan"></span> Plan alimenticio</span>
+          <span class="leyenda-item"><span class="dot dot-alerta"></span> Comida pendiente</span>
+        }
+      </div>
+
+      <!-- Grid del calendario -->
+      <div class="cal-grid-container">
+
+        <!-- Cabecera días de semana -->
+        <div class="cal-grid-header">
+          @for (dia of DIAS_SEMANA; track dia) {
+            <div class="cal-grid-header-cell">{{ dia }}</div>
+          }
+        </div>
+
+        <!-- Cargando mes -->
+        @if (isLoadingMes()) {
+          <div class="cal-loading">
+            <div class="cal-spinner"></div>
+            <p>Cargando calendario...</p>
+          </div>
+        } @else if (error()) {
+          <div class="cal-error">
+            <span class="bx bx-error-circle"></span>
+            <p>{{ error() }}</p>
+            <button class="btn-retry" (click)="cargarMes()">Reintentar</button>
+          </div>
+        } @else {
+          <!-- Celdas de días -->
+          <div class="cal-grid-body">
+            @for (day of calendarGrid(); track trackByDate($index, day)) {
+              <div
+                class="cal-day"
+                [class.cal-day--otro-mes]="!day.isCurrentMonth"
+                [class.cal-day--hoy]="day.isToday"
+                [class.cal-day--selected]="day.isSelected"
+                (click)="seleccionarDia(day)"
+                [attr.aria-label]="'Día ' + day.date.getDate()"
+                role="button"
+                tabindex="0"
+                (keydown.enter)="seleccionarDia(day)"
+              >
+                <span class="cal-day-num">{{ day.date.getDate() }}</span>
+
+                <!-- Indicadores NUTRIÓLOGO -->
+                @if (currentUserRole() === 'NUTRIOLOGO') {
+                  <div class="cal-dots">
+                    @if (day.resumenNutriologo?.tieneCitas) {
+                      <span class="dot dot-cita" [attr.title]="day.resumenNutriologo!.cantidadCitas + ' cita(s)'"></span>
+                    }
+                    @if (day.planesFinalizan && day.planesFinalizan.length > 0) {
+                      <span class="dot dot-fin-plan" [attr.title]="day.planesFinalizan.length + ' plan(es) finaliza(n) hoy'"></span>
+                    }
+                    @if (day.resumenNutriologo?.tieneHorasLibres) {
+                      <span class="dot dot-libre" title="Tiene horas disponibles"></span>
+                    }
+                    @if (day.resumenNutriologo && day.resumenNutriologo.pacientesSinDiario > 0) {
+                      <span class="dot dot-alerta" [attr.title]="day.resumenNutriologo.pacientesSinDiario + ' paciente(s) sin diario'"></span>
+                    }
+                  </div>
+                }
+
+                <!-- Indicadores PACIENTE -->
+                @if (currentUserRole() === 'PACIENTE' && day.resumenPaciente) {
+                  <div class="cal-dots">
+                    @if (day.resumenPaciente.tieneCita) {
+                      <span class="dot dot-cita" title="Tienes una cita"></span>
+                    }
+                    @if (day.resumenPaciente.tienePlan) {
+                      <span class="dot dot-plan" title="Tienes plan alimenticio"></span>
+                    }
+                    @if (!day.resumenPaciente.diarioCompleto && day.resumenPaciente.tienePlan) {
+                      <span class="dot dot-alerta" title="Comida pendiente de registrar"></span>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+    </div>
+    <!-- /cal-panel-grid -->
+
+    <!-- ─── DRAWER: DETALLE DEL DÍA ──────────────────────────────────────── -->
+    @if (isDrawerOpen()) {
+      <div class="cal-drawer" role="complementary" aria-label="Detalle del día seleccionado">
+
+        <!-- Header del drawer -->
+        <div class="drawer-header">
+          <div>
+            <p class="drawer-label">Detalle del día</p>
+            <h3 class="drawer-fecha">{{ drawerTitulo() }}</h3>
+          </div>
+          <button class="drawer-close" (click)="cerrarDrawer()" id="btn-cerrar-drawer" aria-label="Cerrar panel">
+            <span class="bx bx-x"></span>
+          </button>
+        </div>
+
+        <!-- Cargando día -->
+        @if (isLoadingDia()) {
+          <div class="drawer-loading">
+            <div class="cal-spinner"></div>
+            <p>Cargando detalle...</p>
+          </div>
+        }
+
+        <!-- ══════════════════════════════════════════════ -->
+        <!-- VISTA NUTRIÓLOGO                               -->
+        <!-- ══════════════════════════════════════════════ -->
+        @if (currentUserRole() === 'NUTRIOLOGO' && diaDataNutriologo() && !isLoadingDia()) {
+          <div class="drawer-content">
+
+            <!-- Sección: Planes que Finalizan Hoy -->
+            @if (selectedDatePlanesFinalizan().length > 0) {
+              <div class="drawer-section drawer-section--alert">
+                <div class="drawer-section-header">
+                  <span class="bx bx-calendar-event drawer-icon drawer-icon--fin-plan"></span>
+                  <h4>Planes que Finalizan Hoy</h4>
+                  <span class="drawer-badge drawer-badge--fin-plan">{{ selectedDatePlanesFinalizan().length }}</span>
+                </div>
+                <div class="planes-finalizan-list">
+                  @for (plan of selectedDatePlanesFinalizan(); track plan.planId) {
+                    <div class="plan-finaliza-card">
+                      <div class="plan-card-main">
+                        <div class="plan-info">
+                          <p class="plan-paciente">{{ plan.pacienteNombre }}</p>
+                          <p class="plan-nombre">{{ plan.planNombre }} · {{ plan.duracionDias }} días</p>
+                        </div>
+                      </div>
+                      <div class="plan-actions">
+                        <button type="button" class="btn-plan-action btn-plan-action--ver" (click)="irAPlan(plan.planId)">
+                          <span class="bx bx-show"></span>
+                          Ver Plan
+                        </button>
+                        <button type="button" class="btn-plan-action btn-plan-action--nuevo" (click)="crearPlanParaPaciente(plan.pacienteId, plan.pacienteNombre)">
+                          <span class="bx bx-plus-circle"></span>
+                          Nuevo Plan
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Sección: Citas del día -->
+            <div class="drawer-section">
+              <div class="drawer-section-header">
+                <span class="bx bx-calendar-check drawer-icon drawer-icon--cita"></span>
+                <h4>Citas del Día</h4>
+                <span class="drawer-badge">{{ diaDataNutriologo()!.citas.length }}</span>
+                <button
+                  type="button"
+                  class="btn-icon-add"
+                  (click)="abrirModalCrearCita()"
+                  title="Agendar cita en este día"
+                >
+                  <span class="bx bx-plus"></span>
+                </button>
+              </div>
+
+              @if (diaDataNutriologo()!.citas.length === 0) {
+                <div class="drawer-empty">
+                  <span class="bx bx-calendar-x"></span>
+                  <p>Sin citas agendadas</p>
+                </div>
+              } @else {
+                <div class="citas-list">
+                  @for (cita of diaDataNutriologo()!.citas; track cita.id) {
+                    <div 
+                      class="cita-card" 
+                      (click)="abrirModalDetalleCita(cita)" 
+                      role="button" 
+                      tabindex="0"
+                      title="Haz clic para ver opciones de la cita"
+                    >
+                      <div class="cita-hora-block">
+                        <span class="cita-hora">{{ formatHora(cita.fechaHoraInicio) }}</span>
+                        @if (cita.fechaHoraFin) {
+                          <span class="cita-hora-fin">{{ formatHora(cita.fechaHoraFin) }}</span>
+                        }
+                      </div>
+                      <div class="cita-info">
+                        <p class="cita-paciente">{{ cita.pacienteNombre }}</p>
+                        <p class="cita-motivo">{{ MOTIVO_CITA_LABEL[cita.motivoCita] || cita.motivoCita }}</p>
+                      </div>
+                      <span class="cita-estado" [class]="ESTADO_CITA_COLOR[cita.estado]">
+                        {{ ESTADO_CITA_LABEL[cita.estado] || cita.estado }}
+                      </span>
+                      <span class="bx bx-slider-alt cita-arrow" title="Gestionar cita"></span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Sección: Horas Libres -->
+            <div class="drawer-section">
+              <div class="drawer-section-header">
+                <span class="bx bx-time drawer-icon drawer-icon--libre"></span>
+                <h4>Horas Disponibles</h4>
+                <span class="drawer-badge drawer-badge--libre">{{ diaDataNutriologo()!.horasLibres.length }}</span>
+              </div>
+
+              @if (diaDataNutriologo()!.horasLibres.length === 0) {
+                <div class="drawer-empty">
+                  <span class="bx bx-lock"></span>
+                  <p>Agenda completa o día pasado</p>
+                </div>
+              } @else {
+                <div class="horas-libres-grid">
+                  @for (hora of diaDataNutriologo()!.horasLibres; track hora.fechaHoraCompleta) {
+                    <button
+                      class="hora-libre-btn"
+                      (click)="abrirModalCrearCita(hora.fechaHoraCompleta)"
+                      [id]="'btn-hora-' + hora.hora.replace(':', '')"
+                      title="Haz clic para agendar una cita a las {{ hora.hora }}"
+                    >
+                      <span class="bx bx-plus"></span>
+                      {{ hora.hora }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Sección: Pacientes sin diario -->
+            @if (diaDataNutriologo()!.pacientesSinDiario.length > 0) {
+              <div class="drawer-section">
+                <div class="drawer-section-header">
+                  <span class="bx bx-error drawer-icon drawer-icon--alerta"></span>
+                  <h4>Sin Diario Registrado</h4>
+                  <span class="drawer-badge drawer-badge--alerta">{{ diaDataNutriologo()!.pacientesSinDiario.length }}</span>
+                </div>
+                <div class="pacientes-sin-diario-list">
+                  @for (p of diaDataNutriologo()!.pacientesSinDiario; track p.pacienteId) {
+                    <div class="paciente-sin-diario-item" (click)="verPaciente(p.pacienteId)" role="button" tabindex="0">
+                      <div class="paciente-avatar">{{ p.nombreCompleto.charAt(0).toUpperCase() }}</div>
+                      <span>{{ p.nombreCompleto }}</span>
+                      <span class="bx bx-chevron-right cita-arrow"></span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+          </div>
+        }
+
+        <!-- ══════════════════════════════════════════════ -->
+        <!-- VISTA PACIENTE                                 -->
+        <!-- ══════════════════════════════════════════════ -->
+        @if (currentUserRole() === 'PACIENTE' && diaDataPaciente() && !isLoadingDia()) {
+          <div class="drawer-content">
+
+            <!-- Sección: Citas -->
+            <div class="drawer-section">
+              <div class="drawer-section-header">
+                <span class="bx bx-calendar-check drawer-icon drawer-icon--cita"></span>
+                <h4>Mis Citas</h4>
+                <span class="drawer-badge">{{ diaDataPaciente()!.citas.length }}</span>
+                <button
+                  type="button"
+                  class="btn-icon-add"
+                  (click)="abrirModalSolicitarCita()"
+                  title="Solicitar cita con mi nutriólogo"
+                >
+                  <span class="bx bx-plus"></span>
+                </button>
+              </div>
+
+              @if (diaDataPaciente()!.citas.length === 0) {
+                <div class="drawer-empty-action">
+                  <div class="drawer-empty">
+                    <span class="bx bx-calendar-x"></span>
+                    <p>Sin citas para este día</p>
+                  </div>
+                  <button class="btn-solicitar-inline" (click)="abrirModalSolicitarCita()">
+                    <span class="bx bx-calendar-plus"></span>
+                    <span>Solicitar Cita</span>
+                  </button>
+                </div>
+              } @else {
+                <div class="citas-list">
+                  @for (cita of diaDataPaciente()!.citas; track cita.id) {
+                    <div class="cita-card" (click)="abrirModalDetalleCita(cita)">
+                      <div class="cita-hora-block">
+                        <span class="cita-hora">{{ formatHora(cita.fechaHoraInicio) }}</span>
+                      </div>
+                      <div class="cita-info">
+                        <p class="cita-paciente">{{ cita.nutriologoNombre }}</p>
+                        <p class="cita-motivo">{{ MOTIVO_CITA_LABEL[cita.motivoCita] || cita.motivoCita }}</p>
+                      </div>
+                      <span class="cita-estado" [class]="ESTADO_CITA_COLOR[cita.estado]">
+                        {{ ESTADO_CITA_LABEL[cita.estado] || cita.estado }}
+                      </span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Sección: Plan alimenticio del día -->
+            <div class="drawer-section">
+              <div class="drawer-section-header">
+                <span class="bx bx-food-menu drawer-icon drawer-icon--plan"></span>
+                <h4>Mi Plan de Hoy</h4>
+                <span class="drawer-badge drawer-badge--plan">{{ diaDataPaciente()!.comidasProgramadas.length }}</span>
+              </div>
+
+              @if (diaDataPaciente()!.comidasProgramadas.length === 0) {
+                <div class="drawer-empty">
+                  <span class="bx bx-bowl-hot"></span>
+                  <p>Sin plan alimenticio para hoy</p>
+                </div>
+              } @else {
+                <div class="comidas-list">
+                  @for (comida of diaDataPaciente()!.comidasProgramadas; track comida.id) {
+                    @let registro = getRegistroPorHorario(diaDataPaciente()!, comida.horario);
+                    <div class="comida-item">
+                      <div class="comida-horario-label">
+                        {{ HORARIO_LABEL[comida.horario] || comida.horario }}
+                      </div>
+                      <div class="comida-info">
+                        <p class="comida-nombre">{{ comida.plantillaNombre }}</p>
+                        @if (comida.observaciones) {
+                          <p class="comida-obs">{{ comida.observaciones }}</p>
+                        }
+                      </div>
+                      <div class="comida-estado-col">
+                        @if (registro) {
+                          <button
+                            type="button"
+                            class="estado-diario-badge"
+                            [class]="getEstadoDiarioClass(registro.estado)"
+                            (click)="abrirModalRegistrarDiario(comida, registro)"
+                            title="Haz clic para modificar el registro"
+                          >
+                            {{ ESTADO_DIARIO_LABEL[registro.estado] || registro.estado }}
+                            <span class="bx bx-edit-alt"></span>
+                          </button>
+                        } @else {
+                          <button
+                            class="btn-registrar"
+                            (click)="abrirModalRegistrarDiario(comida, null)"
+                            [id]="'btn-registrar-' + comida.horario"
+                          >
+                            <span class="bx bx-plus-circle"></span>
+                            Registrar
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Sección: Bienestar -->
+            <div class="drawer-section">
+              <div class="drawer-section-header">
+                <span class="bx bx-heart drawer-icon drawer-icon--bienestar"></span>
+                <h4>Mi Bienestar</h4>
+              </div>
+
+              @if (diaDataPaciente()!.bienestar?.registrado) {
+                <div 
+                  class="bienestar-registrado" 
+                  (click)="abrirModalRegistrarBienestar()" 
+                  role="button" 
+                  tabindex="0"
+                  title="Haz clic para consultar o actualizar tu registro"
+                >
+                  <div class="bienestar-info-row">
+                    <span class="bx bx-check-circle bienestar-check"></span>
+                    <div>
+                      <strong style="display:block; font-size:0.9rem; color: #166534;">Bienestar registrado</strong>
+                      <span style="font-size:0.75rem; color: #475569;">Haz clic para ver o modificar datos</span>
+                    </div>
+                  </div>
+                  <span class="bx bx-edit-alt edit-btn-icon"></span>
+                </div>
+              } @else {
+                <div class="bienestar-pendiente">
+                  <p class="bienestar-msg">No has registrado tu bienestar para este día.</p>
+                  <button
+                    class="btn-bienestar"
+                    (click)="abrirModalRegistrarBienestar()"
+                    id="btn-registrar-bienestar"
+                  >
+                    <span class="bx bx-heart-circle"></span>
+                    Registrar Bienestar
+                  </button>
+                </div>
+              }
+            </div>
+
+          </div>
+        }
+
+        <!-- Sin datos y sin carga -->
+        @if (!isLoadingDia() && !diaDataNutriologo() && !diaDataPaciente()) {
+          <div class="drawer-loading">
+            <span class="bx bx-calendar-exclamation drawer-empty-icon"></span>
+            <p>No hay información disponible para este día.</p>
+          </div>
+        }
+
+      </div>
+      <!-- /cal-drawer -->
+    }
+
+  </div>
+  <!-- /calendario-content -->
+
+  <!-- Overlay para cerrar el drawer en móvil -->
+  @if (isDrawerOpen()) {
+    <div class="cal-overlay" (click)="cerrarDrawer()" aria-hidden="true"></div>
+  }
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- MODALES INTERACTIVOS IN-PLACE                                          -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <!-- Modal: Crear Cita Rápida (Nutriólogo) -->
+  @if (isModalCrearCitaOpen()) {
+    <app-modal-crear-cita
+      [fechaHoraInicioISO]="selectedHoraLibreISO()"
+      (close)="isModalCrearCitaOpen.set(false)"
+      (citaCreada)="recargarDiaActual()"
+    ></app-modal-crear-cita>
+  }
+
+  <!-- Modal: Detalle y Gestión de Cita -->
+  @if (isModalDetalleCitaOpen() && selectedCitaParaDetalle()) {
+    <app-modal-detalle-cita
+      [cita]="selectedCitaParaDetalle()!"
+      [isNutriologo]="currentUserRole() === 'NUTRIOLOGO'"
+      (close)="isModalDetalleCitaOpen.set(false)"
+      (citaActualizada)="recargarDiaActual()"
+    ></app-modal-detalle-cita>
+  }
+
+  <!-- Modal: Registrar Comida (Paciente) -->
+  @if (isModalRegistrarDiarioOpen() && selectedComidaParaDiario() && selectedDateStr()) {
+    <app-modal-registrar-diario
+      [comida]="selectedComidaParaDiario()!"
+      [fecha]="selectedDateStr()!"
+      [registroExistente]="selectedRegistroParaDiario()"
+      (close)="isModalRegistrarDiarioOpen.set(false)"
+      (diarioRegistrado)="recargarDiaActual()"
+    ></app-modal-registrar-diario>
+  }
+
+  <!-- Modal: Registrar Bienestar (Paciente) -->
+  @if (isModalRegistrarBienestarOpen() && selectedDateStr()) {
+    <app-modal-registrar-bienestar
+      [fecha]="selectedDateStr()!"
+      (close)="isModalRegistrarBienestarOpen.set(false)"
+      (bienestarRegistrado)="recargarDiaActual()"
+    ></app-modal-registrar-bienestar>
+  }
+
+  <!-- Modal: Solicitar Cita (Paciente) -->
+  @if (isModalSolicitarCitaOpen() && selectedDateStr()) {
+    <app-modal-solicitar-cita
+      [fecha]="selectedDateStr()!"
+      (close)="isModalSolicitarCitaOpen.set(false)"
+      (solicitudEnviada)="recargarDiaActual()"
+    ></app-modal-solicitar-cita>
+  }
+
+</section>

@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   inject,
   signal,
@@ -35,16 +36,48 @@ export class MisSugerencias {
   protected isCancelling = signal<number | null>(null);
   protected currentPage = signal(0);
   protected pageSize = signal(10);
+  protected selectedEstado = signal('');
+  protected searchTerm = signal('');
 
   protected sugerenciasResource = rxResource({
-    params: () => ({ page: this.currentPage(), size: this.pageSize() }),
+    params: () => ({
+      page: this.currentPage(),
+      size: this.pageSize(),
+      estado: this.selectedEstado() || undefined,
+    }),
     stream: ({ params }) =>
-      this.sugerenciaService.obtenerMisSugerencias(params.page, params.size),
+      this.sugerenciaService.obtenerMisSugerencias(params.page, params.size, params.estado),
+  });
+
+  protected sugerenciasFiltradas = computed(() => {
+    const list = this.sugerenciasResource.value()?.content ?? [];
+    const term = this.searchTerm().trim().toLowerCase();
+    if (!term) return list;
+    return list.filter(
+      (s) =>
+        s.nombre.toLowerCase().includes(term) ||
+        (s.motivoSugerencia?.toLowerCase().includes(term) ?? false)
+    );
   });
 
   protected onPageChange(event: PageEvent): void {
     this.currentPage.set(event.page);
     this.pageSize.set(event.size);
+  }
+
+  protected selectEstado(estado: string): void {
+    this.selectedEstado.set(estado);
+    this.currentPage.set(0);
+  }
+
+  protected onSearchChange(event: Event): void {
+    this.searchTerm.set((event.target as HTMLInputElement).value);
+  }
+
+  protected limpiarBusqueda(): void {
+    this.searchTerm.set('');
+    this.selectedEstado.set('');
+    this.currentPage.set(0);
   }
 
   protected obtenerIconTipo(tipo: string): string {

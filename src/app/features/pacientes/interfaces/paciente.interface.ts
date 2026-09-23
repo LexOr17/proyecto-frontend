@@ -9,6 +9,8 @@ export interface Paciente {
   rol: string;
   telefono: string;
   nutriologoId?: number;
+  nombreNutriologo?: string;
+  apellidoPaternoNutriologo?: string;
 }
 
 export interface PacienteRequest {

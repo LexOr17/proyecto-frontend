@@ -13,6 +13,7 @@ import { DiarioComidaService } from '../../service/diario-service';
 import { PlanAlimenticioService } from '../../../planes/service/plan-service';
 import { AuthService } from '../../../../core/services/auth-service';
 import { NotificationService } from '../../../../shared/service/notification-service';
+import { FormValidatorHelper } from '../../../../shared/helpers/form-validator-helper';
 import {
   DiarioComidaRequest,
   DiarioComidaResponse,
@@ -37,6 +38,17 @@ interface ModalContext {
   horario: TipoComidaDiario;
   nombre: string;
   comidaProgramadaId?: number;
+}
+
+export interface WeekDayItem {
+  date: Date;
+  dateStr: string;
+  dayName: string;
+  dayNumber: number;
+  isToday: boolean;
+  isSelected: boolean;
+  status: 'ALL_DONE' | 'PARTIAL' | 'EMPTY' | 'FUTURE';
+  count: number;
 }
 
 @Component({
@@ -94,6 +106,68 @@ export class DiarioPaciente {
   protected readonly isToday = computed(
     () => toDateStr(new Date()) === this.selectedDateStr()
   );
+
+  // ─── Week Days Strip ──────────────────────────────────────────────────
+  protected readonly weekDays = computed((): WeekDayItem[] => {
+    const curr = new Date(this.selectedDate());
+    const dayOfWeek = (curr.getDay() + 6) % 7; // 0 = Lunes, 6 = Domingo
+    const monday = new Date(curr);
+    monday.setDate(curr.getDate() - dayOfWeek);
+
+    const history = this.historialResource.value() ?? [];
+    const todayStr = toDateStr(new Date());
+    const selectedStr = this.selectedDateStr();
+
+    const days: WeekDayItem[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const dStr = toDateStr(d);
+      
+      const dayEntries = history.filter(e => e.fecha === dStr);
+      const isFut = dStr > todayStr;
+      
+      let status: 'ALL_DONE' | 'PARTIAL' | 'EMPTY' | 'FUTURE' = 'EMPTY';
+      if (isFut) {
+        status = 'FUTURE';
+      } else if (dayEntries.length >= 3) {
+        status = 'ALL_DONE';
+      } else if (dayEntries.length > 0) {
+        status = 'PARTIAL';
+      }
+
+      days.push({
+        date: d,
+        dateStr: dStr,
+        dayName: d.toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', ''),
+        dayNumber: d.getDate(),
+        isToday: dStr === todayStr,
+        isSelected: dStr === selectedStr,
+        status,
+        count: dayEntries.length,
+      });
+    }
+    return days;
+  });
+
+  // ─── Racha de días ────────────────────────────────────────────────────
+  protected readonly rachaDias = computed(() => {
+    const history = this.historialResource.value() ?? [];
+    const uniqueDates = new Set(history.map(h => h.fecha));
+    let streak = 0;
+    const check = new Date();
+    
+    const todayStr = toDateStr(check);
+    if (!uniqueDates.has(todayStr)) {
+      check.setDate(check.getDate() - 1);
+    }
+
+    while (uniqueDates.has(toDateStr(check))) {
+      streak++;
+      check.setDate(check.getDate() - 1);
+    }
+    return streak;
+  });
 
   // ─── Plan for selected date ───────────────────────────────────────────
   protected readonly activePlan = computed((): PlanAlimenticioResponse | null => {
@@ -191,6 +265,10 @@ export class DiarioPaciente {
     return this.registroForm.get('estado')?.value === 'MODIFICADO';
   }
 
+  protected isDetallesInvalid(): boolean {
+    return FormValidatorHelper.isFieldInvalidTouchedOrDirty(this.registroForm.get('detallesComidaReal'));
+  }
+
   // ─── Date navigation ──────────────────────────────────────────────────
   protected changeDate(delta: number): void {
     this.selectedDate.update(d => {
@@ -198,6 +276,15 @@ export class DiarioPaciente {
       next.setDate(next.getDate() + delta);
       return next;
     });
+  }
+
+  protected selectDay(dStr: string): void {
+    const [y, m, d] = dStr.split('-').map(Number);
+    this.selectedDate.set(new Date(y, m - 1, d));
+  }
+
+  protected goToToday(): void {
+    this.selectedDate.set(new Date());
   }
 
   protected jumpToDate(value: string): void {
@@ -247,9 +334,15 @@ export class DiarioPaciente {
 
   protected onEstadoChange(estado: EstadoRegistro): void {
     this.registroForm.patchValue({ estado });
-    if (estado !== 'MODIFICADO') {
+    const detallesCtrl = this.registroForm.get('detallesComidaReal')!;
+    if (estado === 'MODIFICADO') {
+      detallesCtrl.setValidators([Validators.required, Validators.maxLength(255)]);
+    } else {
+      detallesCtrl.clearValidators();
+      detallesCtrl.setValidators([Validators.maxLength(255)]);
       this.registroForm.patchValue({ detallesComidaReal: '' });
     }
+    detallesCtrl.updateValueAndValidity();
   }
 
   protected onSubmit(): void {

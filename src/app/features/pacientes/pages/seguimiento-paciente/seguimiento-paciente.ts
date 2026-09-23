@@ -15,30 +15,32 @@ export class SeguimientoPaciente {
   private readonly route = inject(ActivatedRoute);
   private readonly pacienteService = inject(PacienteService);
 
-  private readonly pacienteId = signal<number>(
+  protected readonly pacienteId = signal<number>(
     Number(this.route.snapshot.paramMap.get('id'))
   );
 
-  protected pacienteResource = rxResource({
+  protected readonly pacienteResource = rxResource({
     params: () => ({ id: this.pacienteId() }),
     stream: ({ params }) => this.pacienteService.obtenerPacientePorId(params.id),
   });
 
-  protected iniciales = computed(() => {
+  protected readonly iniciales = computed(() => {
     const p = this.pacienteResource.value();
     if (!p) return '';
-    return p.nombre.charAt(0).toUpperCase() + p.apellidoPaterno.charAt(0).toUpperCase();
+    const n = p.nombre?.charAt(0) ?? '';
+    const a = p.apellidoPaterno?.charAt(0) ?? '';
+    return (n + a).toUpperCase() || 'P';
   });
 
-  protected nombreCompleto = computed(() => {
+  protected readonly nombreCompleto = computed(() => {
     const p = this.pacienteResource.value();
     if (!p) return '';
     return [p.nombre, p.apellidoPaterno, p.apellidoMaterno].filter(Boolean).join(' ');
   });
 
-  protected edad = computed(() => {
+  protected readonly edad = computed(() => {
     const p = this.pacienteResource.value();
-    if (!p) return 0;
+    if (!p || !p.fechaNacimiento) return 0;
     const hoy = new Date();
     const nacimiento = new Date(p.fechaNacimiento + 'T00:00:00');
     let edad = hoy.getFullYear() - nacimiento.getFullYear();
@@ -46,17 +48,17 @@ export class SeguimientoPaciente {
     if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
       edad--;
     }
-    return edad;
+    return Math.max(0, edad);
   });
 
-  protected fechaNacimientoFormateada = computed(() => {
+  protected readonly fechaNacimientoFormateada = computed(() => {
     const p = this.pacienteResource.value();
-    if (!p) return '';
+    if (!p || !p.fechaNacimiento) return 'No especificada';
     const fecha = new Date(p.fechaNacimiento + 'T00:00:00');
     return fecha.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
   });
 
-  protected generoFormateado = computed(() => {
+  protected readonly generoFormateado = computed(() => {
     const p = this.pacienteResource.value();
     if (!p) return '';
     const generos: Record<string, string> = {
@@ -65,5 +67,15 @@ export class SeguimientoPaciente {
       OTRO: 'Otro',
     };
     return generos[p.genero] ?? p.genero;
+  });
+
+  protected readonly telefonoFormateado = computed(() => {
+    const p = this.pacienteResource.value();
+    if (!p?.telefono) return 'Sin teléfono';
+    const raw = p.telefono.replace(/\D/g, '');
+    if (raw.length === 10) {
+      return `(${raw.slice(0, 3)}) ${raw.slice(3, 6)}-${raw.slice(6)}`;
+    }
+    return p.telefono;
   });
 }

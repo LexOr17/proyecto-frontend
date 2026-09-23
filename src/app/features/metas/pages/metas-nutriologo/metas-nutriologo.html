@@ -1,353 +1,596 @@
 <div class="metas-page">
 
-  <!-- PATIENT HEADER -->
-  <header class="patient-header">
-    <div class="patient-info">
-      <span class="patient-label">Seguimiento de Metas</span>
-      @if (pacienteResource.isLoading()) {
-        <h1 class="patient-name">Cargando...</h1>
-      } @else {
-        <h1 class="patient-name">{{ nombrePaciente() }}</h1>
-        <p class="patient-meta">
-          ID: #{{ pacienteResource.value()?.id }} &bull;
-          <a [routerLink]="['/main/pacientes', pacienteResource.value()?.id]" class="back-link" aria-label="Volver al perfil del paciente">
-            Ver perfil
-          </a>
-        </p>
-      }
+  <!-- ── HERO CLINICO ─────────────────────────────────────────── -->
+  <header class="patient-hero" aria-label="Cabecera del expediente de objetivos">
+    <div class="hero-glow" aria-hidden="true"></div>
+
+    <div class="hero-main-content">
+      <!-- Breadcrumb & Nav -->
+      <nav class="hero-breadcrumb" aria-label="Miga de pan">
+        <a [routerLink]="['/main/pacientes', pacienteId]" class="hero-back-link" aria-label="Volver al expediente del paciente">
+          <i class="bx bx-arrow-back" aria-hidden="true"></i>
+          <span>Volver al Paciente</span>
+        </a>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current">Objetivos</span>
+      </nav>
+
+      <div class="patient-profile-block">
+        <div class="patient-avatar-wrap" aria-hidden="true">
+          <div class="patient-avatar">
+            <i class="bx bx-user"></i>
+          </div>
+          <span class="online-indicator"></span>
+        </div>
+
+        <div class="patient-titles">
+          <div class="patient-tag-row">
+            <span class="patient-badge">Expediente #{{ pacienteResource.value()?.id ?? pacienteId }}</span>
+            <span class="adherence-badge" [class]="nivelCumplimiento().class">
+              <i class="bx" [class]="nivelCumplimiento().icon" aria-hidden="true"></i>
+              {{ nivelCumplimiento().label }}
+            </span>
+          </div>
+
+          @if (pacienteResource.isLoading()) {
+            <h1 class="patient-name">Cargando paciente...</h1>
+          } @else {
+            <h1 class="patient-name">{{ nombrePaciente() }}</h1>
+            <p class="patient-submeta">
+              <span class="submeta-item"><i class="bx bx-target-lock"></i> Plan Terapéutico de Hábitos</span>
+              <span class="submeta-sep">&bull;</span>
+              <span class="submeta-item"><i class="bx bx-calendar-event"></i> Última sincronización: Hoy</span>
+            </p>
+          }
+        </div>
+      </div>
     </div>
-    <div class="patient-stats" aria-label="Porcentaje de éxito">
-      <span class="stats-label">Metas logradas</span>
-      <span class="stats-value">{{ conteoResource.value()?.porcentaje ?? 0 }}%</span>
+
+    <!-- Gauge Circular de Adherencia -->
+    <div class="hero-gauge-card" aria-label="Nivel de cumplimiento del paciente">
+      <div class="gauge-ring-wrap">
+        <svg class="gauge-svg" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#34D399" />
+              <stop offset="100%" stop-color="#059669" />
+            </linearGradient>
+          </defs>
+          <circle cx="50" cy="50" [attr.r]="radioGauge" class="gauge-bg" />
+          <circle
+            cx="50"
+            cy="50"
+            [attr.r]="radioGauge"
+            class="gauge-fill"
+            [attr.stroke-dasharray]="circunferenciaGauge"
+            [attr.stroke-dashoffset]="getOffsetGauge(porcentajeExito())" />
+        </svg>
+        <div class="gauge-inner-text">
+          <span class="gauge-percentage">{{ porcentajeExito() }}%</span>
+          <span class="gauge-caption">Éxito</span>
+        </div>
+      </div>
+      <div class="gauge-meta">
+        <span class="gauge-title">Tasa de Adherencia</span>
+        <span class="gauge-subtitle">
+          {{ conteoResource.value()?.cumplidas ?? 0 }} de {{ conteoResource.value()?.total ?? 0 }} logrados
+        </span>
+      </div>
     </div>
   </header>
 
-  <!-- STATS WIDGETS -->
-  <section class="widgets-row" aria-label="Resumen de metas">
-    <div class="widget-card w-total">
-      <div class="widget-icon" aria-hidden="true">
-        <i class="bx bx-clipboard"></i>
+  <!-- ── KPIS INTERACTIVOS CON FILTRO ────────────────────────── -->
+  <section class="kpi-filter-row" aria-label="Tarjetas métricas y filtros rápidos">
+    
+    <button
+      type="button"
+      class="kpi-card kpi--total"
+      [class.kpi--active]="filtroEstado() === 'TODOS'"
+      (click)="setFiltro('TODOS')"
+      aria-label="Filtrar por todos los objetivos">
+      <div class="kpi-icon-box" aria-hidden="true">
+        <i class="bx bx-collection"></i>
       </div>
-      <div class="widget-data">
-        <strong>{{ conteoResource.value()?.total ?? 0 }}</strong>
-        <span>Total Metas</span>
+      <div class="kpi-content">
+        <span class="kpi-value">{{ conteoResource.value()?.total ?? 0 }}</span>
+        <span class="kpi-label">Total Asignados</span>
       </div>
-    </div>
-    <div class="widget-card w-pending">
-      <div class="widget-icon" aria-hidden="true">
-        <i class="bx bx-time-five"></i>
+      @if (filtroEstado() === 'TODOS') { <span class="active-dot" aria-hidden="true"></span> }
+    </button>
+
+    <button
+      type="button"
+      class="kpi-card kpi--urgent"
+      [class.kpi--active]="filtroEstado() === 'POR_VALIDAR'"
+      (click)="setFiltro('POR_VALIDAR')"
+      aria-label="Filtrar por objetivos pendientes de validación">
+      <div class="kpi-icon-box" aria-hidden="true">
+        <i class="bx bx-bell"></i>
+        @if ((conteoResource.value()?.porValidar ?? 0) > 0) {
+          <span class="pulse-badge" aria-hidden="true"></span>
+        }
       </div>
-      <div class="widget-data">
-        <strong>{{ conteoResource.value()?.porValidar ?? 0 }}</strong>
-        <span>Por Validar</span>
+      <div class="kpi-content">
+        <span class="kpi-value">{{ conteoResource.value()?.porValidar ?? 0 }}</span>
+        <span class="kpi-label">Por Validar</span>
       </div>
-    </div>
-    <div class="widget-card w-success">
-      <div class="widget-icon" aria-hidden="true">
-        <i class="bx bx-check-circle"></i>
-      </div>
-      <div class="widget-data">
-        <strong>{{ conteoResource.value()?.cumplidas ?? 0 }}</strong>
-        <span>Logradas</span>
-      </div>
-    </div>
-    <div class="widget-card w-active">
-      <div class="widget-icon" aria-hidden="true">
+      @if (filtroEstado() === 'POR_VALIDAR') { <span class="active-dot" aria-hidden="true"></span> }
+    </button>
+
+    <button
+      type="button"
+      class="kpi-card kpi--active-goals"
+      [class.kpi--active]="filtroEstado() === 'PENDIENTE'"
+      (click)="setFiltro('PENDIENTE')"
+      aria-label="Filtrar por objetivos en seguimiento">
+      <div class="kpi-icon-box" aria-hidden="true">
         <i class="bx bx-run"></i>
       </div>
-      <div class="widget-data">
-        <strong>{{ conteoResource.value()?.pendientes ?? 0 }}</strong>
-        <span>En Curso</span>
+      <div class="kpi-content">
+        <span class="kpi-value">{{ conteoResource.value()?.pendientes ?? 0 }}</span>
+        <span class="kpi-label">En Curso</span>
       </div>
-    </div>
+      @if (filtroEstado() === 'PENDIENTE') { <span class="active-dot" aria-hidden="true"></span> }
+    </button>
+
+    <button
+      type="button"
+      class="kpi-card kpi--success"
+      [class.kpi--active]="filtroEstado() === 'CUMPLIDA'"
+      (click)="setFiltro('CUMPLIDA')"
+      aria-label="Filtrar por objetivos logrados">
+      <div class="kpi-icon-box" aria-hidden="true">
+        <i class="bx bx-check-circle"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-value">{{ conteoResource.value()?.cumplidas ?? 0 }}</span>
+        <span class="kpi-label">Logrados</span>
+      </div>
+      @if (filtroEstado() === 'CUMPLIDA') { <span class="active-dot" aria-hidden="true"></span> }
+    </button>
+
+    <button
+      type="button"
+      class="kpi-card kpi--failed"
+      [class.kpi--active]="filtroEstado() === 'NO_CUMPLIDA'"
+      (click)="setFiltro('NO_CUMPLIDA')"
+      aria-label="Filtrar por objetivos no cumplidos">
+      <div class="kpi-icon-box" aria-hidden="true">
+        <i class="bx bx-error-circle"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-value">{{ conteoResource.value()?.noCumplidas ?? 0 }}</span>
+        <span class="kpi-label">No Cumplidos</span>
+      </div>
+      @if (filtroEstado() === 'NO_CUMPLIDA') { <span class="active-dot" aria-hidden="true"></span> }
+    </button>
+
   </section>
 
-  <!-- CONTENT GRID: FORM SIDEBAR + MAIN -->
-  <div class="content-grid">
+  <!-- ── CONTENEDOR PRINCIPAL: FORMULARIO Y REGISTROS EN COLUMNA COMPLETA ── -->
+  <div class="content-layout">
 
-    <!-- SIDEBAR: NEW GOAL FORM -->
-    <aside class="form-sidebar">
-      <div class="form-card">
-        <h2 class="card-title">
-          <i class="bx bx-plus-circle" aria-hidden="true"></i>
-          Nuevo Objetivo
-        </h2>
-        <form [formGroup]="nuevaMetaForm" (ngSubmit)="crearMeta()" novalidate>
+    <!-- PANEL COMPLETO: CREACIÓN DE OBJETIVO -->
+    <section class="creator-card" aria-label="Crear nuevo objetivo">
+      <header class="creator-header">
+        <div class="creator-icon">
+          <span class="bx bx-target-lock" aria-hidden="true"></span>
+        </div>
+        <div>
+          <h2 class="creator-title">Nuevo Objetivo</h2>
+          <p class="creator-subtitle">Prescribe metas claras, alcanzables y medibles para la evolución del paciente</p>
+        </div>
+      </header>
+
+      <!-- Plantillas Rápidas (Chips) -->
+      <div class="quick-presets-section">
+        <span class="preset-label"><i class="bx bx-bulb" aria-hidden="true"></i> Sugerencias Rápidas:</span>
+        <div class="preset-chips-wrap">
+          @for (p of plantillasRapidas; track p.label) {
+            <button
+              type="button"
+              class="preset-chip"
+              (click)="aplicarPlantilla(p.texto)"
+              [attr.aria-label]="'Aplicar plantilla: ' + p.label">
+              {{ p.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <form [formGroup]="nuevaMetaForm" (ngSubmit)="crearMeta()" novalidate class="creator-form-grid">
+        <!-- Columna Izquierda: Descripción -->
+        <div class="form-col-left">
           <div class="form-group">
-            <label for="descripcion">Descripción Clínica</label>
+            <label class="form-label" for="descripcion">
+              <span>Descripción del Objetivo</span>
+              <span class="req-star">*</span>
+            </label>
             <textarea
               id="descripcion"
               formControlName="descripcion"
-              rows="4"
-              placeholder="Ej. Aumentar consumo de proteínas magras..."
+              rows="3"
+              placeholder="Ej. Consumir al menos 2 litros de agua natural distribuidos durante el día y 1 porción de ensalada fresca..."
               [class.input-error]="validator.isFieldInvalid(nuevaMetaForm.get('descripcion'))">
             </textarea>
             @if (validator.isFieldInvalid(nuevaMetaForm.get('descripcion'))) {
               <span class="error-msg" role="alert">
+                <i class="bx bx-error" aria-hidden="true"></i>
                 {{ validator.getErrorMessage(nuevaMetaForm.get('descripcion'), 'descripción') }}
               </span>
             }
           </div>
+        </div>
+
+        <!-- Columna Derecha: Fecha + Atajos + Botón -->
+        <div class="form-col-right">
           <div class="form-group">
-            <label for="fechaObjetivo">Fecha Objetivo de Evaluación</label>
+            <label for="fechaObjetivo">
+              <span>Fecha Límite de Evaluación</span>
+              <span class="req-star">*</span>
+            </label>
             <input
               id="fechaObjetivo"
               type="date"
+              [min]="hoyFechaStr"
               formControlName="fechaObjetivo"
               [class.input-error]="validator.isFieldInvalid(nuevaMetaForm.get('fechaObjetivo'))">
+            
+            <!-- Atajos rápidos de fecha -->
+            <div class="date-shortcuts">
+              <button type="button" class="btn-shortcut" (click)="establecerFechaDias(7)">+7 días</button>
+              <button type="button" class="btn-shortcut" (click)="establecerFechaDias(14)">+15 días</button>
+              <button type="button" class="btn-shortcut" (click)="establecerFechaDias(30)">+1 mes</button>
+            </div>
+
             @if (validator.isFieldInvalid(nuevaMetaForm.get('fechaObjetivo'))) {
               <span class="error-msg" role="alert">
+                <i class="bx bx-error" aria-hidden="true"></i>
                 {{ validator.getErrorMessage(nuevaMetaForm.get('fechaObjetivo'), 'fecha objetivo') }}
               </span>
             }
           </div>
-          <button type="submit" class="btn-submit" [disabled]="isSubmitting()">
+
+          <button type="submit" class="btn-primary-submit" [disabled]="isSubmitting()">
             @if (isSubmitting()) {
-              <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i> Asignando...
+              <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i> Asignando objetivo...
             } @else {
               <i class="bx bx-send" aria-hidden="true"></i> Asignar al Paciente
             }
           </button>
-        </form>
-      </div>
-    </aside>
+        </div>
+      </form>
+    </section>
 
-    <!-- MAIN: CARDS + TABLE -->
-    <main class="main-panel">
+    <!-- MAIN PANEL: BANDEJA DE VALIDACIÓN Y TABLA EXPLORADORA -->
+    <main class="main-workspace">
 
-      <!-- URGENT CARDS: POR_VALIDAR + PENDIENTE -->
-      @if (tieneMetasDestacadas()) {
-        <h2 class="section-header">
-          <i class="bx bx-bolt-circle" aria-hidden="true"></i>
-          Atención Urgente y Activas
-        </h2>
-
-        @for (meta of metasPorValidar(); track meta.id) {
-          <article class="goal-item goal-item--urgent" [attr.aria-label]="'Meta: ' + meta.descripcion">
-            <div class="goal-header">
-              <div class="date-chip">
-                <i class="bx bx-calendar" aria-hidden="true"></i>
-                Evaluación: {{ formatearFecha(meta.fechaObjetivo) }}
-              </div>
-              <span class="badge" [class]="claseEstado(meta.estado)">
-                {{ etiquetaEstado(meta.estado) }}
-              </span>
+      <!-- BANDEJA DE VALIDACIÓN RÁPIDA (URGENTE) -->
+      @if (metasPorValidar().length > 0 && (filtroEstado() === 'TODOS' || filtroEstado() === 'POR_VALIDAR')) {
+        <section class="urgent-section" aria-label="Objetivos que requieren validación">
+          <div class="section-title-wrap">
+            <div class="urgent-badge-pill">
+              <i class="bx bx-bell-ring bx-tada" aria-hidden="true"></i>
+              <span>Atención Prioritaria ({{ metasPorValidar().length }})</span>
             </div>
-            <p class="goal-desc">{{ meta.descripcion }}</p>
-            @if (meta.observaciones) {
-              <div class="note-box" role="note">
-                <strong>Comentario del paciente</strong>
-                <q>{{ meta.observaciones }}</q>
-              </div>
+            <p class="section-hint">El paciente ha reportado el cumplimiento de estos objetivos.</p>
+          </div>
+
+          <div class="urgent-cards-grid">
+            @for (meta of metasPorValidar(); track meta.id) {
+              <article class="validation-card" [attr.aria-label]="'Objetivo por validar: ' + meta.descripcion">
+                <div class="card-status-bar" aria-hidden="true"></div>
+
+                <div class="validation-body">
+                  <div class="validation-header">
+                    <span class="date-chip date-chip--urgent">
+                      <i class="bx bx-calendar-event" aria-hidden="true"></i>
+                      Evaluar: {{ formatearFecha(meta.fechaObjetivo) }}
+                    </span>
+                    <span class="status-pill status--por-validar">
+                      <span class="pill-dot"></span> Por Validar
+                    </span>
+                  </div>
+
+                  <p class="goal-description-text">{{ meta.descripcion }}</p>
+
+                  @if (meta.observaciones) {
+                    <div class="patient-note-bubble" role="note">
+                      <div class="bubble-header">
+                        <i class="bx bx-message-rounded-dots"></i>
+                        <span>Comentario del Paciente:</span>
+                      </div>
+                      <p class="bubble-text">{{ meta.observaciones }}</p>
+                    </div>
+                  }
+
+                  <!-- Panel de retroalimentación -->
+                  <div class="evaluation-box">
+                    <label class="note-label" [for]="'nota-validar-' + meta.id">
+                      Nota de retroalimentación (opcional):
+                    </label>
+                    <textarea
+                      [id]="'obs-input-' + meta.id"
+                      rows="2"
+                      placeholder="Escribe una nota motivacional o correctiva para el paciente..."
+                      [value]="getObservacion(meta.id)"
+                      (input)="setObservacion(meta.id, $event)">
+                    </textarea>
+
+                    <div class="eval-button-group">
+                      <button
+                        type="button"
+                        class="btn-act btn-act--approve"
+                        [disabled]="processingId() === meta.id"
+                        (click)="actualizarEstado(meta, 'CUMPLIDA')"
+                        [attr.aria-label]="'Aprobar objetivo: ' + meta.descripcion">
+                        <i class="bx bx-check-double" aria-hidden="true"></i>
+                        Aprobar
+                      </button>
+
+                      <button
+                        type="button"
+                        class="btn-act btn-act--no-cumplida"
+                        [disabled]="processingId() === meta.id"
+                        (click)="actualizarEstado(meta, 'NO_CUMPLIDA')"
+                        [attr.aria-label]="'Objetivo no cumplido: ' + meta.descripcion">
+                        <i class="bx bx-x" aria-hidden="true"></i>
+                        No Logrado
+                      </button>
+
+                      <button
+                        type="button"
+                        class="btn-act btn-act--reject"
+                        [disabled]="processingId() === meta.id"
+                        (click)="actualizarEstado(meta, 'RECHAZADA')"
+                        [attr.aria-label]="'Rechazar para reintento: ' + meta.descripcion">
+                        <i class="bx bx-redo" aria-hidden="true"></i>
+                        Reintentar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <footer class="card-footer-toolbar">
+                  <button type="button" class="btn-link-action" (click)="abrirEdicion(meta)">
+                    <i class="bx bx-edit"></i> Editar detalles
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-link-action btn-link--danger"
+                    [disabled]="processingId() === meta.id"
+                    (click)="eliminarMeta(meta)">
+                    <i class="bx bx-trash"></i> Eliminar
+                  </button>
+                </footer>
+              </article>
             }
-            <div class="eval-panel">
-              <label [for]="'obs-' + meta.id">Nota de validación (opcional)</label>
-              <textarea
-                [id]="'obs-' + meta.id"
-                rows="2"
-                placeholder="Escribe tu nota final para el paciente..."
-                [value]="getObservacion(meta.id)"
-                (input)="setObservacion(meta.id, $event)">
-              </textarea>
-              <div class="eval-actions">
-                <button
-                  type="button"
-                  class="btn-approve"
-                  [disabled]="processingId() === meta.id"
-                  (click)="actualizarEstado(meta, 'CUMPLIDA')"
-                  [attr.aria-label]="'Aprobar meta: ' + meta.descripcion">
-                  <i class="bx bx-check" aria-hidden="true"></i> Aprobar Meta
-                </button>
-                <button
-                  type="button"
-                  class="btn-reject"
-                  [disabled]="processingId() === meta.id"
-                  (click)="actualizarEstado(meta, 'RECHAZADA')"
-                  [attr.aria-label]="'Rechazar meta: ' + meta.descripcion">
-                  <i class="bx bx-x" aria-hidden="true"></i> Rechazar
-                </button>
-                <button
-                  type="button"
-                  class="btn-no-lograda"
-                  [disabled]="processingId() === meta.id"
-                  (click)="actualizarEstado(meta, 'NO_CUMPLIDA')"
-                  [attr.aria-label]="'Meta no lograda: ' + meta.descripcion">
-                  <i class="bx bx-block" aria-hidden="true"></i> Meta no lograda
-                </button>
-              </div>
-            </div>
-            <div class="card-footer-actions">
-              <button type="button" class="btn-text-edit" (click)="abrirEdicion(meta)">
-                Editar datos
-              </button>
-              <button
-                type="button"
-                class="btn-text-delete"
-                [disabled]="processingId() === meta.id"
-                (click)="eliminarMeta(meta)">
-                Eliminar
-              </button>
-            </div>
-          </article>
-        }
-
-        @for (meta of metasActivas(); track meta.id) {
-          <article class="goal-item" [attr.aria-label]="'Meta: ' + meta.descripcion">
-            <div class="goal-header">
-              <div class="date-chip">
-                <i class="bx bx-calendar" aria-hidden="true"></i>
-                Evaluación: {{ formatearFecha(meta.fechaObjetivo) }}
-              </div>
-              <span class="badge" [class]="claseEstado(meta.estado)">
-                {{ etiquetaEstado(meta.estado) }}
-              </span>
-            </div>
-            <p class="goal-desc">{{ meta.descripcion }}</p>
-            <div class="card-footer-actions">
-              <button type="button" class="btn-text-edit" (click)="abrirEdicion(meta)">
-                Editar datos
-              </button>
-              <button
-                type="button"
-                class="btn-text-delete"
-                [disabled]="processingId() === meta.id"
-                (click)="eliminarMeta(meta)">
-                Eliminar
-              </button>
-            </div>
-          </article>
-        }
+          </div>
+        </section>
       }
 
-      <!-- TABLE: ALL GOALS -->
-      <h2 class="section-header" [class.section-header--mt]="tieneMetasDestacadas()">
-        <i class="bx bx-table" aria-hidden="true"></i>
-        Registro General de Metas
-      </h2>
+      <!-- TABLA Y LISTADO GENERAL -->
+      <section class="table-section" aria-label="Registro general de objetivos">
+        <div class="table-controls-bar">
+          <div class="controls-left">
+            <h2 class="table-section-title">
+              <i class="bx bx-list-check" aria-hidden="true"></i>
+              Registro de Objetivos
+            </h2>
+            <span class="count-pill">{{ metasFiltradas().length }} visibles</span>
+          </div>
 
-      @if (metasResource.isLoading()) {
-        <div class="loading-message"><p>Cargando metas...</p></div>
-      } @else {
-        <div class="table-container">
-          <div class="table-wrapper">
-            <table aria-label="Lista de metas del paciente">
-              <thead>
-                <tr>
-                  <th scope="col">Descripción del Objetivo</th>
-                  <th scope="col">Fecha Límite</th>
-                  <th scope="col">Estado</th>
-                  <th scope="col">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (meta of metasResource.value()?.content ?? []; track meta.id) {
-                  <tr>
-                    <td class="td-desc">{{ meta.descripcion }}</td>
-                    <td class="td-nowrap">{{ formatearFecha(meta.fechaObjetivo) }}</td>
-                    <td class="td-center">
-                      <span class="badge" [class]="claseEstado(meta.estado)">
-                        {{ etiquetaEstado(meta.estado) }}
-                      </span>
-                    </td>
-                    <td class="td-nowrap">
-                      <div class="actions-cell">
-                        <button
-                          type="button"
-                          class="btn-icon btn-edit"
-                          [attr.aria-label]="'Editar meta: ' + meta.descripcion"
-                          (click)="abrirEdicion(meta)">
-                          <i class="bx bx-edit" aria-hidden="true"></i>
-                        </button>
-                        <button
-                          type="button"
-                          class="btn-icon btn-delete"
-                          [attr.aria-label]="'Eliminar meta: ' + meta.descripcion"
-                          [disabled]="processingId() === meta.id"
-                          (click)="eliminarMeta(meta)">
-                          @if (processingId() === meta.id) {
-                            <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i>
-                          } @else {
-                            <i class="bx bx-trash" aria-hidden="true"></i>
-                          }
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                } @empty {
-                  <tr>
-                    <td colspan="4" class="empty-message">No hay metas registradas para este paciente.</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+          <div class="controls-right">
+            <!-- Barra de Búsqueda -->
+            <div class="search-input-wrap">
+              <i class="bx bx-search search-icon" aria-hidden="true"></i>
+              <input
+                type="text"
+                placeholder="Buscar por descripción..."
+                [value]="searchTerm()"
+                (input)="onSearchInput($event)"
+                aria-label="Buscar objetivos">
+              @if (searchTerm()) {
+                <button type="button" class="search-clear-btn" (click)="searchTerm.set('')" aria-label="Limpiar búsqueda">
+                  <i class="bx bx-x"></i>
+                </button>
+              }
+            </div>
           </div>
         </div>
 
-        @if ((metasResource.value()?.totalPages ?? 0) > 0) {
-          <app-pagination
-            [currentPage]="currentPage()"
-            [totalPages]="metasResource.value()?.totalPages ?? 0"
-            [totalElements]="metasResource.value()?.totalElements ?? 0"
-            [pageSize]="pageSize()"
-            (pageChange)="onPageChange($event)" />
+        @if (metasResource.isLoading()) {
+          <div class="loading-state-card">
+            <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i>
+            <p>Cargando catálogo de objetivos...</p>
+          </div>
+        } @else {
+          <div class="table-card">
+            <div class="table-responsive">
+              <table class="modern-table" aria-label="Tabla de objetivos del paciente">
+                <thead>
+                  <tr>
+                    <th scope="col" class="th-desc">Descripción del Objetivo</th>
+                    <th scope="col" class="th-date">Fecha Límite</th>
+                    <th scope="col" class="th-status">Estado</th>
+                    <th scope="col" class="th-actions">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (meta of metasFiltradas(); track meta.id) {
+                    @let daysInfo = diasRestantes(meta.fechaObjetivo);
+                    <tr class="table-row">
+                      <td class="td-desc">
+                        <div class="desc-cell-wrap">
+                          <span class="goal-text">{{ meta.descripcion }}</span>
+                          @if (meta.observaciones) {
+                            <div class="obs-snippet" [title]="meta.observaciones">
+                              <i class="bx bx-note"></i> {{ meta.observaciones }}
+                            </div>
+                          }
+                        </div>
+                      </td>
+
+                      <td class="td-date">
+                        <div class="date-cell-wrap">
+                          <span class="date-main">{{ formatearFecha(meta.fechaObjetivo) }}</span>
+                          @if (meta.estado === 'PENDIENTE' || meta.estado === 'POR_VALIDAR') {
+                            <span class="date-status-tag" [class]="daysInfo.statusClass">
+                              {{ daysInfo.texto }}
+                            </span>
+                          }
+                        </div>
+                      </td>
+
+                      <td class="td-status">
+                        <span class="status-pill" [class]="claseEstado(meta.estado)">
+                          <span class="pill-dot"></span>
+                          {{ etiquetaEstado(meta.estado) }}
+                        </span>
+                      </td>
+
+                      <td class="td-actions">
+                        <div class="action-buttons-cell">
+                          <button
+                            type="button"
+                            class="action-btn btn--edit"
+                            [attr.aria-label]="'Editar objetivo: ' + meta.descripcion"
+                            (click)="abrirEdicion(meta)">
+                            <i class="bx bx-edit" aria-hidden="true"></i>
+                          </button>
+                          <button
+                            type="button"
+                            class="action-btn btn--delete"
+                            [attr.aria-label]="'Eliminar objetivo: ' + meta.descripcion"
+                            [disabled]="processingId() === meta.id"
+                            (click)="eliminarMeta(meta)">
+                            @if (processingId() === meta.id) {
+                              <i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i>
+                            } @else {
+                              <i class="bx bx-trash" aria-hidden="true"></i>
+                            }
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="4" class="empty-table-cell">
+                        <div class="empty-state-inner">
+                          <div class="empty-icon-box" aria-hidden="true">
+                            <i class="bx bx-target-lock"></i>
+                          </div>
+                          <h3>Sin objetivos encontrados</h3>
+                          <p>
+                            @if (searchTerm() || filtroEstado() !== 'TODOS') {
+                              No hay resultados para los filtros aplicados.
+                              <button type="button" class="btn-clear-filters" (click)="setFiltro('TODOS'); searchTerm.set('')">
+                                Restablecer filtros
+                              </button>
+                            } @else {
+                              Aún no has asignado objetivos a este paciente. Utiliza el formulario lateral para comenzar.
+                            }
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            @if ((metasResource.value()?.totalPages ?? 0) > 0) {
+              <div class="table-pagination-footer">
+                <app-pagination
+                  [currentPage]="currentPage()"
+                  [totalPages]="metasResource.value()?.totalPages ?? 0"
+                  [totalElements]="metasResource.value()?.totalElements ?? 0"
+                  [pageSize]="pageSize()"
+                  (pageChange)="onPageChange($event)" />
+              </div>
+            }
+          </div>
         }
-      }
+      </section>
 
     </main>
   </div>
 </div>
 
-<!-- EDIT MODAL -->
+<!-- ── MODAL DE EDICIÓN ─────────────────────────────────────── -->
 @if (editingMeta()) {
   <div
-    class="modal-overlay"
+    class="modal-backdrop"
     role="presentation"
     (click)="cerrarEdicion()"
     (keydown)="onModalKeydown($event)">
     <div
       #editModal
-      class="modal-content"
+      class="modal-dialog-panel"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="edit-modal-title"
+      aria-labelledby="edit-dialog-title"
       (click)="$event.stopPropagation()">
-      <h2 id="edit-modal-title" class="card-title">
-        <i class="bx bx-edit-alt" aria-hidden="true"></i>
-        Editar Objetivo
-      </h2>
-      <form [formGroup]="editMetaForm" (ngSubmit)="guardarEdicion()" novalidate>
+
+      <div class="modal-dialog-header">
+        <div class="dialog-header-icon" aria-hidden="true">
+          <i class="bx bx-edit-alt"></i>
+        </div>
+        <header class="dialog-header">
+          <h2 id="edit-dialog-title" class="dialog-title">Editar Objetivo</h2>
+          <p class="dialog-subtitle">Modifica las instrucciones o la fecha límite</p>
+        </header>
+        <button type="button" class="btn-dialog-close" (click)="cerrarEdicion()" aria-label="Cerrar modal">
+          <i class="bx bx-x"></i>
+        </button>
+      </div>
+
+      <form [formGroup]="editMetaForm" (ngSubmit)="guardarEdicion()" novalidate class="modal-dialog-form">
         <div class="form-group">
-          <label for="edit-descripcion">Descripción</label>
+          <label for="edit-desc">
+            <span>Descripción del Objetivo</span>
+            <span class="req-star">*</span>
+          </label>
           <textarea
-            id="edit-descripcion"
+            id="edit-desc"
             formControlName="descripcion"
             rows="4"
             [class.input-error]="validator.isFieldInvalid(editMetaForm.get('descripcion'))">
           </textarea>
           @if (validator.isFieldInvalid(editMetaForm.get('descripcion'))) {
             <span class="error-msg" role="alert">
+              <i class="bx bx-error" aria-hidden="true"></i>
               {{ validator.getErrorMessage(editMetaForm.get('descripcion'), 'descripción') }}
             </span>
           }
         </div>
+
         <div class="form-group">
-          <label for="edit-fecha">Fecha Límite</label>
+          <label for="edit-date">
+            <span>Fecha Límite de Evaluación</span>
+            <span class="req-star">*</span>
+          </label>
           <input
-            id="edit-fecha"
+            id="edit-date"
             type="date"
+            [min]="hoyFechaStr"
             formControlName="fechaObjetivo"
             [class.input-error]="validator.isFieldInvalid(editMetaForm.get('fechaObjetivo'))">
           @if (validator.isFieldInvalid(editMetaForm.get('fechaObjetivo'))) {
             <span class="error-msg" role="alert">
+              <i class="bx bx-error" aria-hidden="true"></i>
               {{ validator.getErrorMessage(editMetaForm.get('fechaObjetivo'), 'fecha objetivo') }}
             </span>
           }
         </div>
-        <div class="modal-actions">
-          <button type="submit" class="btn-submit">
+
+        <div class="modal-dialog-actions">
+          <button type="button" class="btn-ghost-cancel" (click)="cerrarEdicion()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary-save">
             <i class="bx bx-save" aria-hidden="true"></i> Guardar Cambios
           </button>
-          <button type="button" class="btn-cancel" (click)="cerrarEdicion()">Cancelar</button>
         </div>
       </form>
     </div>

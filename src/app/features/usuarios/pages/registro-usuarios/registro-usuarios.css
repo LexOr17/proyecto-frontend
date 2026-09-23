@@ -173,3 +173,9 @@ select.error {
   margin-bottom: 20px;
   text-align: center;
 }
+
+.help-text {
+  color: #757575;
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
